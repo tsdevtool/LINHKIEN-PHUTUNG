@@ -1,7 +1,13 @@
+import Header from "../../components/Header";
+import Navbar from "../../components/Navbar";
+import DarkMode from "../../components/ui/DarkMode";
+
 const HomePage = () => {
   return (
-    <div>
-      <h1 className="text-2xl text-red-500">Nguyen Thanh Sieu</h1>
+    <div className="bg-white text-black dark:bg-black dark:text-white p-4 h-screen">
+      <Header />
+      <Navbar />
+      <DarkMode />
     </div>
   );
 };
