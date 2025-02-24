@@ -2,11 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import SearchBox from "./ui/SearchBox";
 import {
+  CircleUserRound,
   LockKeyhole,
-  LogIn,
   LogOut,
   ShoppingCart,
-  UserPlus,
 } from "lucide-react";
 
 const Navbar = () => {
@@ -128,20 +127,12 @@ const Navbar = () => {
             ) : (
               <>
                 <Link
-                  to={"/signup"}
-                  className="bg-emerald-600/80 hover:bg-emerald-700 text-white py-2 px-4 
-									rounded-md flex items-center transition duration-300 ease-in-out"
+                  to={"/auth"}
+                  className="bg-lime-700/80 hover:bg-lime-500 text-white py-2 px-4 
+									rounded-md flex items-center transition duration-300 ease-in-out text-sm"
                 >
-                  <UserPlus className="mr-2" size={18} />
-                  Đăng ký
-                </Link>
-                <Link
-                  to={"/login"}
-                  className="bg-gray-700/80 hover:bg-gray-600 text-white py-2 px-4 
-									rounded-md flex items-center transition duration-300 ease-in-out"
-                >
-                  <LogIn className="mr-2" size={18} />
-                  Đăng nhập
+                  <CircleUserRound className="mr-2" size={18} />
+                  Đăng nhập / Đăng ký
                 </Link>
               </>
             )}
