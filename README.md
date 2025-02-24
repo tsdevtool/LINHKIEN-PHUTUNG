@@ -49,6 +49,14 @@ git clone https://github.com/tsdevtool/LINHKIEN-PHUTUNG.git
 - Terminal frontend
   **.env**
 
+```sh
+   npm install
+```
+
+```sh
+   npm run dev
+```
+
 - Terminal management
 
 ```sh
