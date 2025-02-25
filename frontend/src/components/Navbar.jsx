@@ -145,12 +145,12 @@ const Navbar = () => {
               className="relative group text-gray-600 hover:text-cyan-300 transition duration-300 ease-in-out"
             >
               <ShoppingCart
-                className="inline-block mr-1 group-hover:text-cyan-300"
+                className="inline-block mr-1 dark:text-white group-hover:text-cyan-300"
                 size={24}
               />
-              <span className="hidden sm:inline">Cart</span>
+              <span className="hidden sm:inline dark:text-white ">Cart</span>
               {cart > 0 && (
-                <span className="absolute -top-2 -left-2 bg-amber-400 text-white rounded-full px-2 py-0.5 text-xs group-hover:bg-amber-300 transition duration-300 ease-in-out font-medium">
+                <span className="absolute -top-2 -left-2 bg-amber-400  text-white rounded-full px-2 py-0.5 text-xs group-hover:bg-amber-300 transition duration-300 ease-in-out font-medium">
                   {cart}
                 </span>
               )}
