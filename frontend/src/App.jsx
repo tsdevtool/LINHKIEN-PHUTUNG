@@ -5,6 +5,7 @@ import NotFound from "./pages/NotFound/NotFound";
 
 import AuthPage from "./pages/auth/AuthPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import Footer from "./components/Footer";
 function App() {
   return (
     <>
@@ -14,6 +15,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/*" element={<NotFound />} />
       </Routes>
+      <Footer />
     </>
   );
 }

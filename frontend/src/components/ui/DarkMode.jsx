@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 
-const DarkMode = () => {
+const DarkModeToggle = () => {
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("theme") === "dark"
   );
+
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -12,15 +13,22 @@ const DarkMode = () => {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
     }
-  });
+  }, [darkMode]);
+
   return (
     <button
-      className="p-2 bg-gray-200 dark:bg-gray-800 rounded"
       onClick={() => setDarkMode(!darkMode)}
+      className={`relative w-16 h-8 flex items-center bg-cyan-500 rounded-full p-1 transition-all ${
+        darkMode ? "bg-cyan-500" : "bg-gray-400"
+      }`}
     >
-      {darkMode ? "🌞 Sáng" : "🌙 Tối"}
+      <div
+        className={`absolute left-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-all ${
+          darkMode ? "translate-x-8 bg-yellow-400" : "translate-x-0 bg-gray-200"
+        }`}
+      />
     </button>
   );
 };
 
-export default DarkMode;
+export default DarkModeToggle;

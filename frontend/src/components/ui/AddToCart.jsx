@@ -30,7 +30,7 @@ const AddToCart = () => {
           viewBox="0 0 24 24"
           strokeWidth="1.5"
           stroke="currentColor"
-          className="size-6 fa-solid cart-shopping-svg absolute z-20 top-1/2 left-[-20%] text-2xl transform -translate-x-1/2 -translate-y-1/2"
+          className="size-6 fa-solid cart-shopping-svg absolute z-20 top-1/2 left-[-30%] text-2xl transform -translate-x-1/2 -translate-y-1/2"
           animate={{ x: clicked ? 35 : 0 }}
           transition={{ duration: 0.5 }}
         >
