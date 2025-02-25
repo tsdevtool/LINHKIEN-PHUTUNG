@@ -90,7 +90,9 @@ const Navbar = () => {
                         <a
                           key={i}
                           href="#"
-                          className="block px-4 py-2 rounded-2xl hover:bg-cyan-600 hover:text-white m-2 text-center truncate"
+                          className={`block px-4 py-2 rounded-2xl hover:bg-cyan-600 hover:text-white m-2 truncate ${
+                            index > 3 ? "text-end" : "text-start"
+                          }`}
                         >
                           {item}
                         </a>
