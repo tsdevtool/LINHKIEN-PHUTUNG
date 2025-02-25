@@ -79,22 +79,27 @@ const Navbar = () => {
                 >
                   {menu.title}
                   {activeDropdown === menu.title && (
-                    <div
-                      className={`absolute top-full left-0 w-full bg-gray-200/80 p-2 shadow-md rounded-2xl text-black z-0 grid  ${
-                        index > 3
-                          ? "flex-col-reverse grid-cols-3"
-                          : "grid-cols-3"
-                      } overflow-hidden`}
-                    >
-                      {menu.items.map((item, i) => (
-                        <a
-                          key={i}
-                          href="#"
-                          className="block px-4 py-2 rounded-2xl hover:bg-cyan-600 hover:text-white m-2 text-center truncate"
-                        >
-                          {item}
-                        </a>
-                      ))}
+                    <div className="absolute p-2 w-full">
+                      <div
+                        className={`absolute top-full left-0 w-full bg-gray-200/80 p-2 shadow-md rounded-2xl text-black z-0 grid  ${
+                          index > 3
+                            ? "flex-col-reverse grid-cols-3"
+                            : "grid-cols-3"
+                        } overflow-hidden`}
+                        aria-hidden={!activeDropdown}
+                      >
+                        {menu.items.map((item, i) => (
+                          <a
+                            key={i}
+                            href="#"
+                            className={`block px-4 py-2 rounded-2xl hover:bg-cyan-600 hover:text-white m-2 truncate ${
+                              index < 3 ? "text-start" : "text-end"
+                            } `}
+                          >
+                            {item}
+                          </a>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </li>
