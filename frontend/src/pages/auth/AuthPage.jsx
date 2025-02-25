@@ -137,6 +137,7 @@ const AuthPage = () => {
               positionContainer ? "left-[-50%] delay-[600ms]" : "delay-[600ms]"
             }`}
           >
+            <img src="/vite.svg" alt="Logo" className="w-32 h-auto" />
             <h1 className="font-bold text-3xl mb-2">Xin chào!</h1>
             <p className="text-center mb-5">
               Bạn không có tài khoản ư? Đăng ký để sử dụng dịch vụ của chúng tôi
@@ -163,6 +164,7 @@ const AuthPage = () => {
                 : "right-[-50%] delay-[600ms]"
             }`}
           >
+            <img src="/vite.svg" alt="Logo" className="w-32 h-auto" />
             <h1 className="font-bold text-3xl mb-2 text-center">
               Welcome back!
             </h1>

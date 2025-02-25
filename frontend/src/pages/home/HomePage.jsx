@@ -100,7 +100,10 @@ const HomePage = () => {
       {/* Danh sach san pham */}
 
       {/* Do choi xe may */}
-      <div className="my-8 max-w-7xl mx-auto px-6 py-6 font-primary bg-white dark:bg-gray-900 rounded-2xl">
+      <section
+        id="do-choi-xe-may"
+        className="my-8 max-w-7xl mx-auto px-6 py-6 font-primary bg-white dark:bg-gray-900 rounded-2xl"
+      >
         <h1 className="text-2xl md:text-4xl font-extrabold text-gray-800 dark:text-white">
           ĐỒ CHƠI XE MÁY
         </h1>
@@ -137,10 +140,13 @@ const HomePage = () => {
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Phụ tùng thay thế */}
-      <div className="my-8 max-w-7xl mx-auto px-6 py-6 font-primary bg-white dark:bg-gray-900 rounded-2xl">
+      <section
+        id="phu-tung-thay-the"
+        className="my-8 max-w-7xl mx-auto px-6 py-6 font-primary bg-white dark:bg-gray-900 rounded-2xl"
+      >
         <h1 className="text-2xl md:text-4xl font-extrabold text-gray-800 dark:text-white">
           ĐỒ CHƠI XE MÁY
         </h1>
@@ -177,9 +183,12 @@ const HomePage = () => {
             </div>
           ))}
         </div>
-      </div>
+      </section>
       {/* Vỏ xe máy (lốp xe) */}
-      <div className="my-8 max-w-7xl mx-auto px-6 py-6 font-primary bg-white dark:bg-gray-900 rounded-2xl">
+      <section
+        id="vo-xe-may"
+        className="my-8 max-w-7xl mx-auto px-6 py-6 font-primary bg-white dark:bg-gray-900 rounded-2xl"
+      >
         <h1 className="text-2xl md:text-4xl font-extrabold text-gray-800 dark:text-white">
           ĐỒ CHƠI XE MÁY
         </h1>
@@ -216,9 +225,12 @@ const HomePage = () => {
             </div>
           ))}
         </div>
-      </div>
+      </section>
       {/* Nhớt xe máy */}
-      <div className="my-8 max-w-7xl mx-auto px-6 py-6 font-primary bg-white dark:bg-gray-900 rounded-2xl">
+      <section
+        id="nhot-xe-may"
+        className="my-8 max-w-7xl mx-auto px-6 py-6 font-primary bg-white dark:bg-gray-900 rounded-2xl"
+      >
         <h1 className="text-2xl md:text-4xl font-extrabold text-gray-800 dark:text-white">
           ĐỒ CHƠI XE MÁY
         </h1>
@@ -255,9 +267,12 @@ const HomePage = () => {
             </div>
           ))}
         </div>
-      </div>
+      </section>
       {/* Phụ tùng theo xe */}
-      <div className="my-8 max-w-7xl mx-auto px-6 py-6 font-primary bg-white dark:bg-gray-900 rounded-2xl">
+      <section
+        id="phu-tung-theo-xe"
+        className="my-8 max-w-7xl mx-auto px-6 py-6 font-primary bg-white dark:bg-gray-900 rounded-2xl"
+      >
         <h1 className="text-2xl md:text-4xl font-extrabold text-gray-800 dark:text-white">
           ĐỒ CHƠI XE MÁY
         </h1>
@@ -294,7 +309,7 @@ const HomePage = () => {
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 };
