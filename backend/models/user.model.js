@@ -22,7 +22,6 @@ const userSchema = mongoose.Schema({
   email: {
     type: String,
     required: false, //khong bat buoc co mail boi neu khach hang den truc tiep thi chi can sdt la du
-    unique: true,
   },
   image: {
     type: String,
