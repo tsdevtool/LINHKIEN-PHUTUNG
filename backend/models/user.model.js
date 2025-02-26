@@ -18,7 +18,6 @@ const userSchema = mongoose.Schema({
   password: {
     type: String,
     required: true,
-    default: phone, //khi user dang ky se luu password la so dien thoai
   },
   email: {
     type: String,
@@ -28,6 +27,11 @@ const userSchema = mongoose.Schema({
   image: {
     type: String,
     default: "",
+  },
+
+  deliveryAddress: {
+    type: Array,
+    default: [],
   },
   //Cai nay kieu se luu mot so thong tin tim kiem gan nhat cua nguoi dung
   //khi nguoi dung nhap vao tim kiem se hien 4-5 cai tim kiem de de cho lua
