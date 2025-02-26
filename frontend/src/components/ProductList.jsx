@@ -106,7 +106,7 @@ const ProductList = () => {
           MotorKing – nơi mang đến cho bạn những sản phẩm chất lượng cao, giúp
           bạn cá nhân hóa và nâng cấp chiếc xe theo phong cách riêng.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 mt-8">
+        <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 mt-8">
           {products.map((product) => (
             <div
               key={product.id}
