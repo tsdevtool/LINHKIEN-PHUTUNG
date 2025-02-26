@@ -4,18 +4,10 @@ import { generateTokenAndSetCookie } from "../utils/generateToken.js";
 export const signup = async (req, res) => {
   try {
     const { phone, password, firstname, lastname, email } = req.body;
-    if ((!phone, !password, !firstname, !lastname)) {
+    if (!phone || !password || !firstname || !lastname) {
       return res
         .status(400)
         .json({ success: false, message: "Vui lòng nhập đầy đủ thông tin" });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (email && !emailRegex.test(email)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Địa chỉ email không đúng" });
     }
 
     const existingUserByUsername = await User.findOne({ phone: phone });
@@ -32,11 +24,21 @@ export const signup = async (req, res) => {
       });
     }
 
-    const existingUserByEmail = await User.findOne({ email: email });
-    if (existingUserByEmail) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Địa chỉ email này đã được đăng ký" });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (email) {
+      if (!emailRegex.test(email)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Địa chỉ email không đúng" });
+      }
+      const existingUserByEmail = await User.findOne({ email });
+      if (existingUserByEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "Địa chỉ email này đã được đăng ký",
+        });
+      }
     }
 
     const salt = await bcryptjs.genSalt(10);
@@ -63,7 +65,7 @@ export const signup = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("Error in signup controller");
+    console.log("Error in signup controller", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
