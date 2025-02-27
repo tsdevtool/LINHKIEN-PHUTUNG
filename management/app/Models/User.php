@@ -3,14 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use MongoDB\BSON\ObjectId;
 
-class User extends Model
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+class User extends \MongoDB\Laravel\Eloquent\Model
 {
+    use HasFactory;
     protected $connection = 'mongodb';
-    protected $collection = 'employees'; // Tên collection trong MongoDB
-
+    protected $collection = 'users';
     protected $fillable = [
-        'name', 'email', 'phone'
+       'firstname','lastname','phone','password','image','numberOfOrder'
     ];
 }
