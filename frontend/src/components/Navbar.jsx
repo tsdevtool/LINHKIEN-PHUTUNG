@@ -7,14 +7,17 @@ import {
   LogOut,
   ShoppingCart,
 } from "lucide-react";
+import { useAuthStore } from "../store/authUser";
+import ProfileMenu from "./ui/ProfileMenu";
 
 const Navbar = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
+  // const { user, logout } = useAuthStore();
 
   const [user, setUser] = useState(true);
   const [cart, setCart] = useState(3);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isLogged, setIsLogged] = useState(true);
+  // const [isLogged, setIsLogged] = useState(true);
   return (
     <nav className="mt-4 py-4 px-6 bg-white shadow-2xl dark:bg-gray-600/80 border border-cyan-400 rounded-2xl justify-center flex">
       <div className="flex justify-between items-center w-7xl">
@@ -118,7 +121,8 @@ const Navbar = () => {
                 <span className="hidden sm:inline">Dashboard</span>
               </Link>
             )}
-            {isLogged ? (
+            <ProfileMenu />
+            {/* {isLogged ? (
               <button
                 className="bg-red-700 hover:bg-red-400 text-white py-2 px-4 
 						rounded-md flex items-center transition duration-300 ease-in-out"
@@ -137,12 +141,12 @@ const Navbar = () => {
                   Đăng nhập / Đăng ký
                 </Link>
               </>
-            )}
+            )} */}
           </div>
           {user && (
             <Link
               to={"/card"}
-              className="relative group text-gray-600 hover:text-cyan-300 transition duration-300 ease-in-out"
+              className="relative group text-gray-600 hover:text-cyan-300 transition duration-300 ease-in-out z-10"
             >
               <ShoppingCart
                 className="inline-block mr-1 dark:text-white group-hover:text-cyan-300"
