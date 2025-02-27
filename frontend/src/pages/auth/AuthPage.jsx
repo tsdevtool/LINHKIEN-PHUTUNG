@@ -1,15 +1,37 @@
 import {
   KeySquare,
+  KeySquareIcon,
+  Mail,
   SquareUserRound,
   UserRound,
   UserRoundPen,
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
+import { useAuthStore } from "../../store/authUser";
+import toast from "react-hot-toast";
 const AuthPage = () => {
+  const { searchParams } = new URL(document.location);
   const [positionContainer, setPositionContainer] = useState(false);
+  const { login, isLoggingIn, signup, isSigningUp } = useAuthStore();
+  const [firstname, setFirstName] = useState("");
+  const [lastname, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [rePassword, setRePassword] = useState("");
+  const emailValue = searchParams.get("email");
+  const [email, setEmail] = useState(emailValue || "");
 
+  const handleSignUp = (e) => {
+    e.preventDefault();
+    if (password !== rePassword) return toast.error("Mật khẩu chưa khớp");
+    signup({ phone, password, firstname, lastname, email });
+  };
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    login({ phone, password });
+  };
   return (
     <div className="flex justify-center items-center w-full  min-h-screen bg-linear-to-tr from-gray-200 via-pink-200 to-cyan-500">
       <div
@@ -23,7 +45,10 @@ const AuthPage = () => {
               : "right-0 "
           }`}
         >
-          <form action="" className="w-full flex flex-col gap-5 p-10 ">
+          <form
+            onSubmit={handleLogin}
+            className="w-full flex flex-col gap-5 p-10 "
+          >
             <h1 className="text-4xl -mx-2.5 my-0 font-bold">Đăng nhập</h1>
             <div className="relative flex">
               <SquareUserRound className="absolute right-5 top-1/2 -translate-y-1/2 text-2xl text-gray-800" />
@@ -31,6 +56,9 @@ const AuthPage = () => {
                 type="text"
                 className="w-full p-3 pr-14 bg-gray-200/60 rounded-xl border-none outline-none text-[16px] text-gray-900 font-medium placeholder-gray-500 placeholder:font-medium"
                 placeholder="Số điện thoại"
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
               />
             </div>
@@ -40,6 +68,9 @@ const AuthPage = () => {
                 type="password"
                 className="w-full p-3 pr-14 bg-gray-200/60 rounded-xl border-none outline-none text-[16px] text-gray-900 font-medium placeholder-gray-500 placeholder:font-medium"
                 placeholder="Mật khẩu"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
@@ -68,7 +99,10 @@ const AuthPage = () => {
               : "opacity-0 transition-opacity duration-0 delay-[1000ms] right-0 invisible"
           }`}
         >
-          <form action="" className="w-full flex flex-col gap-5 p-10 z-1">
+          <form
+            onSubmit={handleSignUp}
+            className="w-full flex flex-col gap-5 p-10 z-1"
+          >
             <h1 className="text-4xl -mx-2.5 my-0 font-bold">Đăng ký</h1>
             <div className="flex gap-2">
               <div className="relative w-48 flex">
@@ -77,6 +111,9 @@ const AuthPage = () => {
                   type="text"
                   className="w-full p-3 pr-14 bg-gray-200/60 rounded-xl border-none outline-none text-[16px] text-gray-900 font-medium placeholder-gray-500 placeholder:font-medium"
                   placeholder="Tên"
+                  id="firstname"
+                  value={firstname}
+                  onChange={(e) => setFirstName(e.target.value)}
                   required
                 />
               </div>
@@ -86,6 +123,9 @@ const AuthPage = () => {
                   type="text"
                   className="w-full p-3 pr-14 bg-gray-200/60 rounded-xl border-none outline-none text-[16px] text-gray-900 font-medium placeholder-gray-500 placeholder:font-medium"
                   placeholder="Tên đệm"
+                  id="lastname"
+                  value={lastname}
+                  onChange={(e) => setLastName(e.target.value)}
                   required
                 />
               </div>
@@ -96,6 +136,9 @@ const AuthPage = () => {
                 type="text"
                 className="w-full p-3 pr-14 bg-gray-200/60 rounded-xl border-none outline-none text-[16px] text-gray-900 font-medium placeholder-gray-500 placeholder:font-medium"
                 placeholder="Số điện thoại"
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
               />
             </div>
@@ -105,7 +148,33 @@ const AuthPage = () => {
                 type="password"
                 className="w-full p-3 pr-14 bg-gray-200/60 rounded-xl border-none outline-none text-[16px] text-gray-900 font-medium placeholder-gray-500 placeholder:font-medium"
                 placeholder="Mật khẩu"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
+              />
+            </div>
+            <div className="relative flex">
+              <KeySquareIcon className="absolute right-5 top-1/2 -translate-y-1/2 text-2xl text-gray-800" />
+              <input
+                type="password"
+                className="w-full p-3 pr-14 bg-gray-200/60 rounded-xl border-none outline-none text-[16px] text-gray-900 font-medium placeholder-gray-500 placeholder:font-medium"
+                placeholder="Nhập lại mật khẩu"
+                id="re-password"
+                value={rePassword}
+                onChange={(e) => setRePassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="relative flex">
+              <Mail className="absolute right-5 top-1/2 -translate-y-1/2 text-2xl text-gray-800" />
+              <input
+                type="email"
+                className="w-full p-3 pr-14 bg-gray-200/60 rounded-xl border-none outline-none text-[16px] text-gray-900 font-medium placeholder-gray-500 placeholder:font-medium"
+                placeholder="Email (Không bắt buộc)"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="ml-3.5 mr-3.5 my-0">
