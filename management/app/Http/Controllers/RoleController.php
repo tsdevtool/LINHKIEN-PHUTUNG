@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 
 class RoleController extends Controller
 {
+
     public function index(){
         $roles = Role::all();
         $data=[
