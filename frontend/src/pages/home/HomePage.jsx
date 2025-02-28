@@ -12,7 +12,7 @@ const HomePage = () => {
       <Navbar />
 
       {/* Danh sach san pham */}
-      <div className="flex">
+      <div className="flex justify-center">
         <SidebarLeft />
         <ProductList />
         <SidebarRight />
