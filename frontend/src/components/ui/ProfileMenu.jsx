@@ -6,6 +6,10 @@ import { Link, useNavigate } from "react-router-dom";
 export const ProfileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuthStore();
+<<<<<<< Updated upstream
+=======
+  const [isAdmin] = useState(true);
+>>>>>>> Stashed changes
   const navigate = useNavigate();
 
   const handleButton = () => {
@@ -38,10 +42,29 @@ export const ProfileMenu = () => {
         <div className="absolute left-0 mt-2 w-full bg-gray-900/80 text-white rounded-lg shadow-lg z-20">
           {user && (
             <div className="flex flex-col gap-2 px-4 py-2">
+<<<<<<< Updated upstream
               <Link to={"/setting"} className="flex gap-2 items-center">
                 <Settings size={20} /> <span>Cài đặt</span>
               </Link>
               <Link className="flex gap-2 items-center" onClick={logout}>
+=======
+              {isAdmin && (
+                <Link
+                  className="flex gap-2 items-center text-sm"
+                  to={"/dashboard"}
+                >
+                  <LayoutDashboard size={20} />
+                  Admin
+                </Link>
+              )}
+              <Link to={"/setting"} className="flex gap-2 items-center text-sm">
+                <Settings size={20} /> <span className="truncate">Cài đặt</span>
+              </Link>
+              <Link
+                onClick={logout}
+                className="flex gap-2 items-center text-sm"
+              >
+>>>>>>> Stashed changes
                 <LogOut size={20} /> <span>Đăng xuất</span>
               </Link>
             </div>
