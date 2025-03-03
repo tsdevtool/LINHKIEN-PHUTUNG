@@ -256,7 +256,7 @@ const ProductList = () => {
                 <span className="text-xl font-semibold text-gray-800 dark:text-white">
                   {product.price.toFixed(3)} {"VNĐ"}
                 </span>
-                <AddToCart />
+                <AddToCart/>
               </div>
             </div>
           ))}
