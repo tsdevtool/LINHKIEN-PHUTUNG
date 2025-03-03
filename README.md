@@ -50,6 +50,10 @@ git clone https://github.com/tsdevtool/LINHKIEN-PHUTUNG.git
   **.env**
 
 ```sh
+   cd frontend
+```
+
+```sh
    npm install
 ```
 
@@ -64,13 +68,5 @@ git clone https://github.com/tsdevtool/LINHKIEN-PHUTUNG.git
 ```
 
 ```sh
-   npm install
-```
-
-```sh
-   npm run build
-```
-
-```sh
-   composer run dev
+   php artisan serve
 ```

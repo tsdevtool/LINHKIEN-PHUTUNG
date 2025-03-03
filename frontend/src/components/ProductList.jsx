@@ -102,7 +102,7 @@ const ProductList = () => {
         <p className="mt-2 text-sm md:text-lg text-gray-600 dark:text-gray-300">
           Bạn là người yêu xe, đam mê độ xe và muốn chiếc xe của mình trở nên
           nổi bật hơn? Hãy khám phá ngay{" "}
-          <soan className="font-bold">Đồ chơi xe máy</soan> bộ sưu tập tại
+          <span className="font-bold">Đồ chơi xe máy</span> bộ sưu tập tại
           MotorKing – nơi mang đến cho bạn những sản phẩm chất lượng cao, giúp
           bạn cá nhân hóa và nâng cấp chiếc xe theo phong cách riêng.
         </p>
@@ -147,7 +147,7 @@ const ProductList = () => {
         <p className="mt-2 text-sm md:text-lg text-gray-600 dark:text-gray-300">
           Bạn là người yêu xe, đam mê độ xe và muốn chiếc xe của mình trở nên
           nổi bật hơn? Hãy khám phá ngay{" "}
-          <soan className="font-bold">Đồ chơi xe máy</soan> bộ sưu tập tại
+          <span className="font-bold">Đồ chơi xe máy</span> bộ sưu tập tại
           MotorKing – nơi mang đến cho bạn những sản phẩm chất lượng cao, giúp
           bạn cá nhân hóa và nâng cấp chiếc xe theo phong cách riêng.
         </p>
@@ -189,7 +189,7 @@ const ProductList = () => {
         <p className="mt-2 text-sm md:text-lg text-gray-600 dark:text-gray-300">
           Bạn là người yêu xe, đam mê độ xe và muốn chiếc xe của mình trở nên
           nổi bật hơn? Hãy khám phá ngay{" "}
-          <soan className="font-bold">Đồ chơi xe máy</soan> bộ sưu tập tại
+          <span className="font-bold">Đồ chơi xe máy</span> bộ sưu tập tại
           MotorKing – nơi mang đến cho bạn những sản phẩm chất lượng cao, giúp
           bạn cá nhân hóa và nâng cấp chiếc xe theo phong cách riêng.
         </p>
@@ -231,7 +231,7 @@ const ProductList = () => {
         <p className="mt-2 text-sm md:text-lg text-gray-600 dark:text-gray-300">
           Bạn là người yêu xe, đam mê độ xe và muốn chiếc xe của mình trở nên
           nổi bật hơn? Hãy khám phá ngay{" "}
-          <soan className="font-bold">Đồ chơi xe máy</soan> bộ sưu tập tại
+          <span className="font-bold">Đồ chơi xe máy</span> bộ sưu tập tại
           MotorKing – nơi mang đến cho bạn những sản phẩm chất lượng cao, giúp
           bạn cá nhân hóa và nâng cấp chiếc xe theo phong cách riêng.
         </p>
@@ -273,7 +273,7 @@ const ProductList = () => {
         <p className="mt-2 text-sm md:text-lg text-gray-600 dark:text-gray-300">
           Bạn là người yêu xe, đam mê độ xe và muốn chiếc xe của mình trở nên
           nổi bật hơn? Hãy khám phá ngay{" "}
-          <soan className="font-bold">Đồ chơi xe máy</soan> bộ sưu tập tại
+          <span className="font-bold">Đồ chơi xe máy</span> bộ sưu tập tại
           MotorKing – nơi mang đến cho bạn những sản phẩm chất lượng cao, giúp
           bạn cá nhân hóa và nâng cấp chiếc xe theo phong cách riêng.
         </p>
