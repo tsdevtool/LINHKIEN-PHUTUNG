@@ -141,7 +141,7 @@ const Navbar = () => {
           </div>
           {user && (
             <Link
-              to={"/card"}
+              to={"/cart"}
               className="relative group text-gray-600 hover:text-cyan-300 transition duration-300 ease-in-out"
             >
               <ShoppingCart
