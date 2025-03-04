@@ -16,9 +16,62 @@ class User extends \MongoDB\Laravel\Eloquent\Model implements Authenticatable
     protected $connection = 'mongodb';
     protected $collection = 'users';
     protected $fillable = [
-       'firstname','lastname','phone','password','image','numberOfOrder'
+       'firstname','lastname','phone', 'password','image','numberOfOrder'
     ];
     protected $hidden = [
         'password',
     ];
+
+    public function getAuthIdentifierName()
+    {
+        return '_id';
+    }
+
+    /**
+     * Trả về giá trị của khóa chính.
+     */
+    public function getAuthIdentifier()
+    {
+        return $this->_id;
+    }
+
+    /**
+     * Trả về tên cột chứa mật khẩu của user.
+     */
+    public function getAuthPasswordName()
+    {
+        return 'password';
+    }
+
+    /**
+     * Trả về giá trị mật khẩu của user.
+     */
+    public function getAuthPassword()
+    {
+        return $this->password;
+    }
+
+    /**
+     * Trả về tên cột nhớ token (nếu có).
+     */
+    public function getRememberTokenName()
+    {
+        return null; // Không dùng remember_token với MongoDB
+    }
+
+    /**
+     * Trả về token nhớ đăng nhập (không áp dụng cho MongoDB).
+     */
+    public function getRememberToken()
+    {
+        return null;
+    }
+
+    /**
+     * Cập nhật token nhớ đăng nhập (không áp dụng cho MongoDB).
+     */
+    public function setRememberToken($value)
+    {
+        return null;
+    }
 }

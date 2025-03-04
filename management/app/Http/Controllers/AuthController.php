@@ -14,18 +14,18 @@ class AuthController extends Controller
 {
     public function signup(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|unique:users',
+            'password' => 'required|min:6',
+            'firstname' => 'required',
+            'lastname' => 'required',
+            'email' => 'nullable|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 400);
+        }
         try {
-            $validator = Validator::make($request->all(), [
-                'phone' => 'required|unique:users',
-                'password' => 'required|min:6',
-                'firstname' => 'required',
-                'lastname' => 'required',
-                'email' => 'nullable|email|unique:users',
-            ]);
-    
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()], 400);
-            }
     
             $hashedPassword = Hash::make($request->password);
             $image = "https://avatar.iran.liara.run/username?username=" . $request->firstname;
@@ -67,9 +67,10 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        Cookie::queue(Cookie::forget('jwt-phutung'));
-
-        return response()->json(['success' => true, 'message' => 'Đăng xuất thành công']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Đăng xuất thành công'
+        ])->withCookie(cookie()->forget('jwt-phutung'));
     }
 
 
