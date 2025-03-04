@@ -147,7 +147,7 @@ const Navbar = () => {
             <Link
 
               to={"/cart"}
-              className="relative group text-gray-600 hover:text-cyan-300 transition duration-300 ease-in-out z-10"
+              className="relative group text-gray-600 hover:text-cyan-300 transition duration-300 ease-in-out z-10">
 
               <ShoppingCart
                 className="inline-block mr-1 dark:text-white group-hover:text-cyan-300"

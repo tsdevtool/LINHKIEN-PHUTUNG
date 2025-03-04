@@ -51,22 +51,6 @@ export const ProfileMenu = () => {
                   to={"/dashboard"}
                 >
                   <LayoutDashboard size={20} />
-                  Admin
-                </Link>
-              )}
-              <Link to={"/setting"} className="flex gap-2 items-center text-sm">
-                <Settings size={20} /> <span className="truncate">Cài đặt</span>
-              </Link>
-              <Link
-                onClick={logout}
-                className="flex gap-2 items-center text-sm"
-              >
-              {isAdmin && (
-                <Link
-                  className="flex gap-2 items-center text-sm"
-                  to={"/dashboard"}
-                >
-                  <LayoutDashboard size={20} />
                   Dashboard
                 </Link>
               )}
