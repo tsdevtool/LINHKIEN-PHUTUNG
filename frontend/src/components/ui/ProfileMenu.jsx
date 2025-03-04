@@ -18,6 +18,7 @@ export const ProfileMenu = () => {
       navigate("/auth");
     }
   };
+
   return (
     <div className="relative">
       <button
@@ -31,18 +32,23 @@ export const ProfileMenu = () => {
           </>
         ) : (
           <>
-            <img
-              src={user.image}
-              alt={user.firstname + user.lastname}
-              className="w-6 h-6"
-            />
-            {user.firstname}
+            {user.image ? (
+              <img
+                src={user.image}
+                alt={user.firstname + " " + user.lastname}
+                className="w-6 h-6 rounded-full"
+              />
+            ) : (
+              <User size={20} />
+            )}
+            <span>{user.firstname}</span>
           </>
         )}
       </button>
 
-      {isOpen && (
+      {isOpen && user && (
         <div className="absolute left-0 mt-2 w-full bg-gray-900/80 text-white rounded-lg shadow-lg z-20">
+
           {user && (
             <div className="flex flex-col gap-2 px-4 py-2">
               {isAdmin && (
@@ -58,14 +64,25 @@ export const ProfileMenu = () => {
                 <Settings size={20} /> <span className="truncate">Cài đặt</span>
               </Link>
               <Link
-                to={"/"}
                 className="flex gap-2 items-center text-sm"
-                onClick={logout}
+                to={"/dashboard"}
               >
-                <LogOut size={20} /> <span>Đăng xuất</span>
+                <LayoutDashboard size={20} />
+                <span>Admin</span>
               </Link>
-            </div>
-          )}
+            )}
+            <Link to={"/setting"} className="flex gap-2 items-center text-sm">
+              <Settings size={20} />
+              <span className="truncate">Cài đặt</span>
+            </Link>
+            <button
+              onClick={logout}
+              className="flex gap-2 items-center text-sm text-left w-full cursor-pointer"
+            >
+              <LogOut size={20} />
+              <span>Đăng xuất</span>
+            </button>
+          </div>
         </div>
       )}
     </div>

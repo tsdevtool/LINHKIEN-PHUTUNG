@@ -121,9 +121,9 @@ const ProductList = () => {
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white mt-4">
                   {product.name}
                 </h2>
-                <p className="text-gray-600 dark:text-gray-300 text-start text-xs md:text-base mt-2 line-clamp-4">
+                {/* <p className="text-gray-600 dark:text-gray-300 text-start text-xs md:text-base mt-2 line-clamp-4">
                   {product.description}
-                </p>
+                </p> */}
               </div>
               <div className="flex justify-between items-center mt-4">
                 <span className="text-xl font-semibold text-gray-800 dark:text-white">
