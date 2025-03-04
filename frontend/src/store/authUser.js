@@ -13,7 +13,7 @@ export const useAuthStore = create((set) => ({
     set({ isSigningUp: true });
     try {
       const response = await axios.post("/api/v1/auth/signup", credentials);
-      set({ user: response.data.user, isSigningUp: false });
+      set({ user: response.data?.user, isSigningUp: false });
       toast.success("Tài khoản đã được đăng ký");
     } catch (error) {
       toast.error(error.response.data.message || "Lỗi đăng ký");
