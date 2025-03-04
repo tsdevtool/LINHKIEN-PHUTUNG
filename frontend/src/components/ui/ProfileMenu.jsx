@@ -48,7 +48,6 @@ export const ProfileMenu = () => {
 
       {isOpen && user && (
         <div className="absolute left-0 mt-2 w-full bg-gray-900/80 text-white rounded-lg shadow-lg z-20">
-
           {user && (
             <div className="flex flex-col gap-2 px-4 py-2">
               {isAdmin && (
@@ -57,32 +56,21 @@ export const ProfileMenu = () => {
                   to={"/dashboard"}
                 >
                   <LayoutDashboard size={20} />
-                  Dashboard
+                  <span>Admin</span>
                 </Link>
               )}
               <Link to={"/setting"} className="flex gap-2 items-center text-sm">
                 <Settings size={20} /> <span className="truncate">Cài đặt</span>
               </Link>
-              <Link
-                className="flex gap-2 items-center text-sm"
-                to={"/dashboard"}
+              <button
+                onClick={logout}
+                className="flex gap-2 items-center text-sm text-left w-full cursor-pointer"
               >
-                <LayoutDashboard size={20} />
-                <span>Admin</span>
-              </Link>
-            )}
-            <Link to={"/setting"} className="flex gap-2 items-center text-sm">
-              <Settings size={20} />
-              <span className="truncate">Cài đặt</span>
-            </Link>
-            <button
-              onClick={logout}
-              className="flex gap-2 items-center text-sm text-left w-full cursor-pointer"
-            >
-              <LogOut size={20} />
-              <span>Đăng xuất</span>
-            </button>
-          </div>
+                <LogOut size={20} />
+                <span>Đăng xuất</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
