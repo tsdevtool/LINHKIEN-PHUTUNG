@@ -21,4 +21,4 @@ Route::get('/check-db', function () {
 });
 
 
-Route::get('/users', [\App\Http\Controllers\Api\UserController::class, 'index']);
+// Route::get('/users', [\App\Http\Controllers\Api\UserController::class, 'index']);
