@@ -1,8 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/home/HomePage";
-
 import NotFound from "./pages/404/NotFound";
-
+import CartPage from "./pages/cart/CartPage";
 import AuthPage from "./pages/auth/AuthPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import Footer from "./components/Footer";
@@ -10,6 +9,9 @@ import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authUser";
 import { useEffect } from "react";
 import { Loader } from "lucide-react";
+import OrderPage from "./pages/employee/OrderPage";
+import NewOrder from "./components/employee/NewOrder";
+import MainLayout from "./pages/employee/layouts/MainLayout";
 function App() {
   const { user, isCheckingAuth, authCheck } = useAuthStore();
   useEffect(() => {
@@ -33,9 +35,15 @@ function App() {
           element={!user ? <AuthPage /> : <Navigate to="/" />}
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      
+        <Route path="/cart" element={<CartPage />} /> {/* Thêm route cho CartPage */}
         <Route path="/*" element={<NotFound />} />
+           {/* Gói tất cả trang của employee vào MainLayout */}
+        <Route path="/employee" element={<MainLayout />}>
+          <Route index element={<OrderPage />} /> {/* Trang mặc định */}
+          <Route path="neworder" element={<NewOrder />} />
+        </Route>
       </Routes>
-      <Footer />
       <Toaster />
     </>
   );
