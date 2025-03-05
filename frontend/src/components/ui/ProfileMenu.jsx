@@ -51,10 +51,7 @@ export const ProfileMenu = () => {
           {user && (
             <div className="flex flex-col gap-2 px-4 py-2">
               {isAdmin && (
-                <Link
-                  className="flex gap-2 items-center text-sm"
-                  to={"/dashboard"}
-                >
+                <Link className="flex gap-2 items-center text-sm" to={"/admin"}>
                   <LayoutDashboard size={20} />
                   <span>Admin</span>
                 </Link>
