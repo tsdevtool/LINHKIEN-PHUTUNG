@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../../store/authUser";
 import toast from "react-hot-toast";
+import Loading from "../../components/ui/Loading";
 const AuthPage = () => {
   const { searchParams } = new URL(document.location);
   const [positionContainer, setPositionContainer] = useState(false);
@@ -32,6 +33,11 @@ const AuthPage = () => {
     e.preventDefault();
     login({ phone, password });
   };
+
+  if (isLoggingIn || isSigningUp) {
+    return <Loading />;
+  }
+
   return (
     <div className="flex justify-center items-center w-full  min-h-screen bg-linear-to-tr from-gray-200 via-pink-200 to-cyan-500">
       <div

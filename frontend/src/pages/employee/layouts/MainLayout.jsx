@@ -1,4 +1,3 @@
-import React from "react";
 import Navbar from "../../../components/employee/Navbar";
 import { Outlet } from "react-router-dom";
 
