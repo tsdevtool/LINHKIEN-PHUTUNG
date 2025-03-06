@@ -1,0 +1,207 @@
+/* Background gradients and effects */
+.bg-space-gradient {
+  background: linear-gradient(to bottom, #0f172a, #1e293b);
+  position: relative;
+}
+
+.bg-space-gradient::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: radial-gradient(
+      circle at 20% 30%,
+      rgba(34, 211, 238, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 70%,
+      rgba(244, 63, 94, 0.1) 0%,
+      transparent 50%
+    );
+}
+
+/* Stars animation */
+.stars {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(
+      2px 2px at 20px 30px,
+      #eee,
+      rgba(0, 0, 0, 0)
+    ),
+    radial-gradient(2px 2px at 40px 70px, #fff, rgba(0, 0, 0, 0)),
+    radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0, 0, 0, 0)),
+    radial-gradient(2px 2px at 90px 40px, #fff, rgba(0, 0, 0, 0)),
+    radial-gradient(2px 2px at 130px 80px, #fff, rgba(0, 0, 0, 0)),
+    radial-gradient(2px 2px at 160px 120px, #ddd, rgba(0, 0, 0, 0));
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  animation: twinkle 4s ease-in-out infinite;
+  opacity: 0.3;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Meteor animation */
+.meteor {
+  position: absolute;
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  box-shadow: 0 0 10px #fff;
+  opacity: 0.3;
+}
+
+/* Floating elements */
+.planet-large {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  left: -100px;
+  top: 10%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(34, 211, 238, 0.2),
+    rgba(34, 211, 238, 0.1) 30%,
+    transparent 70%
+  );
+  filter: blur(20px);
+}
+
+.floating-grid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(
+      to right,
+      rgba(34, 211, 238, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgba(34, 211, 238, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  transform: perspective(1000px) rotateX(60deg);
+  opacity: 0.3;
+}
+
+/* Window styles */
+.preview-window {
+  background: rgba(15, 23, 42, 0.8);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  min-width: 300px;
+  transition: transform 0.3s ease;
+}
+
+.preview-window:hover {
+  transform: translateY(-5px);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.1),
+    0 0 40px rgba(34, 211, 238, 0.05);
+}
+
+.shadow-glow-sm {
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.1),
+    0 0 20px rgba(34, 211, 238, 0.05);
+}
+
+/* Code preview styles */
+.window-content pre {
+  margin: 0;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.375rem;
+  font-family: "Fira Code", monospace;
+}
+
+.window-content code {
+  color: #67e8f9;
+}
+
+/* Navigation icons */
+.nav-icon-wrapper {
+  transition: transform 0.2s ease;
+}
+
+.nav-icon-wrapper:hover {
+  transform: translateY(-5px);
+}
+
+.icon-circle {
+  position: relative;
+  color: #67e8f9;
+}
+
+.icon-circle::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(34, 211, 238, 0.2) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.icon-circle:hover::after {
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .nav-icons {
+    gap: 2rem;
+  }
+
+  .preview-windows {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .planet-large {
+    width: 300px;
+    height: 300px;
+  }
+
+  .stars {
+    background-size: 150px 150px;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav-icons {
+    gap: 1rem;
+  }
+
+  .icon-circle {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .preview-window {
+    min-width: 250px;
+  }
+}

@@ -1,178 +1,307 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import {
+  FaTrash,
+  FaMinus,
+  FaPlus,
+  FaTag,
+  FaChevronRight,
+  FaShoppingCart,
+} from "react-icons/fa";
 import Header from "../../components/Header";
 import Navbar from "../../components/Navbar";
-import SidebarLeft from "../../components/SidebarLeft";
-import SidebarRight from "../../components/SidebarRight";
+import EmptyCart from "../../components/cart/EmptyCart";
+import RecommendedProducts from "../../components/cart/RecommendedProducts";
 
 const CartPage = () => {
-  // State for quantity and total price
-  const [quantity, setQuantity] = useState(1);
-  const [total, setTotal] = useState(150000 + 40000); // Base price + shipping
-  const unitPrice = 150000; // Price per item
-  const shippingFee = 40000;
+  // State để kiểm tra giỏ hàng có trống không
+  const [isEmpty, setIsEmpty] = useState(false);
 
-  // State for dark mode (toggle this in Header or wherever you have the switch)
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // Dữ liệu mẫu cho giỏ hàng
+  const cartItems = [
+    {
+      id: 1,
+      name: "CPU Intel Core i5-12400F",
+      image: "https://picsum.photos/900/900",
+      price: 4290000,
+      originalPrice: 4790000,
+      discount: 10,
+      quantity: 1,
+    },
+    {
+      id: 2,
+      name: "RAM Kingston Fury Beast 16GB DDR4 3200MHz",
+      image: "https://picsum.photos/900/900",
+      price: 1290000,
+      originalPrice: 1490000,
+      discount: 13,
+      quantity: 2,
+    },
+  ];
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
-  };
+  // Dữ liệu mẫu cho voucher
+  const vouchers = [
+    {
+      id: "TECH10",
+      description: "Giảm 10% cho đơn hàng từ 2 triệu",
+      discount: "10%",
+      minOrder: 2000000,
+    },
+    {
+      id: "FREESHIP",
+      description: "Miễn phí vận chuyển cho đơn hàng từ 1 triệu",
+      discount: "Miễn phí vận chuyển",
+      minOrder: 1000000,
+    },
+  ];
 
-  // Handlers for cart actions
-  const handleIncrease = () => {
-    setQuantity((prev) => prev + 1);
-    setTotal((prev) => prev + unitPrice);
-  };
+  // Tính tổng tiền
+  const subtotal = cartItems.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
+  const shipping = 50000;
+  const discount = 150000;
+  const total = subtotal + shipping - discount;
 
-  const handleDecrease = () => {
-    if (quantity > 1) {
-      setQuantity((prev) => prev - 1);
-      setTotal((prev) => prev - unitPrice);
+  // Hàm xử lý xóa sản phẩm
+  const handleRemoveItem = (id) => {
+    // Trong thực tế, bạn sẽ cập nhật state thực sự
+    alert(`Đã xóa sản phẩm có id: ${id}`);
+
+    // Ví dụ về cách sử dụng setIsEmpty
+    if (cartItems.length === 1) {
+      setIsEmpty(true);
     }
   };
 
-  const handleDelete = () => {
-    alert("Sản phẩm đã được xóa khỏi giỏ hàng!");
+  // Hàm xử lý thay đổi số lượng
+  const handleQuantityChange = (id, change) => {
+    // Trong thực tế, bạn sẽ cập nhật state thực sự
+    alert(
+      `Đã thay đổi số lượng sản phẩm có id: ${id} (${
+        change > 0 ? "tăng" : "giảm"
+      })`
+    );
   };
 
-  const handleDiscount = () => {
-    alert("Mã giảm giá đã được áp dụng (giả lập giảm 20,000đ)!");
-    setTotal((prev) => prev - 20000);
+  // Hàm xử lý áp dụng voucher
+  const handleApplyVoucher = (code) => {
+    alert(`Đã áp dụng voucher: ${code}`);
   };
 
-  const handleOrder = () => {
-    alert(`Đặt hàng thành công! Tổng tiền: ${total.toLocaleString()}đ`);
-  };
-
-  return (
-    <div className="bg-white text-black dark:bg-black dark:text-white p-4 h-auto">
-      {/* Pass dark mode toggle to Header */}
-      <Header toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />
-      <Navbar />
-
-      {/* Main layout with sidebars */}
-      <div className="flex max-w-7xl mx-auto px-4 lg:px-8 gap-6">
-        {/* SidebarLeft */}
-        <div className="hidden lg:block w-64 flex-shrink-0">
-          <SidebarLeft />
-        </div>
-
-        {/* Main Cart Content */}
-        <div className="flex-1 max-w-3xl bg-white dark:bg-gray-800 shadow-lg p-6 rounded-xl my-8">
-          {/* Thanh tiến trình */}
-          <div className="flex justify-between items-center border-b dark:border-gray-700 pb-4 mb-6">
-            {["Giỏ hàng", "Thông tin đặt hàng", "Thanh toán", "Hoàn tất"].map(
-              (step, index) => (
-                <div
-                  key={index}
-                  className={`flex-1 text-center ${
-                    index === 0
-                      ? "text-red-500"
-                      : "text-gray-500 dark:text-gray-400"
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 mx-auto flex items-center justify-center rounded-full font-semibold ${
-                      index === 0
-                        ? "bg-red-500 text-white"
-                        : "bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
-                    }`}
-                  >
-                    {index + 1}
-                  </div>
-                  <p className="text-sm mt-2 font-medium dark:text-gray-300">
-                    {step}
-                  </p>
-                </div>
-              )
-            )}
-          </div>
-
-          {/* Sản phẩm trong giỏ hàng */}
-          <div className="flex items-center justify-between py-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-            <img
-              src="https://images.pexels.com/photos/3780681/pexels-photo-3780681.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-              alt="Tai nghe"
-              className="w-16 h-16 object-cover rounded-md"
-            />
-            <div className="flex-1 px-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                Tai nghe gì gì đó
-              </h3>
-            </div>
-            <div className="text-right">
-              <p className="text-red-500 font-semibold text-lg">150.000đ</p>
-              <p className="text-gray-400 dark:text-gray-500 text-sm line-through">
-                200.000đ
-              </p>
-            </div>
-          </div>
-
-          {/* Nút xóa và số lượng */}
-          <div className="flex justify-between items-center py-4">
-            <button
-              onClick={handleDelete}
-              className="text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition flex items-center gap-1"
-            >
-              🗑 <span className="text-sm font-medium">Xóa</span>
-            </button>
-            <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md">
-              <button
-                onClick={handleDecrease}
-                className="px-3 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                -
-              </button>
-              <span className="px-4 py-1 text-gray-800 dark:text-gray-200 font-medium">
-                {quantity}
-              </span>
-              <button
-                onClick={handleIncrease}
-                className="px-3 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          {/* Mã giảm giá */}
-          <button
-            onClick={handleDiscount}
-            className="border border-blue-500 p-2 w-full rounded-md flex items-center justify-center text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 transition mt-4"
-          >
-            <span className="mr-2">🎟</span>
-            <span className="font-medium">Sử dụng mã giảm giá</span>
-          </button>
-
-          {/* Thông tin tổng tiền */}
-          <div className="mt-6 border-t dark:border-gray-700 pt-4">
-            <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
-              <span>Phí vận chuyển:</span>
-              <span>{shippingFee.toLocaleString()}đ</span>
-            </div>
-            <div className="flex justify-between text-lg font-bold text-red-500 mt-3">
-              <span>Tổng tiền:</span>
-              <span>{total.toLocaleString()}đ</span>
-            </div>
-          </div>
-
-          {/* Nút đặt hàng ngay */}
-          <button
-            onClick={handleOrder}
-            className="w-full bg-red-500 text-white py-3 rounded-lg mt-6 text-lg font-semibold hover:bg-red-600 transition duration-300"
-          >
-            ĐẶT HÀNG NGAY
-          </button>
-        </div>
-
-        {/* SidebarRight */}
-        <div className="hidden lg:block w-64 flex-shrink-0">
-          <SidebarRight />
+  // Hiển thị giỏ hàng trống nếu không có sản phẩm
+  if (isEmpty) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+        <Header />
+        <Navbar />
+        <div className="container mx-auto py-8 px-4">
+          <EmptyCart />
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <Header />
+      <Navbar />
+
+      <div className="container mx-auto py-8 px-4">
+        <div className="flex items-center gap-3 mb-6">
+          <FaShoppingCart className="text-2xl text-cyan-600" />
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+            Giỏ hàng của bạn
+          </h1>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Phần sản phẩm - Bên trái */}
+          <div className="w-full lg:w-2/3">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-6 mb-6">
+              <div className="flex items-center justify-between pb-4 border-b dark:border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                  Sản phẩm
+                </h2>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {cartItems.length} sản phẩm
+                </span>
+              </div>
+
+              {/* Danh sách sản phẩm */}
+              {cartItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-col sm:flex-row items-center py-6 border-b dark:border-gray-700"
+                >
+                  <div className="flex items-center mb-4 sm:mb-0">
+                    <input
+                      type="checkbox"
+                      className="mr-4 h-5 w-5 cursor-pointer accent-cyan-600"
+                      defaultChecked
+                    />
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-md overflow-hidden">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex-1 sm:ml-4">
+                    <h3 className="font-medium text-gray-800 dark:text-white mb-1">
+                      {item.name}
+                    </h3>
+                    <div className="flex items-center mb-2">
+                      <span className="bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 text-xs px-2 py-1 rounded">
+                        -{item.discount}%
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-cyan-600 font-bold">
+                        {item.price.toLocaleString()}đ
+                      </span>
+                      <span className="text-gray-400 line-through text-sm">
+                        {item.originalPrice.toLocaleString()}đ
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center mt-4 sm:mt-0">
+                    <div className="flex items-center border dark:border-gray-600 rounded-md mr-6">
+                      <button
+                        className="px-3 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        onClick={() => handleQuantityChange(item.id, -1)}
+                      >
+                        <FaMinus size={12} />
+                      </button>
+                      <span className="px-3 py-1 border-x dark:border-gray-600 text-gray-800 dark:text-gray-200">
+                        {item.quantity}
+                      </span>
+                      <button
+                        className="px-3 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        onClick={() => handleQuantityChange(item.id, 1)}
+                      >
+                        <FaPlus size={12} />
+                      </button>
+                    </div>
+                    <button
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      onClick={() => handleRemoveItem(item.id)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Phần voucher */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-6">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+                Voucher
+              </h2>
+
+              <div className="flex items-center border border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+                <FaTag className="text-cyan-600 mr-3" />
+                <input
+                  type="text"
+                  placeholder="Nhập mã voucher"
+                  className="flex-1 bg-transparent outline-none text-gray-800 dark:text-white placeholder-gray-400"
+                />
+                <button className="bg-cyan-600 text-white px-4 py-2 rounded-md hover:bg-cyan-700 transition-colors">
+                  Áp dụng
+                </button>
+              </div>
+
+              <div className="mt-4">
+                <h3 className="font-medium mb-2 text-gray-800 dark:text-white">
+                  Voucher khả dụng
+                </h3>
+                {vouchers.map((voucher) => (
+                  <div
+                    key={voucher.id}
+                    className="flex items-center justify-between border-b dark:border-gray-700 py-3"
+                  >
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/30 rounded-full flex items-center justify-center text-cyan-600 mr-3">
+                        <FaTag />
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-800 dark:text-white">
+                          {voucher.id}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {voucher.description}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      className="text-cyan-600 hover:underline"
+                      onClick={() => handleApplyVoucher(voucher.id)}
+                    >
+                      Áp dụng
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Phần thanh toán - Bên phải */}
+          <div className="w-full lg:w-1/3">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-6 sticky top-6">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+                Thanh toán
+              </h2>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>Tạm tính</span>
+                  <span>{subtotal.toLocaleString()}đ</span>
+                </div>
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>Phí vận chuyển</span>
+                  <span>{shipping.toLocaleString()}đ</span>
+                </div>
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>Giảm giá</span>
+                  <span>-{discount.toLocaleString()}đ</span>
+                </div>
+                <div className="border-t dark:border-gray-700 pt-3 flex justify-between font-bold">
+                  <span className="text-gray-800 dark:text-white">
+                    Tổng cộng
+                  </span>
+                  <span className="text-cyan-600">
+                    {total.toLocaleString()}đ
+                  </span>
+                </div>
+              </div>
+
+              <button className="w-full bg-cyan-600 text-white py-3 rounded-lg font-medium hover:bg-cyan-700 transition-colors flex items-center justify-center gap-2">
+                Thanh toán ngay
+                <FaChevronRight size={12} />
+              </button>
+
+              <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                Bằng cách nhấn &quot;Thanh toán ngay&quot;, bạn đồng ý với{" "}
+                <a href="#" className="text-cyan-600 hover:underline">
+                  Điều khoản dịch vụ
+                </a>{" "}
+                và{" "}
+                <a href="#" className="text-cyan-600 hover:underline">
+                  Chính sách bảo mật
+                </a>{" "}
+                của chúng tôi.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <RecommendedProducts />
+      </div>
     </div>
-   
   );
 };
 
