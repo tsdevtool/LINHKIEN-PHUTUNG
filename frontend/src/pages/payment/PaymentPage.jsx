@@ -90,6 +90,12 @@ const PaymentPage = () => {
     // Tạo mã đơn hàng ngẫu nhiên
     const orderId = Math.random().toString(36).substring(2, 10).toUpperCase();
 
+    // Thông tin giao hàng
+    const shippingInfo =
+      selectedAddress === "new"
+        ? formData
+        : savedAddresses.find((addr) => addr.id === selectedAddress);
+
     // Xử lý đặt hàng dựa trên phương thức thanh toán
     switch (paymentMethod) {
       case "cod":
@@ -99,6 +105,8 @@ const PaymentPage = () => {
               orderId,
               total: orderSummary.total,
               paymentMethod: "cod",
+              items: orderSummary.items,
+              shippingInfo,
             },
           },
         });
@@ -111,6 +119,8 @@ const PaymentPage = () => {
               amount: orderSummary.total,
               method: "bank",
               transferCode: "TECH" + orderId,
+              items: orderSummary.items,
+              shippingInfo,
             },
           },
         });
@@ -122,6 +132,8 @@ const PaymentPage = () => {
               orderId,
               amount: orderSummary.total,
               method: "momo",
+              items: orderSummary.items,
+              shippingInfo,
             },
           },
         });
@@ -133,6 +145,8 @@ const PaymentPage = () => {
               orderId,
               amount: orderSummary.total,
               method: "vnpay",
+              items: orderSummary.items,
+              shippingInfo,
             },
           },
         });
@@ -144,6 +158,8 @@ const PaymentPage = () => {
               orderId,
               amount: orderSummary.total,
               method: "zalopay",
+              items: orderSummary.items,
+              shippingInfo,
             },
           },
         });

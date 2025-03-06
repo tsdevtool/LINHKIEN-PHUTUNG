@@ -18,6 +18,7 @@ import CartPage from "./pages/cart/CartPage";
 import PaymentPage from "./pages/payment/PaymentPage";
 import PaymentQRPage from "./pages/payment/PaymentQRPage";
 import OrderSuccessPage from "./pages/order/OrderSuccessPage";
+import OrderStatusPage from "./pages/order/OrderStatusPage";
 import NotFound from "./pages/404/NotFound";
 
 // Admin Components
@@ -61,6 +62,7 @@ function App() {
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/payment/qr" element={<PaymentQRPage />} />
         <Route path="/order-success" element={<OrderSuccessPage />} />
+        <Route path="/orders" element={<OrderStatusPage />} />
 
         {/* Employee routes */}
         <Route path="/employee" element={<MainLayout />}>
