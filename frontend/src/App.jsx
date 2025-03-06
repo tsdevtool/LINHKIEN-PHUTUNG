@@ -1,57 +1,71 @@
+// Core React and Third-party imports
+import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+
+// Store/State Management
+import { useAuthStore } from "./store/authUser";
+
+// Components
+import Header from "./components/layout/Header";
+
+// Layouts
+import AdminLayout from "./pages/layouts/AdminLayout";
+import MainLayout from "./pages/employee/layouts/MainLayout";
+
+// Pages
 import HomePage from "./pages/home/HomePage";
-import NotFound from "./pages/404/NotFound";
-import CartPage from "./pages/cart/CartPage";
 import AuthPage from "./pages/auth/AuthPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import CartPage from "./pages/cart/CartPage";
+import NotFound from "./pages/404/NotFound";
 
-import { Toaster } from "react-hot-toast";
-import { useAuthStore } from "./store/authUser";
-import { useEffect, useState } from "react";
-
-import OrderPage from "./pages/employee/OrderPage";
-import NewOrder from "./components/employee/NewOrder";
-import MainLayout from "./pages/employee/layouts/MainLayout";
-import Loading from "./components/ui/Loading";
-import AdminLayout from "./pages/layouts/AdminLayout";
+// Admin Components
 import DashBoardSection from "./pages/admin/dashboard/DashBoardSection";
 import ProductsSection from "./pages/admin/products/ProductsSection";
 import CategoriesSection from "./pages/admin/categories/CategoriesSection";
+
+// Employee Components
+import OrderPage from "./pages/employee/OrderPage";
+import NewOrder from "./components/employee/NewOrder";
+
+// UI Components
+import Loading from "./components/ui/Loading";
+
 function App() {
   const { user, isCheckingAuth, authCheck } = useAuthStore();
+
   useEffect(() => {
     authCheck();
   }, [authCheck]);
-  const [isAdmin, setIsAdmin] = useState(true);
+
+  // Using a constant instead of state since setIsAdmin is never used
+  const isAdmin = true;
+
   if (isCheckingAuth) {
     return <Loading />;
   }
+
   return (
     <>
-      {/* {isAdmin && (
-        <AdminLayout>
-          <Routes>
-            <Route path="/admin" element={<DashBoardSection />} />
-            <Route path="/admin/products" element={<ProductsSection />} />
-            <Route path="/admin/categories" element={<CategoriesSection />} />
-          </Routes>
-        </AdminLayout>
-      )} */}
+      <Header />
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<HomePage />} />
         <Route
           path="/auth"
           element={!user ? <AuthPage /> : <Navigate to="/" />}
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/cart" element={<CartPage />} />{" "}
-        {/* Thêm route cho CartPage */}
-        <Route path="/*" element={<NotFound />} />
-        {/* Gói tất cả trang của employee vào MainLayout */}
+        <Route path="/cart" element={<CartPage />} />
+
+        {/* Employee routes */}
         <Route path="/employee" element={<MainLayout />}>
-          <Route index element={<OrderPage />} /> {/* Trang mặc định */}
+          <Route index element={<OrderPage />} />
           <Route path="neworder" element={<NewOrder />} />
         </Route>
+
+        {/* Admin routes */}
         <Route
           path="/admin/*"
           element={
@@ -61,6 +75,7 @@ function App() {
                   <Route path="" element={<DashBoardSection />} />
                   <Route path="products" element={<ProductsSection />} />
                   <Route path="categories" element={<CategoriesSection />} />
+                  <Route path="products/list" element={<ProductsSection />} />
                 </Routes>
               </AdminLayout>
             ) : (
@@ -68,6 +83,9 @@ function App() {
             )
           }
         />
+
+        {/* Catch-all route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       <Toaster />

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\UploadController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\AuthMiddleware;
 use Illuminate\Http\Request;
@@ -16,6 +17,7 @@ use App\Models\Product;
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
+Route::post('/upload', [UploadController::class, 'uploadImage']);
 
 Route::controller(AuthController::class)->group(function () {
     Route::post('v1/auth/signup', 'signup');
@@ -33,7 +35,7 @@ Route::controller(UserController::class)->group(function () {
 Route::controller(ProductController::class)->group(function () {
     Route::get('v1/products', [ProductController::class,'index']);
     Route::get('v1/product/{_id}', [ProductController::class,'show']);
-    Route::post('v1/product/', [ProductController::class,'store']);
+    Route::post('v1/product', [ProductController::class,'store']);
     Route::put('v1/product/edit/{_id}', [ProductController::class,'update']);
     Route::delete('v1/product/delete/{_id}', [ProductController::class,'destroy']);
 });

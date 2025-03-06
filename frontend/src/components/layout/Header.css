@@ -1,0 +1,64 @@
+.bg-primary {
+  background-color: #ee4d2d;
+}
+
+.header-top {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.search-input {
+  background-color: #fff;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: #ee4d2d;
+  outline: none;
+}
+
+.search-button {
+  background-color: #ee4d2d;
+  transition: opacity 0.2s ease;
+}
+
+.search-button:hover {
+  opacity: 0.9;
+}
+
+.search-suggestions a {
+  white-space: nowrap;
+}
+
+.cart-badge {
+  background-color: #fff;
+  color: #ee4d2d;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .search-suggestions {
+    display: none;
+  }
+
+  .header-top-links span {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-top {
+    display: none;
+  }
+}
