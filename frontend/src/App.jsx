@@ -16,6 +16,8 @@ import AuthPage from "./pages/auth/AuthPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import CartPage from "./pages/cart/CartPage";
 import PaymentPage from "./pages/payment/PaymentPage";
+import PaymentQRPage from "./pages/payment/PaymentQRPage";
+import OrderSuccessPage from "./pages/order/OrderSuccessPage";
 import NotFound from "./pages/404/NotFound";
 
 // Admin Components
@@ -57,6 +59,8 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/payment/qr" element={<PaymentQRPage />} />
+        <Route path="/order-success" element={<OrderSuccessPage />} />
 
         {/* Employee routes */}
         <Route path="/employee" element={<MainLayout />}>

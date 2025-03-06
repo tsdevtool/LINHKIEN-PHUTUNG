@@ -11,6 +11,7 @@ import {
   FaChevronRight,
   FaShoppingCart,
 } from "react-icons/fa";
+import { SiZalo } from "react-icons/si";
 
 import Header from "../../components/Header";
 import Navbar from "../../components/Navbar";
@@ -86,23 +87,66 @@ const PaymentPage = () => {
       }
     }
 
+    // Tạo mã đơn hàng ngẫu nhiên
+    const orderId = Math.random().toString(36).substring(2, 10).toUpperCase();
+
     // Xử lý đặt hàng dựa trên phương thức thanh toán
     switch (paymentMethod) {
       case "cod":
-        alert("Đặt hàng thành công! Bạn sẽ thanh toán khi nhận hàng.");
-        navigate("/order-success");
+        navigate("/order-success", {
+          state: {
+            orderDetails: {
+              orderId,
+              total: orderSummary.total,
+              paymentMethod: "cod",
+            },
+          },
+        });
         break;
       case "bank":
-        window.location.href = "https://bank-payment-gateway.com";
+        navigate("/payment/qr", {
+          state: {
+            paymentDetails: {
+              orderId,
+              amount: orderSummary.total,
+              method: "bank",
+              transferCode: "TECH" + orderId,
+            },
+          },
+        });
         break;
       case "momo":
-        window.location.href = "https://momo-payment.com";
+        navigate("/payment/qr", {
+          state: {
+            paymentDetails: {
+              orderId,
+              amount: orderSummary.total,
+              method: "momo",
+            },
+          },
+        });
         break;
       case "vnpay":
-        window.location.href = "https://vnpay-payment.com";
+        navigate("/payment/qr", {
+          state: {
+            paymentDetails: {
+              orderId,
+              amount: orderSummary.total,
+              method: "vnpay",
+            },
+          },
+        });
         break;
       case "zalopay":
-        window.location.href = "https://zalopay-payment.com";
+        navigate("/payment/qr", {
+          state: {
+            paymentDetails: {
+              orderId,
+              amount: orderSummary.total,
+              method: "zalopay",
+            },
+          },
+        });
         break;
       default:
         break;
@@ -318,6 +362,7 @@ const PaymentPage = () => {
                     className="accent-cyan-600"
                   />
                   {/* <SiMomo className="text-[#A50064] text-2xl" /> */}
+                  <img src="/ico-MoMo.svg" alt="VNPay" className="w-8 h-8" />
                   <div>
                     <div className="text-gray-800 dark:text-white font-medium">
                       Ví MoMo
@@ -337,7 +382,7 @@ const PaymentPage = () => {
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="accent-cyan-600"
                   />
-                  <img src="/vnpay-logo.png" alt="VNPay" className="w-8 h-8" />
+                  <img src="/ico-vnpage.svg" alt="VNPay" className="w-8 h-8" />
                   <div>
                     <div className="text-gray-800 dark:text-white font-medium">
                       VNPay
@@ -357,7 +402,7 @@ const PaymentPage = () => {
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="accent-cyan-600"
                   />
-                  {/* <SiZalo className="text-[#0068FF] text-2xl" /> */}
+                  <SiZalo className="text-cyan-600 text-2xl" />
                   <div>
                     <div className="text-gray-800 dark:text-white font-medium">
                       ZaloPay
