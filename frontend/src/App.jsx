@@ -6,9 +6,6 @@ import { Toaster } from "react-hot-toast";
 // Store/State Management
 import { useAuthStore } from "./store/authUser";
 
-// Components
-import Header from "./components/layout/Header";
-
 // Layouts
 import AdminLayout from "./pages/layouts/AdminLayout";
 import MainLayout from "./pages/employee/layouts/MainLayout";
@@ -31,7 +28,7 @@ import NewOrder from "./components/employee/NewOrder";
 
 // UI Components
 import Loading from "./components/ui/Loading";
-
+import Footer from "./components/Footer";
 function App() {
   const { user, isCheckingAuth, authCheck } = useAuthStore();
 
@@ -48,7 +45,6 @@ function App() {
 
   return (
     <>
-      <Header />
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<HomePage />} />
@@ -87,7 +83,7 @@ function App() {
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-
+      <Footer />
       <Toaster />
     </>
   );
