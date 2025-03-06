@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 
 export const useCategoryStore = create((set) => ({
   categories: [],
+  category: {},
   isLoading: false,
 
   getAllCategories: async () => {
@@ -11,6 +12,18 @@ export const useCategoryStore = create((set) => ({
     try {
       const response = await axios.get("/api/v1/categories");
       set({ categories: response.data.categories });
+    } catch (error) {
+      console.error("Lỗi khi lấy danh mục:", error);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  getCategoryById: async (id) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get(`/api/v1/category/${id}`);
+      set({ category: response.data.category });
     } catch (error) {
       console.error("Lỗi khi lấy danh mục:", error);
     } finally {

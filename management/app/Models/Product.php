@@ -17,6 +17,7 @@ class Product extends \MongoDB\Laravel\Eloquent\Model
         'description',
         'quantity',    
         'price',
+        'image_url',
         'category_id',
         'manufactured_at',
         'expires_at',

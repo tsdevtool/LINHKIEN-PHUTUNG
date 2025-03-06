@@ -30,6 +30,7 @@ const menuItems = [
     icon: <Package />,
     link: "#",
     subItems: [
+      { name: "Danh sách", link: "/admin/products/list" },
       { name: "Đang được bán", link: "/admin/products/active" },
       { name: "Hết hàng", link: "/admin/products/out-of-stock" },
       { name: "Hàng tồn kho", link: "/admin/products/inventory" },
