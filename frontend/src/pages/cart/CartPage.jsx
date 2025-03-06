@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaTrash,
   FaMinus,
@@ -13,6 +14,7 @@ import EmptyCart from "../../components/cart/EmptyCart";
 import RecommendedProducts from "../../components/cart/RecommendedProducts";
 
 const CartPage = () => {
+  const navigate = useNavigate();
   // State để kiểm tra giỏ hàng có trống không
   const [isEmpty, setIsEmpty] = useState(false);
 
@@ -87,6 +89,11 @@ const CartPage = () => {
   // Hàm xử lý áp dụng voucher
   const handleApplyVoucher = (code) => {
     alert(`Đã áp dụng voucher: ${code}`);
+  };
+
+  // Hàm xử lý chuyển đến trang thanh toán
+  const handleProceedToPayment = () => {
+    navigate("/payment");
   };
 
   // Hiển thị giỏ hàng trống nếu không có sản phẩm
@@ -279,8 +286,11 @@ const CartPage = () => {
                 </div>
               </div>
 
-              <button className="w-full bg-cyan-600 text-white py-3 rounded-lg font-medium hover:bg-cyan-700 transition-colors flex items-center justify-center gap-2">
-                Thanh toán ngay
+              <button
+                onClick={handleProceedToPayment}
+                className="w-full bg-cyan-600 text-white py-3 rounded-lg font-medium hover:bg-cyan-700 transition-colors flex items-center justify-center gap-2"
+              >
+                Tiến hành thanh toán
                 <FaChevronRight size={12} />
               </button>
 

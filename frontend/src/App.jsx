@@ -15,6 +15,7 @@ import HomePage from "./pages/home/HomePage";
 import AuthPage from "./pages/auth/AuthPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import CartPage from "./pages/cart/CartPage";
+import PaymentPage from "./pages/payment/PaymentPage";
 import NotFound from "./pages/404/NotFound";
 
 // Admin Components
@@ -29,6 +30,7 @@ import NewOrder from "./components/employee/NewOrder";
 // UI Components
 import Loading from "./components/ui/Loading";
 import Footer from "./components/Footer";
+
 function App() {
   const { user, isCheckingAuth, authCheck } = useAuthStore();
 
@@ -54,6 +56,7 @@ function App() {
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/payment" element={<PaymentPage />} />
 
         {/* Employee routes */}
         <Route path="/employee" element={<MainLayout />}>
