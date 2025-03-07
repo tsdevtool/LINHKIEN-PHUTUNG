@@ -5,14 +5,13 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\AuthMiddleware;
-use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SupplierController;
-use App\Models\Category;
-use App\Models\Product;
+
 
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
@@ -32,20 +31,25 @@ Route::controller(UserController::class)->group(function () {
     Route::delete('v1/user/delete/{_id}', [UserController::class,'destroy']);
 });
 
-Route::controller(ProductController::class)->group(function () {
-    Route::get('v1/products', [ProductController::class,'index']);
-    Route::get('v1/product/{_id}', [ProductController::class,'show']);
-    Route::post('v1/product', [ProductController::class,'store']);
-    Route::put('v1/product/edit/{_id}', [ProductController::class,'update']);
-    Route::delete('v1/product/delete/{_id}', [ProductController::class,'destroy']);
+Route::prefix('products')->group(function () {
+    Route::get('/', [ProductController::class, 'index']);
+    Route::get('/trash', [ProductController::class, 'getTrash']); // Thêm route mới
+    Route::get('/{id}', [ProductController::class, 'show']);
+    Route::post('/', [ProductController::class, 'store']);
+    Route::put('/{id}', [ProductController::class, 'update']);
+    Route::delete('/soft/{id}', [ProductController::class, 'softDelete']);
+    Route::delete('/{id}', [ProductController::class, 'destroy']);
+    Route::delete('/trash/empty', [ProductController::class, 'emptyTrash']);
+    Route::post('/restore/{id}', [ProductController::class, 'restore']);
 });
 
-Route::controller(CategoryController::class)->group(function () {
-    Route::get('v1/categories', [CategoryController::class,'index']);
-    Route::get('v1/category/{_id}', [CategoryController::class,'show']);
-    Route::post('v1/category/', [CategoryController::class,'store']);
-    Route::put('v1/category/edit/{_id}', [CategoryController::class,'update']);
-    Route::delete('v1/category/delete/{_id}', [CategoryController::class,'destroy']);
+Route::prefix('categories')->group(function () {
+    Route::get('/', [CategoryController::class, 'index']);
+    Route::get('/{id}', [CategoryController::class, 'show']);
+    Route::post('/', [CategoryController::class, 'store']);
+    Route::put('/{id}', [CategoryController::class, 'update']);
+    Route::delete('/{id}', [CategoryController::class, 'destroy']);
+    Route::post('/{id}/move', [CategoryController::class, 'moveCategory']);
 });
 
 Route::controller(SupplierController::class)->group(function () {

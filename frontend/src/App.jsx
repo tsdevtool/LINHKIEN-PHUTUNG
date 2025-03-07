@@ -33,6 +33,8 @@ import NewOrder from "./components/employee/NewOrder";
 // UI Components
 import Loading from "./components/ui/Loading";
 import Footer from "./components/Footer";
+import CategoryTest from "./components/CategoryTest";
+import CategoryTree from "./components/CategoryTree";
 
 function App() {
   const { user, isCheckingAuth, authCheck } = useAuthStore();
@@ -63,6 +65,7 @@ function App() {
         <Route path="/payment/qr" element={<PaymentQRPage />} />
         <Route path="/order-success" element={<OrderSuccessPage />} />
         <Route path="/orders" element={<OrderStatusPage />} />
+        <Route path="/test" element={<CategoryTree />} />
 
         {/* Employee routes */}
         <Route path="/employee" element={<MainLayout />}>
