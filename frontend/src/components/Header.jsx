@@ -10,7 +10,7 @@ import {
 
 const Header = () => {
   return (
-    <header className="bg-black text-white dark:bg-cyan-600/80 text-sm py-2 px-8 flex justify-between items-center rounded-2xl">
+    <header className="bg-black text-white dark:bg-cyan-600/80 text-sm py-2 px-8 flex justify-between items-center">
       {/* Thong tin lien he */}
       <div className="flex w-full justify-center lg:w-3/4 flex-wrap max-md:grid max-md:grid-cols-2 gap-y-2 gap-4">
         <div className="flex gap-1 truncate">

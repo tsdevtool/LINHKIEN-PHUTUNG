@@ -11,7 +11,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SupplierController;
-
+use App\Http\Controllers\HomeController;
 
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
@@ -50,6 +50,10 @@ Route::prefix('categories')->group(function () {
     Route::put('/{id}', [CategoryController::class, 'update']);
     Route::delete('/{id}', [CategoryController::class, 'destroy']);
     Route::post('/{id}/move', [CategoryController::class, 'moveCategory']);
+});
+
+Route::prefix('home')->group(function () {
+    Route::get('/', [HomeController::class, 'getHomeCategories']);
 });
 
 Route::controller(SupplierController::class)->group(function () {
