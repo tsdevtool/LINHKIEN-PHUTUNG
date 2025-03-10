@@ -32,7 +32,8 @@ class HomeController extends Controller
                                     'id' => $product->_id,
                                     'name' => $product->name,
                                     'price' => $product->price,
-                                    'quantity' => $product->quantity
+                                    'quantity' => $product->quantity,
+                                    'image_url' => $product->image_url
                                 ];
                             });
                     })
