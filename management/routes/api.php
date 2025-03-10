@@ -45,11 +45,14 @@ Route::prefix('products')->group(function () {
 
 Route::prefix('categories')->group(function () {
     Route::get('/', [CategoryController::class, 'index']);
+    Route::get('/trash', [CategoryController::class, 'getTrashedCategories']);
     Route::get('/{id}', [CategoryController::class, 'show']);
     Route::post('/', [CategoryController::class, 'store']);
     Route::put('/{id}', [CategoryController::class, 'update']);
+    Route::delete('/trash/{id}', [CategoryController::class, 'forceDelete']);
     Route::delete('/{id}', [CategoryController::class, 'destroy']);
     Route::post('/{id}/move', [CategoryController::class, 'moveCategory']);
+    Route::post('/restore/{id}', [CategoryController::class, 'restore']);
 });
 
 Route::prefix('home')->group(function () {

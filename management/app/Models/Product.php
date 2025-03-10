@@ -32,7 +32,6 @@ class Product extends MongoModel
         'quantity' => 'integer',
         'manufactured_at' => 'datetime',
         'expires_at' => 'datetime',
-        'images' => 'array',
         'is_active' => 'boolean',
         'deleted_at' => 'datetime'
     ];
@@ -51,5 +50,13 @@ class Product extends MongoModel
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Set the images attribute
+     */
+    public function setImagesAttribute($value)
+    {
+        $this->attributes['images'] = empty($value) ? [] : $value;
     }
 }

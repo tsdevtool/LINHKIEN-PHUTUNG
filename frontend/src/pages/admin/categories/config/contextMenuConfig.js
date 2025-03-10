@@ -1,4 +1,5 @@
 import $ from "jquery";
+import { Modal } from "antd";
 
 export const getContextMenuItems = ({
   node,
@@ -8,8 +9,10 @@ export const getContextMenuItems = ({
   setShowProductModal,
   deleteProduct,
   softDeleteCategory,
+  handleAddProduct,
+  handleEditProduct,
 }) => {
-  let items = {};
+  const items = {};
 
   if (node.type === "parent_category") {
     items.create = {
@@ -28,23 +31,32 @@ export const getContextMenuItems = ({
   }
 
   if (node.type === "child_category") {
-    items.create_product = {
+    items.addProduct = {
       label: "Thêm sản phẩm mới",
-      action: function () {
-        setSelectedCategory(node.original);
-        setModalMode("create");
-        setShowProductModal(true);
-      },
+      icon: "fa fa-plus",
+      action: () => handleAddProduct(node),
     };
   }
 
   if (node.type === "product") {
     items.edit = {
       label: "Sửa sản phẩm",
-      action: function () {
-        setSelectedProduct(node.original);
-        setModalMode("edit");
-        setShowProductModal(true);
+      icon: "fa fa-edit",
+      action: () => handleEditProduct(node),
+    };
+    items.delete = {
+      label: "Xóa sản phẩm",
+      icon: "fa fa-trash",
+      action: () => {
+        const productId = node.id.split("_")[1];
+        Modal.confirm({
+          title: "Xác nhận xóa",
+          content: "Bạn có chắc chắn muốn xóa sản phẩm này?",
+          okText: "Xóa",
+          okType: "danger",
+          cancelText: "Hủy",
+          onOk: () => deleteProduct(productId),
+        });
       },
     };
   }

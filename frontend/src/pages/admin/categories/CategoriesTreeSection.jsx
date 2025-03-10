@@ -73,6 +73,7 @@ const CategoriesTreeSection = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [modalMode, setModalMode] = useState("create");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     getAllCategories();
@@ -141,10 +142,8 @@ const CategoriesTreeSection = () => {
           items: (node) =>
             getContextMenuItems({
               node,
-              setSelectedCategory,
-              setSelectedProduct,
-              setModalMode,
-              setShowProductModal,
+              handleAddProduct,
+              handleEditProduct,
               deleteProduct,
               softDeleteCategory,
             }),
@@ -171,41 +170,70 @@ const CategoriesTreeSection = () => {
 
   const handleProductSubmit = async (productData) => {
     try {
+      setIsSubmitting(true);
+      const loadingMessage =
+        modalMode === "create"
+          ? "Đang tạo sản phẩm..."
+          : "Đang cập nhật sản phẩm...";
+      const toastId = toast.loading(loadingMessage);
+
       if (modalMode === "create") {
         const formData = new FormData();
+
+        // Thêm các trường cơ bản
         formData.append("name", productData.get("name"));
         formData.append("description", productData.get("description"));
         formData.append("quantity", productData.get("quantity"));
         formData.append("price", productData.get("price"));
-        formData.append("category_id", selectedCategory.id.toString());
+        formData.append("category_id", selectedCategory.id);
 
+        // Thêm các trường ngày tháng
         const manufactured_at = productData.get("manufactured_at");
         const expires_at = productData.get("expires_at");
         if (manufactured_at)
           formData.append("manufactured_at", manufactured_at);
         if (expires_at) formData.append("expires_at", expires_at);
 
+        // Xử lý ảnh chính
         const image = productData.get("image");
-        if (image) formData.append("image", image);
+        if (image instanceof File) {
+          formData.append("image", image);
+        }
 
+        // Xử lý nhiều ảnh phụ
         const images = productData.getAll("images[]");
         if (images.length > 0) {
-          images.forEach((img) => formData.append("images[]", img));
+          images.forEach((img) => {
+            if (img instanceof File) {
+              formData.append("images[]", img);
+            }
+          });
         }
 
         await createProduct(formData);
+        toast.success("Thêm sản phẩm thành công", { id: toastId });
       } else {
-        await updateProduct(selectedProduct.id, productData);
+        const formData = new FormData();
+        formData.append("_method", "PUT");
+
+        // Thêm các trường đã thay đổi
+        for (let [key, value] of productData.entries()) {
+          if (value instanceof File || value !== selectedProduct[key]) {
+            formData.append(key, value);
+          }
+        }
+
+        await updateProduct(selectedProduct.id, formData);
+        toast.success("Cập nhật sản phẩm thành công", { id: toastId });
       }
+
       setShowProductModal(false);
-      getAllProducts();
-      toast.success(
-        modalMode === "create"
-          ? "Thêm sản phẩm thành công"
-          : "Cập nhật sản phẩm thành công"
-      );
+      await getAllProducts();
+      setSelectedProduct(null);
+      setSelectedCategory(null);
     } catch (error) {
       console.error("Error submitting product:", error);
+
       if (error.response?.data?.message) {
         if (typeof error.response.data.message === "object") {
           Object.entries(error.response.data.message).forEach(
@@ -216,7 +244,30 @@ const CategoriesTreeSection = () => {
         } else {
           toast.error(error.response.data.message);
         }
+      } else {
+        toast.error("Có lỗi xảy ra, vui lòng thử lại");
       }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddProduct = (node) => {
+    setModalMode("create");
+    setSelectedCategory({ id: node.id });
+    setSelectedProduct(null);
+    setShowProductModal(true);
+  };
+
+  const handleEditProduct = (node) => {
+    const productId = node.id.split("_")[1];
+    const product = products.find((p) => p.id === productId);
+
+    if (product) {
+      setModalMode("edit");
+      setSelectedProduct(product);
+      setSelectedCategory({ id: product.category_id });
+      setShowProductModal(true);
     }
   };
 
@@ -336,6 +387,7 @@ const CategoriesTreeSection = () => {
                 initialData={modalMode === "edit" ? selectedProduct : null}
                 onSubmit={handleProductSubmit}
                 categoryId={selectedCategory?.id}
+                isSubmitting={isSubmitting}
               />
             </motion.div>
           </Modal>

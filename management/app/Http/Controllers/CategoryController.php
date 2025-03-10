@@ -207,6 +207,76 @@ class CategoryController extends Controller
     }
 
     /**
+     * Lấy danh sách category đã xoá
+     */
+    public function getTrashedCategories(): JsonResponse
+    {
+        try {
+            $trashedCategories = Category::onlyTrashed()->get();
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Trashed categories retrieved successfully',
+                'categories' => $trashedCategories
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting trashed categories: ' . $e->getMessage());
+            return $this->errorResponse('Error getting trashed categories', 500);
+        }
+    }
+
+    /**
+     * Khôi phục một category đã xoá
+     */
+    public function restore(string $id): JsonResponse
+    {
+        try {
+            $category = Category::onlyTrashed()->find($id);
+
+            if (!$category) {
+                return $this->errorResponse('Category not found in trash', 404);
+            }
+
+            $category->restore();
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Category restored successfully',
+                'category' => $category
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error restoring category: ' . $e->getMessage());
+            return $this->errorResponse('Error restoring category', 500);
+        }
+    }
+    
+    /**
+     * Xoá vĩnh viễn một category
+     */
+    public function forceDelete(string $id): JsonResponse
+    {
+        try {
+            $category = Category::onlyTrashed()->find($id);
+
+            if (!$category) {
+                return $this->errorResponse('Category not found in trash', 404);
+            }
+
+            // Xoá vĩnh viễn category
+            $category->forceDelete();
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Category permanently deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error permanently deleting category: ' . $e->getMessage());
+            return $this->errorResponse('Error permanently deleting category', 500);
+        }
+    }
+
+    /**
      * Move category to new position
      */
     public function moveCategory(Request $request, string $id): JsonResponse
