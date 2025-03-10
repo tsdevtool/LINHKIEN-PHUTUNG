@@ -9,7 +9,7 @@ import { toast } from "react-hot-toast";
 import SearchInput from "./components/SearchInput";
 import { getTreeConfig, transformData } from "./config/treeConfig";
 import { getContextMenuItems } from "./config/contextMenuConfig";
-import ProductForm from "@/components/ProductForm";
+import ProductForm from "@/components/products/ProductForm";
 import { Folder, FolderOpen, Package2, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import PropTypes from "prop-types";

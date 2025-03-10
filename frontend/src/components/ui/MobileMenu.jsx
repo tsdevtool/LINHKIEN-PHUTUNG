@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCategories } from "../../hooks/useCategories";
 import SearchBox from "./SearchBox";
 import NavMenuItem from "./NavMenuItem";
-import { LoadingMenu, ErrorMenu } from "./LoadingStates";
+import { LoadingMenu, ErrorMenu } from "../skeletons/LoadingStates";
 
 const MobileMenu = ({ isOpen, activeDropdown, setActiveDropdown }) => {
   const { data: categories, isLoading, isError } = useCategories();

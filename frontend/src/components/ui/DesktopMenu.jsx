@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import { useCategories } from "../../hooks/useCategories";
 import SearchBox from "./SearchBox";
 import NavMenuItem from "./NavMenuItem";
-import { LoadingMenu, ErrorMenu } from "./LoadingStates";
+import { LoadingMenu, ErrorMenu } from "../skeletons/LoadingStates";
 
 const DesktopMenu = ({ activeDropdown, setActiveDropdown }) => {
   const { data: categories, isLoading, isError } = useCategories();
@@ -19,7 +19,7 @@ const DesktopMenu = ({ activeDropdown, setActiveDropdown }) => {
         <div className="w-[90%]">
           <ul className="flex justify-between items-center ">
             {categories.map((menu) => (
-              <li key={menu.id} className="px-2">
+              <li key={menu.id} className="px-2 uppercase">
                 <NavMenuItem
                   menu={menu}
                   isActive={activeDropdown === menu.title}
