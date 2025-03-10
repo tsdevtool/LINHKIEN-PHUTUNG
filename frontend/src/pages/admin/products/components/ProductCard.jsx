@@ -14,7 +14,7 @@ const ProductCard = ({ product }) => {
         className="block relative overflow-hidden rounded-xl"
       >
         <img
-          src={`http://127.0.0.1:8000${product?.image_url}`}
+          src={`${product.image_url}`}
           alt={product.name}
           className="w-full h-40 object-cover rounded-xl"
         />
