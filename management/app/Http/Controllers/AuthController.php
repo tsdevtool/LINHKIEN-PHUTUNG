@@ -96,7 +96,7 @@ class AuthController extends Controller
     $token = JWT::encode($payload, $key, 'HS256');
 
     // Đặt cookie
-    Cookie::queue(Cookie::make('jwt-phutung', $token, 15 * 24 * 60, '/', null, false, true, false, 'Lax'));
+    Cookie::queue(Cookie::make('jwt-phutung', $token, 15 * 24 * 60 * 60, '/', null, false, true, false, 'Lax'));
 
     return $token;
 }

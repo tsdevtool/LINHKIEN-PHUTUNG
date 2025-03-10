@@ -122,33 +122,12 @@ const Navbar = () => {
               </Link>
             )}
             <ProfileMenu />
-            {/* {isLogged ? (
-              <button
-                className="bg-red-700 hover:bg-red-400 text-white py-2 px-4 
-						rounded-md flex items-center transition duration-300 ease-in-out"
-                onClick={() => setIsLogged(false)}
-              >
-                <LogOut size={18} />
-              </button>
-            ) : (
-              <>
-                <Link
-                  to={"/auth"}
-                  className="bg-lime-700/80 hover:bg-lime-500 text-white py-2 px-4 
-									rounded-md flex items-center transition duration-300 ease-in-out text-sm"
-                >
-                  <CircleUserRound className="mr-2" size={18} />
-                  Đăng nhập / Đăng ký
-                </Link>
-              </>
-            )} */}
           </div>
           {user && (
             <Link
-
               to={"/cart"}
-              className="relative group text-gray-600 hover:text-cyan-300 transition duration-300 ease-in-out z-10">
-
+              className="relative group text-gray-600 hover:text-cyan-300 transition duration-300 ease-in-out z-10"
+            >
               <ShoppingCart
                 className="inline-block mr-1 dark:text-white group-hover:text-cyan-300"
                 size={24}

@@ -7,11 +7,11 @@ import {
   Package,
   User2,
   Users,
-  ChevronDown,
   EllipsisVertical,
 } from "lucide-react";
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import PropTypes from "prop-types";
+import MenuItem from "./MenuItem";
 
 const menuItems = [
   { name: "Dashboard", icon: <Home />, link: "/admin" },
@@ -36,7 +36,15 @@ const menuItems = [
       { name: "Hàng tồn kho", link: "/admin/products/inventory" },
     ],
   },
-  { name: "Danh mục", icon: <List />, link: "/admin/categories" },
+  {
+    name: "Danh mục",
+    icon: <List />,
+    link: "#",
+    subItems: [
+      { name: "Danh sách", link: "/admin/categories" },
+      { name: "Sơ đồ", link: "/admin/categories-tree" },
+    ],
+  },
   { name: "Người dùng", icon: <Users />, link: "/admin/users" },
   {
     name: "Nhân viên",
@@ -50,62 +58,67 @@ const menuItems = [
 ];
 
 const Sidebar = ({ isOpen, setIsOpen, isLocked, setIsLocked }) => {
+  const location = useLocation();
+
   return (
     <div
       className={cn(
-        "h-screen bg-gray-900 text-white p-4 transition-all duration-300 ease-in-out fixed",
-        isOpen || isLocked ? "w-64" : "w-16"
+        "h-screen bg-gray-900 text-white transition-all duration-300 ease-in-out fixed z-50",
+        "border-r border-gray-800",
+        isOpen || isLocked ? "w-64" : "w-20"
       )}
       onMouseEnter={() => !isLocked && setIsOpen(true)}
       onMouseLeave={() => !isLocked && setIsOpen(false)}
     >
-      {/* Toggle Button */}
-      <div className="flex w-full justify-between items-center">
-        <img
-          src="/logo-nobg.png"
-          alt="Logo"
-          className="size-15 overflow-hidden"
-        />
-        <h1 className="uppercase font-semibold text-xl overflow-hidden">
-          MotorKing
-        </h1>
+      {/* Header */}
+      <div className="flex items-center gap-3 p-4 border-b border-gray-800">
+        <img src="/logo-nobg.png" alt="Logo" className="w-10 h-10 rounded-lg" />
+        {(isOpen || isLocked) && (
+          <h1 className="font-bold text-xl bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+            MotorKing
+          </h1>
+        )}
         <button
           onClick={() => setIsLocked(!isLocked)}
-          className="mb-4 p-2 transition-transform duration-300 ease-in-out hover:scale-110"
+          className={cn(
+            "ml-auto p-2 rounded-lg transition-all duration-300",
+            "hover:bg-gray-800 hover:text-blue-400",
+            isLocked && "text-blue-400"
+          )}
         >
-          {isLocked ? <Menu /> : <EllipsisVertical />}
+          {isLocked ? (
+            <Menu className="w-5 h-5" />
+          ) : (
+            <EllipsisVertical className="w-5 h-5" />
+          )}
         </button>
       </div>
 
       {/* Menu Items */}
-      <nav className="space-y-4">
+      <nav className="space-y-2 p-4">
         {menuItems.map((item, index) => (
-          <div key={index}>
-            <Link
-              to={item.link}
-              className="flex items-center gap-4 p-2 rounded-lg hover:bg-gray-700 transition-all duration-300"
-            >
-              {item.icon}
-              {(isOpen || isLocked) && <span>{item.name}</span>}
-            </Link>
-            {item.subItems && (isOpen || isLocked) && (
-              <div className="ml-12 space-y-2 transition-opacity duration-300">
-                {item.subItems.map((subItem, subIndex) => (
-                  <Link
-                    key={subIndex}
-                    to={subItem.link}
-                    className="block text-sm text-gray-400 hover:text-white transition-colors duration-300"
-                  >
-                    {subItem.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          <MenuItem
+            key={index}
+            item={item}
+            isOpen={isOpen}
+            isLocked={isLocked}
+            isActive={
+              location.pathname === item.link ||
+              (item.subItems &&
+                item.subItems.some((sub) => location.pathname === sub.link))
+            }
+          />
         ))}
       </nav>
     </div>
   );
+};
+
+Sidebar.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  setIsOpen: PropTypes.func.isRequired,
+  isLocked: PropTypes.bool.isRequired,
+  setIsLocked: PropTypes.func.isRequired,
 };
 
 export default Sidebar;
