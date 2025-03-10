@@ -31,6 +31,7 @@ const CreateProductForm = () => {
     price: "",
     category_id: "",
     image: null,
+    images: [],
   });
 
   const [isOpen, setIsOpen] = useState(false);
@@ -44,7 +45,12 @@ const CreateProductForm = () => {
   };
 
   const handleFileChange = (e) => {
-    setProduct({ ...product, image: e.target.files[0] });
+    const { name, files } = e.target;
+    if (name === "image") {
+      setProduct({ ...product, image: files[0] });
+    } else if (name === "images") {
+      setProduct({ ...product, images: Array.from(files) });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -56,19 +62,29 @@ const CreateProductForm = () => {
     formData.append("price", product.price);
     formData.append("category_id", product.category_id);
     if (product.image_url) {
-      formData.append("image_url", product.image);
+      formData.append("image", product.image);
+    }
+    if (product.images.length > 0) {
+      product.images.forEach((image) => {
+        formData.append("images[]", image);
+      });
     }
 
-    await addProduct(formData);
-    setIsOpen(false);
-    setProduct({
-      name: "",
-      description: "",
-      quantity: "",
-      price: "",
-      category_id: "",
-      image_url: null,
-    });
+    try {
+      await addProduct(formData);
+      setIsOpen(false);
+      setProduct({
+        name: "",
+        description: "",
+        quantity: "",
+        price: "",
+        category_id: "",
+        image: null,
+        images: [], // Reset images array
+      });
+    } catch (error) {
+      console.error("Error creating product:", error);
+    }
   };
 
   return (

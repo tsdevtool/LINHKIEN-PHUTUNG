@@ -11,6 +11,14 @@ use Illuminate\Http\JsonResponse;
 
 class ProductController extends Controller
 {
+    private const MAIN_IMAGE_SIZE = 2048; // 2MB
+    private const ADDITIONAL_IMAGE_SIZE = 10240; // 10MB
+    private const IMAGE_DIMENSIONS = [
+        'width' => 800,
+        'height' => 800,
+        'crop' => 'limit'
+    ];
+
     private array $rules = [
         'name' => 'required|string|max:255',
         'description' => 'required|string',
@@ -19,8 +27,9 @@ class ProductController extends Controller
         'category_id' => 'required|string',
         'manufactured_at' => 'nullable|date',
         'expires_at' => 'nullable|date|after_or_equal:manufactured_at',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'images.*' => 'nullable|mimes:jpeg,png,jpg,gif,mp4|max:10240', // 10MB limit cho files
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:' . self::MAIN_IMAGE_SIZE,
+        'images' => 'nullable',
+        'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:' . self::ADDITIONAL_IMAGE_SIZE,
     ];
 
     /**
@@ -33,10 +42,7 @@ class ProductController extends Controller
                 ->with('category')
                 ->get();
 
-            return response()->json([
-                'status' => 200,
-                'products' => $products
-            ]);
+            return $this->successResponse(200, null, ['products' => $products]);
         } catch (\Exception $e) {
             Log::error('Error fetching products: ' . $e->getMessage());
             return $this->errorResponse('Error fetching products', 500);
@@ -57,10 +63,7 @@ class ProductController extends Controller
                 return $this->errorResponse('Product not found', 404);
             }
 
-            return response()->json([
-                'status' => 200,
-                'product' => $product
-            ]);
+            return $this->successResponse(200, null, ['product' => $product]);
         } catch (\Exception $e) {
             Log::error('Error fetching product: ' . $e->getMessage());
             return $this->errorResponse('Error fetching product', 500);
@@ -79,52 +82,31 @@ class ProductController extends Controller
         }
 
         try {
+            $this->logInfo('Starting product creation', ['request_data' => $request->except(['image', 'images'])]);
+
             // Upload ảnh chính
             $mainImageData = $this->handleImageUpload($request, 'image');
             
             // Upload các ảnh phụ
-            $additionalImages = [];
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $image) {
-                    $imageData = $this->handleAdditionalFileUpload($image);
-                    if ($imageData) {
-                        $additionalImages[] = $imageData;
-                    }
-                }
-            }
+            $additionalImages = $this->handleAdditionalImagesUpload($request);
 
-            $product = Product::create([
-                'name' => $request->name,
-                'description' => $request->description,
-                'quantity' => $request->quantity,
-                'price' => $request->price,
-                'category_id' => $request->category_id,
-                'manufactured_at' => $request->manufactured_at,
-                'expires_at' => $request->expires_at,
-                'image_url' => $mainImageData['url'] ?? null,
-                'image_public_id' => $mainImageData['public_id'] ?? null,
-                'images' => $additionalImages,
-                'is_active' => true
+            $productData = $this->prepareProductData($request, $mainImageData, $additionalImages);
+            $product = Product::create($productData);
+
+            $this->logInfo('Product created successfully', [
+                'product_id' => $product->_id,
+                'images_count' => count($product->images)
             ]);
 
-            return response()->json([
-                'status' => 201,
-                'message' => 'Product created successfully',
-                'product' => $product->load('category')
-            ], 201);
+            return $this->successResponse(201, 'Product created successfully', ['product' => $product->load('category')]);
 
         } catch (\Exception $e) {
-            Log::error('Error creating product: ' . $e->getMessage());
+            $this->logError('Error creating product', $e);
             
             // Cleanup uploaded images
-            if (isset($mainImageData['public_id'])) {
-                $this->deleteCloudinaryImage($mainImageData['public_id']);
-            }
-            foreach ($additionalImages ?? [] as $image) {
-                $this->deleteCloudinaryImage($image['public_id']);
-            }
+            $this->cleanupImages($mainImageData['public_id'] ?? null, $additionalImages ?? []);
 
-            return $this->errorResponse('Error creating product', 500);
+            return $this->errorResponse('Error creating product: ' . $e->getMessage(), 500);
         }
     }
 
@@ -140,10 +122,7 @@ class ProductController extends Controller
                 return $this->errorResponse('Product not found', 404);
             }
 
-            $updateRules = array_map(function($rule) {
-                return str_replace('required', 'nullable', $rule);
-            }, $this->rules);
-            
+            $updateRules = $this->getUpdateRules();
             $validator = Validator::make($request->all(), $updateRules);
 
             if ($validator->fails()) {
@@ -159,32 +138,17 @@ class ProductController extends Controller
 
             // Xử lý ảnh phụ
             if ($request->hasFile('images')) {
-                // Xóa ảnh cũ nếu có
-                foreach ($product->images ?? [] as $image) {
-                    $this->deleteCloudinaryImage($image['public_id']);
-                }
-
-                $additionalImages = [];
-                foreach ($request->file('images') as $image) {
-                    $imageData = $this->handleAdditionalFileUpload($image);
-                    if ($imageData) {
-                        $additionalImages[] = $imageData;
-                    }
-                }
-                $product->images = $additionalImages;
+                $newImages = $this->handleAdditionalImagesUpload($request);
+                $product->images = array_merge($product->images ?? [], $newImages);
             }
 
             $product->fill($request->except(['image', 'images']));
             $product->save();
 
-            return response()->json([
-                'status' => 200,
-                'message' => 'Product updated successfully',
-                'product' => $product->load('category')
-            ]);
+            return $this->successResponse(200, 'Product updated successfully', ['product' => $product->load('category')]);
 
         } catch (\Exception $e) {
-            Log::error('Error updating product: ' . $e->getMessage());
+            $this->logError('Error updating product', $e);
             return $this->errorResponse('Error updating product', 500);
         }
     }
@@ -201,15 +165,11 @@ class ProductController extends Controller
                 return $this->errorResponse('Product not found', 404);
             }
 
-            $product->delete(); // Sử dụng soft delete
-
-            return response()->json([
-                'status' => 200,
-                'message' => 'Product moved to trash successfully'
-            ]);
+            $product->delete();
+            return $this->successResponse(200, 'Product moved to trash successfully');
 
         } catch (\Exception $e) {
-            Log::error('Error moving product to trash: ' . $e->getMessage());
+            $this->logError('Error moving product to trash', $e);
             return $this->errorResponse('Error moving product to trash', 500);
         }
     }
@@ -227,15 +187,10 @@ class ProductController extends Controller
             }
 
             $product->restore();
-
-            return response()->json([
-                'status' => 200,
-                'message' => 'Product restored successfully',
-                'product' => $product->load('category')
-            ]);
+            return $this->successResponse(200, 'Product restored successfully', ['product' => $product->load('category')]);
 
         } catch (\Exception $e) {
-            Log::error('Error restoring product: ' . $e->getMessage());
+            $this->logError('Error restoring product', $e);
             return $this->errorResponse('Error restoring product', 500);
         }
     }
@@ -252,24 +207,14 @@ class ProductController extends Controller
                 return $this->errorResponse('Product not found', 404);
             }
 
-            // Xóa ảnh chính
-            if ($product->image_public_id) {
-                $this->deleteCloudinaryImage($product->image_public_id);
-            }
-
-            // Xóa các ảnh phụ
-            foreach ($product->images ?? [] as $image) {
-                $this->deleteCloudinaryImage($image['public_id']);
-            }
-
+            // Xóa ảnh chính và ảnh phụ
+            $this->cleanupImages($product->image_public_id, $product->images ?? []);
+            
             $product->forceDelete();
-            return response()->json([
-                'status' => 200,
-                'message' => 'Product permanently deleted'
-            ]);
+            return $this->successResponse(200, 'Product permanently deleted');
 
         } catch (\Exception $e) {
-            Log::error('Error deleting product: ' . $e->getMessage());
+            $this->logError('Error deleting product', $e);
             return $this->errorResponse('Error deleting product', 500);
         }
     }
@@ -283,27 +228,32 @@ class ProductController extends Controller
             $trashedProducts = Product::onlyTrashed()->get();
 
             foreach ($trashedProducts as $product) {
-                // Xóa ảnh chính
-                if ($product->image_public_id) {
-                    $this->deleteCloudinaryImage($product->image_public_id);
-                }
-
-                // Xóa các ảnh phụ
-                foreach ($product->images ?? [] as $image) {
-                    $this->deleteCloudinaryImage($image['public_id']);
-                }
-
+                $this->cleanupImages($product->image_public_id, $product->images ?? []);
                 $product->forceDelete();
             }
 
-            return response()->json([
-                'status' => 200,
-                'message' => 'Trash emptied successfully'
-            ]);
+            return $this->successResponse(200, 'Trash emptied successfully');
 
         } catch (\Exception $e) {
-            Log::error('Error emptying trash: ' . $e->getMessage());
+            $this->logError('Error emptying trash', $e);
             return $this->errorResponse('Error emptying trash', 500);
+        }
+    }
+
+    /**
+     * Get products in trash
+     */
+    public function getTrash(): JsonResponse
+    {
+        try {
+            $trashedProducts = Product::onlyTrashed()
+                ->with('category')
+                ->get();
+
+            return $this->successResponse(200, null, ['products' => $trashedProducts]);
+        } catch (\Exception $e) {
+            $this->logError('Error fetching trashed products', $e);
+            return $this->errorResponse('Error fetching trashed products', 500);
         }
     }
 
@@ -317,13 +267,10 @@ class ProductController extends Controller
         }
 
         $cloudinaryImage = $request->file($fieldName)->storeOnCloudinary('products', [
-            'transformation' => [
-                'quality' => 'auto',
-                'fetch_format' => 'auto',
-                'width' => 800,
-                'height' => 800,
-                'crop' => 'limit'
-            ]
+            'transformation' => array_merge(
+                ['quality' => 'auto', 'fetch_format' => 'auto'],
+                self::IMAGE_DIMENSIONS
+            )
         ]);
 
         return [
@@ -333,47 +280,69 @@ class ProductController extends Controller
     }
 
     /**
-     * Handle additional file upload (image or video)
+     * Handle multiple image uploads
+     */
+    private function handleAdditionalImagesUpload(Request $request): array
+    {
+        $additionalImages = [];
+        
+        if (!$request->hasFile('images')) {
+            return $additionalImages;
+        }
+
+        $uploadedFiles = $request->file('images');
+        $files = is_array($uploadedFiles) ? $uploadedFiles : [$uploadedFiles];
+        
+        $this->logInfo('Processing additional images', ['count' => count($files)]);
+
+        foreach ($files as $index => $image) {
+            $imageData = $this->handleAdditionalFileUpload($image);
+            
+            if ($imageData) {
+                $additionalImages[] = [
+                    'url' => $imageData['url'],
+                    'public_id' => $imageData['public_id']
+                ];
+            }
+        }
+
+        $this->logInfo('Final additional images array', [
+            'count' => count($additionalImages),
+            'images' => $additionalImages
+        ]);
+
+        return $additionalImages;
+    }
+
+    /**
+     * Handle single additional file upload
      */
     private function handleAdditionalFileUpload($file): ?array
     {
-        if (!$file) {
+        if (!$file || !$file->isValid()) {
             return null;
         }
 
-        $options = [
-            'resource_type' => 'auto',
-            'folder' => 'products',
-            'transformation' => [
-                'quality' => 'auto',
-                'fetch_format' => 'auto'
-            ]
-        ];
+        try {
+            $options = [
+                'folder' => 'products/additional',
+                'resource_type' => 'auto',
+                'transformation' => array_merge(
+                    ['quality' => 'auto', 'fetch_format' => 'auto'],
+                    self::IMAGE_DIMENSIONS
+                )
+            ];
 
-        // Nếu là video
-        if (str_starts_with($file->getMimeType(), 'video')) {
-            $options['transformation'] = array_merge($options['transformation'], [
-                'width' => 720,
-                'crop' => 'scale',
-                'duration' => 60 // Giới hạn video 60s
-            ]);
-        } else {
-            // Nếu là ảnh
-            $options['transformation'] = array_merge($options['transformation'], [
-                'width' => 800,
-                'height' => 800,
-                'crop' => 'limit'
-            ]);
+            $result = Cloudinary::upload($file->getRealPath(), $options);
+
+            return [
+                'url' => $result->getSecurePath(),
+                'public_id' => $result->getPublicId()
+            ];
+        } catch (\Exception $e) {
+            $this->logError('Error uploading additional file', $e);
+            return null;
         }
-
-        $result = $file->storeOnCloudinary($options);
-
-        return [
-            'url' => $result->getSecurePath(),
-            'public_id' => $result->getPublicId(),
-            'resource_type' => $result->getFileType(),
-            'type' => str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image'
-        ];
     }
 
     /**
@@ -381,22 +350,15 @@ class ProductController extends Controller
      */
     private function handleImageUpdate(Request $request, Product $product): ?array
     {
-        // Delete existing image if new image is uploaded or image is set to null
         if ($product->image_public_id) {
             $this->deleteCloudinaryImage($product->image_public_id);
         }
 
-        // If image is set to null, return null
         if ($request->has('image') && $request->image === null) {
             return null;
         }
 
-        // If new image is uploaded, store it
-        if ($request->hasFile('image')) {
-            return $this->handleImageUpload($request, 'image');
-        }
-
-        return null;
+        return $request->hasFile('image') ? $this->handleImageUpload($request, 'image') : null;
     }
 
     /**
@@ -408,9 +370,87 @@ class ProductController extends Controller
             try {
                 Cloudinary::destroy($publicId);
             } catch (\Exception $e) {
-                Log::error('Error deleting image from Cloudinary: ' . $e->getMessage());
+                $this->logError('Error deleting image from Cloudinary', $e);
             }
         }
+    }
+
+    /**
+     * Cleanup uploaded images
+     */
+    private function cleanupImages(?string $mainImageId, array $additionalImages): void
+    {
+        if ($mainImageId) {
+            $this->deleteCloudinaryImage($mainImageId);
+        }
+
+        foreach ($additionalImages as $image) {
+            if (isset($image['public_id'])) {
+                $this->deleteCloudinaryImage($image['public_id']);
+            }
+        }
+    }
+
+    /**
+     * Prepare product data for creation
+     */
+    private function prepareProductData(Request $request, ?array $mainImageData, array $additionalImages): array
+    {
+        return [
+            'name' => $request->name,
+            'description' => $request->description,
+            'quantity' => $request->quantity,
+            'price' => $request->price,
+            'category_id' => $request->category_id,
+            'manufactured_at' => $request->manufactured_at,
+            'expires_at' => $request->expires_at,
+            'image_url' => $mainImageData['url'] ?? null,
+            'image_public_id' => $mainImageData['public_id'] ?? null,
+            'images' => $additionalImages,
+            'is_active' => true
+        ];
+    }
+
+    /**
+     * Get update validation rules
+     */
+    private function getUpdateRules(): array
+    {
+        return array_map(function($rule) {
+            return str_replace('required', 'nullable', $rule);
+        }, $this->rules);
+    }
+
+    /**
+     * Log info message
+     */
+    private function logInfo(string $message, array $context = []): void
+    {
+        Log::info($message, $context);
+    }
+
+    /**
+     * Log error message
+     */
+    private function logError(string $message, \Exception $e): void
+    {
+        Log::error($message . ': ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString()
+        ]);
+    }
+
+    /**
+     * Return success response
+     */
+    private function successResponse(int $status, ?string $message = null, array $data = []): JsonResponse
+    {
+        $response = ['status' => $status];
+        
+        if ($message) {
+            $response['message'] = $message;
+        }
+
+        return response()->json(array_merge($response, $data), $status);
     }
 
     /**
@@ -422,25 +462,5 @@ class ProductController extends Controller
             'status' => $status,
             'message' => $message
         ], $status);
-    }
-
-    /**
-     * Get products in trash
-     */
-    public function getTrash(): JsonResponse
-    {
-        try {
-            $trashedProducts = Product::onlyTrashed()
-                ->with('category')
-                ->get();
-
-            return response()->json([
-                'status' => 200,
-                'products' => $trashedProducts
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error fetching trashed products: ' . $e->getMessage());
-            return $this->errorResponse('Error fetching trashed products', 500);
-        }
     }
 }
