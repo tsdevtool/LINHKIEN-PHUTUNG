@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\UserController;
@@ -25,10 +26,15 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('v1/auth/auth-check', 'authCheck')->middleware(AuthMiddleware::class);
 });
 
-Route::controller(UserController::class)->group(function () {
-    Route::get('v1/users', [UserController::class,'index']);
-    Route::get('v1/user/{_id}', [UserController::class,'show']);
-    Route::delete('v1/user/delete/{_id}', [UserController::class,'destroy']);
+Route::prefix('home')->group(function () {
+    Route::get('/', [HomeController::class, 'getHomeCategories']);
+});
+
+Route::prefix('cart')->group(function () {
+    Route::post('/', [CartController::class,'index'])->middleware(AuthMiddleware::class);
+    Route::post('/', [CartController::class,'store'])->middleware(AuthMiddleware::class);
+    Route::put('/', [CartController::class,'update'])->middleware(AuthMiddleware::class);
+    Route::delete('/', [CartController::class,'destroy'])->middleware(AuthMiddleware::class);
 });
 
 Route::prefix('products')->group(function () {
@@ -55,9 +61,15 @@ Route::prefix('categories')->group(function () {
     Route::post('/restore/{id}', [CategoryController::class, 'restore']);
 });
 
-Route::prefix('home')->group(function () {
-    Route::get('/', [HomeController::class, 'getHomeCategories']);
+
+
+
+Route::controller(UserController::class)->group(function () {
+    Route::get('v1/users', [UserController::class,'index']);
+    Route::get('v1/user/{_id}', [UserController::class,'show']);
+    Route::delete('v1/user/delete/{_id}', [UserController::class,'destroy']);
 });
+
 
 Route::controller(SupplierController::class)->group(function () {
     Route::get('v1/suppliers', [SupplierController::class,'index']);
