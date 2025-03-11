@@ -14,12 +14,10 @@ const ProductList = () => {
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
-  // Kiểm tra và lấy mảng categories từ response
   const categories = data?.data || [];
 
   return (
     <div>
-      {/* Do choi xe may */}
       {categories.map((category) => (
         <section
           key={category.id}
