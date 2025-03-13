@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Customers;
 
 use App\Actions\Cart\AddToCart;
 use App\Actions\Cart\GetCart;
@@ -8,7 +8,9 @@ use App\Actions\Cart\RemoveFromCart;
 use App\Actions\Cart\UpdateCartItemQuantity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
+use App\Http\Controllers\Controller;
+use App\Models\Cart;
+use Exception;
 
 class CartController extends Controller
 {

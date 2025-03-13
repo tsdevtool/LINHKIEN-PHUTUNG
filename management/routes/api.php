@@ -1,20 +1,20 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\UserController;
+use App\Http\Controllers\Customers\CartController;
+use App\Http\Controllers\Customers\HomeController;
+use App\Http\Controllers\Admins\CategoryController;
+use App\Http\Controllers\Admins\ProductController;
+use App\Http\Controllers\Admins\RoleController;
+use App\Http\Controllers\Admins\SupplierController;
+use App\Http\Controllers\Admins\EmployeeController;
+use App\Http\Controllers\Employees\CustomerController;
+use App\Http\Controllers\Employees\OrderController;
 use App\Http\Controllers\UploadController;
-use App\Http\Controllers\UserController;
 use App\Http\Middleware\AuthMiddleware;
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\SupplierController;
-use App\Http\Controllers\HomeController;
 
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();

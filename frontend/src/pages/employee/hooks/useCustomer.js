@@ -1,93 +1,167 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import customerService from '../services/customerService';
 
-export const useCustomer = () => {
-    const [customers, setCustomers] = useState([]);
-    const [selectedCustomer, setSelectedCustomer] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isSearchActive, setIsSearchActive] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+// Constants
+const INITIAL_STATE = {
+    customers: [],
+    selectedCustomer: null,
+    searchTerm: '',
+    isSearchActive: false,
+    loading: false,
+    error: null
+};
 
-    useEffect(() => {
-        fetchCustomers();
+// Validation functions
+const validateCustomerId = (customer) => {
+    const id = customer._id || customer.id;
+    if (!id) {
+        throw new Error('Thiếu thông tin ID khách hàng');
+    }
+    return id;
+};
+
+const validateCustomerData = (customer) => {
+    const requiredFields = ['name', 'phone', 'address'];
+    const missingFields = requiredFields.filter(field => !customer[field]);
+    
+    if (missingFields.length > 0) {
+        throw new Error(`Thiếu thông tin khách hàng: ${missingFields.join(', ')}`);
+    }
+};
+
+const normalizeCustomerData = (customer) => {
+    return {
+        _id: customer._id || customer.id,
+        name: customer.name?.trim(),
+        phone: customer.phone?.trim(),
+        email: customer.email?.trim() || '',
+        address: customer.address?.trim() || '',
+        numberOfOrders: customer.numberOfOrders || 0,
+        totalSpent: customer.totalSpent || 0,
+        createdAt: customer.createdAt || new Date().toISOString()
+    };
+};
+
+export const useCustomer = () => {
+    // State initialization
+    const [state, setState] = useState(INITIAL_STATE);
+    const { customers, selectedCustomer, searchTerm, isSearchActive, loading, error } = state;
+
+    // Update state utility
+    const updateState = (newState) => {
+        setState(prev => ({ ...prev, ...newState }));
+    };
+
+    // Error handling utility
+    const handleError = useCallback((error, customMessage = '') => {
+        console.error(customMessage || 'Error:', error);
+        updateState({ 
+            error: error.message || 'Đã xảy ra lỗi, vui lòng thử lại',
+            loading: false 
+        });
     }, []);
 
-    const fetchCustomers = async () => {
+    // Fetch customers
+    const fetchCustomers = useCallback(async () => {
         try {
-            setLoading(true);
+            updateState({ loading: true, error: null });
             const data = await customerService.getCustomers();
             console.log('Fetched customers:', data);
-            setCustomers(data);
-        } catch (err) {
-            setError(err.message);
+            updateState({ customers: data });
+        } catch (error) {
+            handleError(error, 'Error fetching customers:');
         } finally {
-            setLoading(false);
+            updateState({ loading: false });
         }
-    };
+    }, [handleError]);
 
-    const handleSearch = async (query) => {
+    // Initial fetch
+    useEffect(() => {
+        fetchCustomers();
+    }, [fetchCustomers]);
+
+    // Search customers
+    const handleSearch = useCallback(async (query) => {
+        if (!query?.trim()) {
+            await fetchCustomers();
+            return;
+        }
+
         try {
-            setLoading(true);
-            setError(null);
+            updateState({ loading: true, error: null });
             const results = await customerService.searchCustomers(query);
-            console.log('Search results from API:', results);
-            setCustomers(results);
-        } catch (err) {
-            console.error('Search error:', err);
-            setError(err.message);
+            console.log('Search results:', results);
+            updateState({ customers: results });
+        } catch (error) {
+            handleError(error, 'Error searching customers:');
         } finally {
-            setLoading(false);
+            updateState({ loading: false });
         }
-    };
+    }, [fetchCustomers, handleError]);
 
-    const selectCustomer = (customer) => {
-        console.log('Raw customer data:', customer);
-        
-        // Kiểm tra và chuẩn hóa dữ liệu khách hàng
-        const normalizedCustomer = {
-            _id: customer._id || customer.id, // Thử cả _id và id
-            name: customer.name,
-            phone: customer.phone,
-            email: customer.email || '',
-            address: customer.address || ''
-        };
-
-        console.log('Normalized customer data:', normalizedCustomer);
-
-        if (!normalizedCustomer._id) {
-            console.error('Customer missing ID:', customer);
-            setError('Thiếu thông tin ID khách hàng');
-            return;
+    // Select customer
+    const selectCustomer = useCallback((customer) => {
+        try {
+            console.log('Raw customer data:', customer);
+            
+            // Validate customer data
+            validateCustomerId(customer);
+            validateCustomerData(customer);
+            
+            // Normalize customer data
+            const normalizedCustomer = normalizeCustomerData(customer);
+            console.log('Normalized customer data:', normalizedCustomer);
+            
+            updateState({
+                selectedCustomer: normalizedCustomer,
+                isSearchActive: false,
+                searchTerm: '',
+                error: null
+            });
+        } catch (error) {
+            handleError(error, 'Error selecting customer:');
         }
+    }, [handleError]);
 
-        if (!normalizedCustomer.address) {
-            console.error('Customer missing address:', customer);
-            setError('Thiếu thông tin địa chỉ khách hàng');
-            return;
-        }
+    // Clear selected customer
+    const clearSelectedCustomer = useCallback(() => {
+        updateState({
+            selectedCustomer: null,
+            searchTerm: '',
+            error: null
+        });
+    }, []);
 
-        setSelectedCustomer(normalizedCustomer);
-        setIsSearchActive(false);
-        setSearchTerm('');
-    };
+    // Set search term
+    const setSearchTerm = useCallback((term) => {
+        updateState({ searchTerm: term });
+    }, []);
 
-    const clearSelectedCustomer = () => {
-        setSelectedCustomer(null);
-        setSearchTerm('');
-    };
+    // Set search active
+    const setIsSearchActive = useCallback((active) => {
+        updateState({ isSearchActive: active });
+    }, []);
+
+    // Refresh customers
+    const refreshCustomers = useCallback(() => {
+        fetchCustomers();
+    }, [fetchCustomers]);
 
     return {
+        // State
         customers,
         selectedCustomer,
         searchTerm,
         isSearchActive,
         loading,
         error,
+
+        // Actions
         setSearchTerm,
         setIsSearchActive,
         handleSearch,
         selectCustomer,
-        clearSelectedCustomer
+        clearSelectedCustomer,
+        refreshCustomers
     };
 }; 
