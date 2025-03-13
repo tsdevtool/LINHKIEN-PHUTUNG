@@ -1,62 +1,208 @@
-import React, { useState } from "react";
+import { cn } from "@/lib/utils";
+import {
+  ClipboardList,
+  Home,
+  List,
+  Menu,
+  Package,
+  User2,
+  Users,
+  EllipsisVertical,
+  ChevronDown,
+} from "lucide-react";
+import { useLocation } from "react-router-dom";
+import PropTypes from "prop-types";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Package, ChevronDown, Truck, Store, Users, Tag, DollarSign, BarChart, FileText, Settings } from "lucide-react";
 
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+const menuItems = [
+  { name: "Dashboard", icon: <Home />, link: "/employee" },
+  {
+    name: "Đơn hàng",
+    icon: <ClipboardList />,
+    link: "#",
+    subItems: [
+      { name: "Tạo Đơn Hàng", link: "/employee/orders/new" },
+      { name: "Danh sách đơn hàng", link: "/employee/orders" },
+      { name: "", link: "/admin/orders/completed" },
+    ],
+  },
+  {
+    name: "Sản phẩm",
+    icon: <Package />,
+    link: "#",
+    subItems: [
+      { name: "Danh sách", link: "/admin/products/list" },
+      { name: "Đang được bán", link: "/admin/products/active" },
+      { name: "Hết hàng", link: "/admin/products/out-of-stock" },
+      { name: "Hàng tồn kho", link: "/admin/products/inventory" },
+    ],
+  },
+  {
+    name: "Danh mục",
+    icon: <List />,
+    link: "#",
+    subItems: [
+      { name: "Danh sách", link: "/admin/categories" },
+      { name: "Sơ đồ", link: "/admin/categories-tree" },
+    ],
+  },
+  { name: "Người dùng", icon: <Users />, link: "/admin/users" },
+  {
+    name: "Nhân viên",
+    icon: <User2 />,
+    link: "#",
+    subItems: [
+      { name: "Thông tin nhân viên", link: "/admin/employees/info" },
+      { name: "Lịch làm việc", link: "/admin/employees/schedule" },
+    ],
+  },
+];
+
+const MenuItem = ({ item, isOpen, isLocked, isActive }) => {
+  const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
 
   return (
-    <aside className="bg-[#1E293B] text-white w-64 p-4 space-y-4 h-screen">
-      <h1 className="text-xl font-bold text-white">MotoKing</h1>
-      <nav className="space-y-2">
-        <div>
+    <div>
+      {item.subItems ? (
+        <div className="relative">
           <button
-            className="flex items-center justify-between w-full p-2 hover:bg-[#374151] rounded-md"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => setIsSubMenuOpen(!isSubMenuOpen)}
+            className={cn(
+              "w-full flex items-center p-3 rounded-lg transition-all duration-300",
+              "hover:bg-gray-800",
+              isActive && "bg-gray-800 text-blue-400"
+            )}
           >
-            <div className="flex items-center space-x-2">
-              <Package size={20} /> <span>Đơn hàng</span>
-            </div>
-            <ChevronDown size={18} className={isOpen ? "rotate-180 transition" : "transition"} />
+            <span className="text-xl">{item.icon}</span>
+            {(isOpen || isLocked) && (
+              <>
+                <span className="ml-3 flex-1 text-left">{item.name}</span>
+                <ChevronDown
+                  className={cn(
+                    "w-4 h-4 transition-transform duration-200",
+                    isSubMenuOpen && "transform rotate-180"
+                  )}
+                />
+              </>
+            )}
           </button>
-          {isOpen && (
-            <div className="ml-6 space-y-1">
-              <Link to="/employee/neworder" className="block p-2 text-sm hover:bg-[#374151] rounded-md text-gray-300">
-                Tạo đơn hàng
-              </Link>
-              <Link to="#" className="block p-2 text-sm hover:bg-[#374151] rounded-md text-gray-300">
-                Danh sách đơn hàng
-              </Link>
+          {(isOpen || isLocked) && isSubMenuOpen && (
+            <div className="pl-12 space-y-2 mt-2">
+              {item.subItems.map((subItem, index) => (
+                <Link
+                  key={index}
+                  to={subItem.link}
+                  className={cn(
+                    "block p-2 rounded-lg transition-all duration-300",
+                    "hover:bg-gray-800 hover:text-blue-400",
+                    location.pathname === subItem.link && "text-blue-400"
+                  )}
+                >
+                  {subItem.name}
+                </Link>
+              ))}
             </div>
           )}
         </div>
-        <Link to="#" className="flex items-center space-x-2 p-2 hover:bg-[#374151] rounded-md">
-          <Truck size={20} /> <span>Vận chuyển</span>
+      ) : (
+        <Link
+          to={item.link}
+          className={cn(
+            "flex items-center p-3 rounded-lg transition-all duration-300",
+            "hover:bg-gray-800",
+            isActive && "bg-gray-800 text-blue-400"
+          )}
+        >
+          <span className="text-xl">{item.icon}</span>
+          {(isOpen || isLocked) && (
+            <span className="ml-3">{item.name}</span>
+          )}
         </Link>
-        <Link to="#" className="flex items-center space-x-2 p-2 hover:bg-[#374151] rounded-md">
-          <Store size={20} /> <span>Sản phẩm</span>
-        </Link>
-        <Link to="#" className="flex items-center space-x-2 p-2 hover:bg-[#374151] rounded-md">
-          <Users size={20} /> <span>Khách hàng</span>
-        </Link>
-        <Link to="#" className="flex items-center space-x-2 p-2 hover:bg-[#374151] rounded-md">
-          <Tag size={20} /> <span>Khuyến mãi</span>
-        </Link>
-        <Link to="#" className="flex items-center space-x-2 p-2 hover:bg-[#374151] rounded-md">
-          <DollarSign size={20} /> <span>Sổ quỹ</span>
-        </Link>
-        <Link to="#" className="flex items-center space-x-2 p-2 hover:bg-[#374151] rounded-md">
-          <BarChart size={20} /> <span>Báo cáo</span>
-        </Link>
-        <Link to="#" className="flex items-center space-x-2 p-2 hover:bg-[#374151] rounded-md">
-          <FileText size={20} /> <span>Sapo Invoice</span>
-        </Link>
-        <Link to="#" className="flex items-center space-x-2 p-2 hover:bg-[#374151] rounded-md">
-          <Settings size={20} /> <span>Cấu hình</span>
-        </Link>
-      </nav>
-    </aside>
+      )}
+    </div>
   );
+};
+
+MenuItem.propTypes = {
+  item: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    icon: PropTypes.node.isRequired,
+    link: PropTypes.string.isRequired,
+    subItems: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        link: PropTypes.string.isRequired,
+      })
+    ),
+  }).isRequired,
+  isOpen: PropTypes.bool.isRequired,
+  isLocked: PropTypes.bool.isRequired,
+  isActive: PropTypes.bool.isRequired,
+};
+
+const Navbar = ({ isOpen, setIsOpen, isLocked, setIsLocked }) => {
+  const location = useLocation();
+
+  return (
+    <div
+      className={cn(
+        "h-screen bg-gray-900 text-white transition-all duration-300 ease-in-out fixed z-50",
+        "border-r border-gray-800",
+        isOpen || isLocked ? "w-64" : "w-20"
+      )}
+      onMouseEnter={() => !isLocked && setIsOpen(true)}
+      onMouseLeave={() => !isLocked && setIsOpen(false)}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 p-4 border-b border-gray-800">
+        <img src="/logo-nobg.png" alt="Logo" className="w-10 h-10 rounded-lg" />
+        {(isOpen || isLocked) && (
+          <h1 className="font-bold text-xl bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+            MotorKing
+          </h1>
+        )}
+        <button
+          onClick={() => setIsLocked(!isLocked)}
+          className={cn(
+            "ml-auto p-2 rounded-lg transition-all duration-300",
+            "hover:bg-gray-800 hover:text-blue-400",
+            isLocked && "text-blue-400"
+          )}
+        >
+          {isLocked ? (
+            <Menu className="w-5 h-5" />
+          ) : (
+            <EllipsisVertical className="w-5 h-5" />
+          )}
+        </button>
+      </div>
+
+      {/* Menu Items */}
+      <nav className="space-y-2 p-4">
+        {menuItems.map((item, index) => (
+          <MenuItem
+            key={index}
+            item={item}
+            isOpen={isOpen}
+            isLocked={isLocked}
+            isActive={
+              location.pathname === item.link ||
+              (item.subItems &&
+                item.subItems.some((sub) => location.pathname === sub.link))
+            }
+          />
+        ))}
+      </nav>
+    </div>
+  );
+};
+
+Navbar.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  setIsOpen: PropTypes.func.isRequired,
+  isLocked: PropTypes.bool.isRequired,
+  setIsLocked: PropTypes.func.isRequired,
 };
 
 export default Navbar;

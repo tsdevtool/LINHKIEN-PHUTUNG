@@ -3,6 +3,8 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\AuthMiddleware;
@@ -61,15 +63,20 @@ Route::prefix('categories')->group(function () {
     Route::post('/restore/{id}', [CategoryController::class, 'restore']);
 });
 
-
-
+Route::prefix('customers')->group(function () {
+    Route::get('/', [CustomerController::class, 'index']);
+    Route::get('/search', [CustomerController::class, 'search']);
+    Route::get('/{id}', [CustomerController::class, 'show']);
+    Route::post('/', [CustomerController::class, 'store']);
+    Route::put('/{id}', [CustomerController::class, 'update']);
+    Route::delete('/{id}', [CustomerController::class, 'destroy']);
+});
 
 Route::controller(UserController::class)->group(function () {
     Route::get('v1/users', [UserController::class,'index']);
     Route::get('v1/user/{_id}', [UserController::class,'show']);
     Route::delete('v1/user/delete/{_id}', [UserController::class,'destroy']);
 });
-
 
 Route::controller(SupplierController::class)->group(function () {
     Route::get('v1/suppliers', [SupplierController::class,'index']);
@@ -87,4 +94,11 @@ Route::controller(RoleController::class)->group(function () {
     Route::post('v1/roles', 'store');
     Route::put('v1/roles/edit/{_id}', 'update');
     Route::delete('v1/roles/delete/{_id}', 'destroy');
+});
+
+Route::prefix('orders')->group(function () {
+    Route::get('/', [OrderController::class, 'index']);
+    Route::post('/', [OrderController::class, 'store']);
+    Route::get('/{id}', [OrderController::class, 'show']);
+    Route::put('/{id}', [OrderController::class, 'update']);
 });
