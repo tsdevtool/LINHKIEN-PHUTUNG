@@ -8,7 +8,7 @@ import { useAuthStore } from "./store/authUser";
 
 // Layouts
 import AdminLayout from "./pages/layouts/AdminLayout";
-import MainLayout from "./pages/employee/layouts/MainLayout";
+import EmployeeLayout from "./pages/layouts/EmployeeLayout";
 
 // Pages
 import HomePage from "./pages/home/HomePage";
@@ -28,12 +28,14 @@ import CategoriesSection from "./pages/admin/categories/CategoriesSection";
 
 // Employee Components
 import OrderPage from "./pages/employee/OrderPage";
-import NewOrder from "./components/employee/NewOrder";
+import NewOrder from "./pages/employee/NewOrder";
+import OrderList from "./pages/employee/OrderList";
 
 // UI Components
 import Loading from "./components/ui/Loading";
 import Footer from "./components/Footer";
 import CategoriesTreeSection from "./pages/admin/categories/CategoriesTreeSection";
+import OrderDetail from "./pages/employee/OrderDetail";
 
 function App() {
   const { user, isCheckingAuth, authCheck } = useAuthStore();
@@ -66,10 +68,19 @@ function App() {
         <Route path="/orders" element={<OrderStatusPage />} />
 
         {/* Employee routes */}
-        <Route path="/employee" element={<MainLayout />}>
-          <Route index element={<OrderPage />} />
-          <Route path="neworder" element={<NewOrder />} />
-        </Route>
+        <Route
+          path="/employee/*"
+          element={
+            <EmployeeLayout>
+              <Routes>
+                <Route path="" element={<OrderList />} />
+                <Route path="orders" element={<OrderList />} />
+                <Route path="orders/new" element={<NewOrder />} />
+                <Route path="/orders/:id" element={<OrderDetail />} />
+              </Routes>
+            </EmployeeLayout>
+          }
+        />
 
         {/* Admin routes */}
         <Route
