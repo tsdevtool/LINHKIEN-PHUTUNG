@@ -30,11 +30,11 @@ Route::prefix('home')->group(function () {
     Route::get('/', [HomeController::class, 'getHomeCategories']);
 });
 
-Route::prefix('cart')->group(function () {
-    Route::post('/', [CartController::class,'index'])->middleware(AuthMiddleware::class);
-    Route::post('/', [CartController::class,'store'])->middleware(AuthMiddleware::class);
-    Route::put('/', [CartController::class,'update'])->middleware(AuthMiddleware::class);
-    Route::delete('/', [CartController::class,'destroy'])->middleware(AuthMiddleware::class);
+Route::prefix('cart')->middleware(AuthMiddleware::class)->group(function () {
+    Route::post('/', [CartController::class,'index']);
+    Route::post('/', [CartController::class,'store'] );
+    Route::put('/', [CartController::class,'update']);
+    Route::delete('/', [CartController::class,'destroy']);
 });
 
 Route::prefix('products')->group(function () {

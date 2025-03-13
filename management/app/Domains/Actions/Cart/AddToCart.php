@@ -86,8 +86,8 @@ class AddToCart
                 ]
             ], 200);
             
-        } catch (\Throwable $th) {
-            return $this->errorResponse->execute('Lỗi thêm sản phẩm vào giỏ hàng: ' . $th->getMessage(), 500);
+        } catch (\Exception $e) {
+            return $this->errorResponse->execute('Lỗi thêm sản phẩm vào giỏ hàng: ' . $e->getMessage(), 500);
         }
     }
 }
