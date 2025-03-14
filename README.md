@@ -64,7 +64,27 @@ git clone https://github.com/tsdevtool/LINHKIEN-PHUTUNG.git
 - Terminal management
 
 ```sh
-    cd Management_Web
+    download **file** **php_mongodb-1.20.1-8.2-ts-vs16-x64_86**
+```
+
+```sh
+    copyfile php_mongodb.ddl **paste** vào Xampp\php\ext
+```
+
+```sh
+    vào Xampp\php **open file** php.ini **find** ;extension=zip **xoá dấu ;**
+```
+
+```sh
+    line_break **add_line** extension=mongodb **or** extension=php_mongodb
+```
+
+```sh
+    cd management
+```
+
+```sh
+   composer install
 ```
 
 ```sh
