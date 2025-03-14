@@ -10,9 +10,9 @@ enum RoleEnum:string
 
     public function label():string{
         return match ($this) {
-            self::ADMIN => 'Administrator',
-            self::EMPLOYEE => 'Employee',
-            self::CUSTOMER => 'Customer',
+            self::ADMIN => 'Quản trị viên',
+            self::EMPLOYEE => 'Nhân viên',
+            self::CUSTOMER => 'Khách hàng',
         };
     }
 }
