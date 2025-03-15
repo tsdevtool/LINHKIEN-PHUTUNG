@@ -10,6 +10,20 @@ const DesktopMenu = ({ activeDropdown, setActiveDropdown }) => {
   if (isLoading) return <LoadingMenu />;
   if (isError) return <ErrorMenu />;
 
+  // Kiểm tra nếu không có danh mục
+  if (!categories || categories.length === 0) {
+    return (
+      <div className="hidden lg:flex lg:w-2/3 lg:justify-center">
+        <div className="w-full max-w-4xl flex flex-col items-center">
+          <div className="w-2/3 mb-4">
+            <SearchBox />
+          </div>
+          <div className="text-center py-4">Không có danh mục nào.</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="hidden lg:flex lg:w-2/3 lg:justify-center">
       <div className="w-full max-w-4xl flex flex-col items-center">

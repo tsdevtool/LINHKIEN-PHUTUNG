@@ -26,6 +26,8 @@ const MobileMenu = ({ isOpen, activeDropdown, setActiveDropdown }) => {
             <LoadingMenu />
           ) : isError ? (
             <ErrorMenu />
+          ) : !categories || categories.length === 0 ? (
+            <div className="text-center py-4">Không có danh mục nào.</div>
           ) : (
             categories.map((menu) => (
               <NavMenuItem

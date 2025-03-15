@@ -11,7 +11,6 @@ use App\Http\Controllers\Admins\SupplierController;
 use App\Http\Controllers\Admins\EmployeeController;
 use App\Http\Controllers\Employees\CustomerController;
 use App\Http\Controllers\Employees\OrderController;
-use App\Http\Controllers\UploadController;
 use App\Http\Middleware\AuthMiddleware;
 
 use Illuminate\Support\Facades\Route;
@@ -19,7 +18,6 @@ use Illuminate\Support\Facades\Route;
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
-Route::post('/upload', [UploadController::class, 'uploadImage']);
 
 Route::controller(AuthController::class)->group(function () {
     Route::post('v1/auth/signup', 'signup');

@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\Customers;
 
-use App\Actions\Cart\AddToCart;
-use App\Actions\Cart\GetCart;
-use App\Actions\Cart\RemoveFromCart;
-use App\Actions\Cart\UpdateCartItemQuantity;
+use App\Actions\Customer\Cart\AddToCart;
+use App\Actions\Customer\Cart\GetCart;
+use App\Actions\Customer\Cart\RemoveFromCart;
+use App\Actions\Customer\Cart\UpdateCartItemQuantity;
+use App\Http\Requests\Cart\GetCartRequest;
+use App\Http\Requests\Cart\AddToCartRequest;
+use App\Http\Requests\Cart\UpdateCartItemQuantityRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\Cart;
-use Exception;
 
 class CartController extends Controller
 {
@@ -18,28 +18,59 @@ class CartController extends Controller
     private $addToCart;
     private $updateCartItemQuantity;
     private $removeFromCart;
-    public function __construct(GetCart $getCart, AddToCart $addToCart, UpdateCartItemQuantity $updateCartItemQuantity, RemoveFromCart $removeFromCart){
+
+    public function __construct(
+        GetCart $getCart, 
+        AddToCart $addToCart, 
+        UpdateCartItemQuantity $updateCartItemQuantity, 
+        RemoveFromCart $removeFromCart
+    ){
         $this->getCart = $getCart;
         $this->addToCart = $addToCart;
         $this->updateCartItemQuantity = $updateCartItemQuantity;
         $this->removeFromCart = $removeFromCart;
     }
 
-    public function index(Request $request): JsonResponse
+    /**
+     * Lấy thông tin giỏ hàng của người dùng hiện tại
+     *
+     * @param GetCartRequest $request
+     * @return JsonResponse
+     */
+    public function index(GetCartRequest $request): JsonResponse
     {
         return $this->getCart->execute($request);
     }
 
-    public function store(Request $request):JsonResponse{
+    /**
+     * Thêm sản phẩm vào giỏ hàng
+     *
+     * @param AddToCartRequest $request
+     * @return JsonResponse
+     */
+    public function store(AddToCartRequest $request): JsonResponse
+    {
         return $this->addToCart->execute($request);
     }
 
-    public function update(Request $request):JsonResponse{
+    /**
+     * Cập nhật số lượng sản phẩm trong giỏ hàng
+     *
+     * @param UpdateCartItemQuantityRequest $request
+     * @return JsonResponse
+     */
+    public function update(UpdateCartItemQuantityRequest $request): JsonResponse
+    {
         return $this->updateCartItemQuantity->execute($request);
     }
 
-    public function destroy(): JsonResponse{
+    /**
+     * Xóa sản phẩm khỏi giỏ hàng
+     *
+     * @return JsonResponse
+     */
+    public function destroy(): JsonResponse
+    {
         return $this->removeFromCart->execute();
     }
-
 }

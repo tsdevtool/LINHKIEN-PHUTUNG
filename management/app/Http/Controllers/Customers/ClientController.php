@@ -3,25 +3,44 @@
 namespace App\Http\Controllers\Customers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Client;
-use Illuminate\Http\Request;
-use Exception;
-use Management\App\Actions\Product\DetailProduct;
+use App\Http\Requests\Product\DetailProductRequest;
+use App\Http\Requests\Product\ListProductInChildCategoryRequest;
+use App\Actions\Customer\Product\DetailProduct;
+use App\Actions\Customer\Product\ListProductInChildCategory;
+use Illuminate\Http\JsonResponse;
 
 class ClientController extends Controller
 {
     private $detailProduct;
+    private $listProductInChildCategory;
     
-    public function __construct(DetailProduct $detailProduct){
+    public function __construct(
+        DetailProduct $detailProduct,
+        ListProductInChildCategory $listProductInChildCategory
+    ){
         $this->detailProduct = $detailProduct;
+        $this->listProductInChildCategory = $listProductInChildCategory;
     }
-    //Xem thong tin chi san pham
-    public function showDetailProduct(Request $request){
+
+    /**
+     * Xem thông tin chi tiết sản phẩm
+     *
+     * @param DetailProductRequest $request
+     * @return JsonResponse
+     */
+    public function showDetailProduct(DetailProductRequest $request): JsonResponse
+    {
         return $this->detailProduct->execute($request);
     }
 
-    //Xem danh sach san pham theo danh muc con
-    public function showListProductFollowChildCategory(Request $request){
-
+    /**
+     * Xem danh sách sản phẩm theo danh mục con
+     *
+     * @param ListProductInChildCategoryRequest $request
+     * @return JsonResponse
+     */
+    public function showListProductFollowChildCategory(ListProductInChildCategoryRequest $request): JsonResponse
+    {
+        return $this->listProductInChildCategory->execute($request);
     }
 }
