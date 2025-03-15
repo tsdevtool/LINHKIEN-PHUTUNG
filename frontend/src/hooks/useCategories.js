@@ -3,11 +3,14 @@ import axios from "axios";
 
 const fetchCategories = async () => {
   try {
-    const { data } = await axios.get("/api/categories");
-    if (!data.categories) {
+    const response = await axios.get("/api/categories");
+
+    // Kiểm tra cấu trúc dữ liệu
+    if (!response.data || !response.data.categories) {
       throw new Error("Invalid response format");
     }
-    return data.categories;
+
+    return response.data.categories;
   } catch (error) {
     if (error.response?.data?.message) {
       throw new Error(error.response.data.message);
@@ -33,8 +36,7 @@ export const useCategories = () => {
               parentId: childCategory.parent.id,
             })) || [],
         }));
-      } catch (error) {
-        console.error("Error transforming categories:", error);
+      } catch {
         return [];
       }
     },

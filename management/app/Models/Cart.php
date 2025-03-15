@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\CartStatus;
 use MongoDB\Laravel\Eloquent\Model as MongoModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+
 
 class Cart extends MongoModel
 {
@@ -21,16 +23,12 @@ class Cart extends MongoModel
 
     protected $casts = [
         'user_id' => 'string',
+        'status' => CartStatus::class,
         'total_price' => 'decimal:3',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
 
-    // Định nghĩa enum cho trạng thái giỏ hàng
-    const STATUS_PENDING = 'pending';
-    const STATUS_CHECKOUT = 'checkout';
-    const STATUS_COMPLETED = 'completed';
-    const STATUS_CANCELED = 'canceled';
 
     protected static function boot()
     {
@@ -41,7 +39,7 @@ class Cart extends MongoModel
             $model->created_at = $model->freshTimestamp();
             $model->updated_at = $model->freshTimestamp();
             if (!$model->status) {
-                $model->status = self::STATUS_PENDING;
+                $model->status = CartStatus::PENDING;
             }
         });
 
@@ -65,38 +63,40 @@ class Cart extends MongoModel
     // Kiểm tra trạng thái giỏ hàng
     public function isPending(): bool
     {
-        return $this->status === self::STATUS_PENDING;
+        return $this->status === CartStatus::PENDING;
     }
 
     public function isCheckout(): bool
     {
-        return $this->status === self::STATUS_CHECKOUT;
+        return $this->status === CartStatus::CHECKOUT;
+    }
+
+    public function isDelivery(): bool
+    {
+        return $this->status === CartStatus::DELIVERY;
     }
 
     public function isCompleted(): bool
     {
-        return $this->status === self::STATUS_COMPLETED;
+        return $this->status === CartStatus::COMPLETED;
     }
 
     public function isCanceled(): bool
     {
-        return $this->status === self::STATUS_CANCELED;
+        return $this->status === CartStatus::CANCELED;
     }
 
     // Cập nhật trạng thái
-    public function updateStatus(string $status): bool
+    public function updateStatus(CartStatus $status): bool
     {
-        if (!in_array($status, [
-            self::STATUS_PENDING,
-            self::STATUS_CHECKOUT,
-            self::STATUS_COMPLETED,
-            self::STATUS_CANCELED
-        ])) {
-            return false;
-        }
-
         $this->status = $status;
         return $this->save();
+    }
+
+    // Lấy label của trạng thái hiện tại
+    public function getStatusLabel(): string
+    {
+        return $this->status->label();
     }
 
     // Tính tổng giá trị giỏ hàng
