@@ -15,6 +15,16 @@ class DetailProductRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'id' => $this->route('id')
+        ]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      */
     public function rules(): array

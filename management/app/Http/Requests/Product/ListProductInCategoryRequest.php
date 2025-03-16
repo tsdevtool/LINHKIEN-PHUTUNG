@@ -4,7 +4,7 @@ namespace App\Http\Requests\Product;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ListProductInChildCategoryRequest extends FormRequest
+class ListProductInCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -16,6 +16,8 @@ class ListProductInChildCategoryRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -24,9 +26,6 @@ class ListProductInChildCategoryRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom messages for validator errors.
-     */
     public function messages(): array
     {
         return [
@@ -35,4 +34,4 @@ class ListProductInChildCategoryRequest extends FormRequest
             'category_id.exists' => 'Danh mục không tồn tại'
         ];
     }
-} 
+}

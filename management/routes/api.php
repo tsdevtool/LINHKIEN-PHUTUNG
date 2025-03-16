@@ -9,6 +9,7 @@ use App\Http\Controllers\Admins\ProductController;
 use App\Http\Controllers\Admins\RoleController;
 use App\Http\Controllers\Admins\SupplierController;
 use App\Http\Controllers\Admins\EmployeeController;
+use App\Http\Controllers\Customers\ClientController;
 use App\Http\Controllers\Employees\CustomerController;
 use App\Http\Controllers\Employees\OrderController;
 use App\Http\Middleware\AuthMiddleware;
@@ -26,8 +27,17 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('v1/auth/auth-check', 'authCheck')->middleware(AuthMiddleware::class);
 });
 
+//Customer
 Route::prefix('home')->group(function () {
     Route::get('/', [HomeController::class, 'getHomeCategories']);
+});
+
+Route::prefix('client')->group(function () {
+    Route::get('/{id}/detail-product', [ClientController::class, 'showDetailProduct']);
+    
+    Route::get('/{category_id}/get-all', [ClientController::class, 'showListProductFollowCategory']);
+    
+    Route::get('/{category_id}/category', [ClientController::class, 'showListProductFollowChildCategory']);
 });
 
 Route::prefix('cart')->middleware(AuthMiddleware::class)->group(function () {
