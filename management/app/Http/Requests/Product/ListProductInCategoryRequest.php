@@ -4,7 +4,7 @@ namespace App\Http\Requests\Product;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ListProductInChildCategoryRequest extends FormRequest
+class ListProductInCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -85,4 +85,4 @@ class ListProductInChildCategoryRequest extends FormRequest
     {
         return $this->input('search');
     }
-} 
+}

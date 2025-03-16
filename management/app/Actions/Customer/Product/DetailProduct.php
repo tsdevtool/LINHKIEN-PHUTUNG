@@ -42,9 +42,9 @@ class DetailProduct
      */
     private function findAndValidateProduct(string $id): ?Product
     {
-        return Product::with(['category', 'reviews'])
+        return Product::with(['category'])
             ->where('_id', $id)
-            ->where('active', true)
+            ->where('is_active', true)
             ->first();
     }
 
@@ -56,9 +56,6 @@ class DetailProduct
      */
     private function formatProductResponse(Product $product): array
     {
-        $avgRating = $product->reviews->avg('rating') ?? 0;
-        $reviewCount = $product->reviews->count();
-
         return [
             'id' => $product->_id,
             'name' => $product->name,
@@ -71,8 +68,6 @@ class DetailProduct
                 'id' => $product->category->_id,
                 'name' => $product->category->name
             ],
-            'average_rating' => round($avgRating, 1),
-            'review_count' => $reviewCount,
             'created_at' => $product->created_at,
             'updated_at' => $product->updated_at
         ];
