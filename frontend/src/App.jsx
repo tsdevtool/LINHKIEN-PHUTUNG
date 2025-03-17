@@ -30,6 +30,7 @@ import CategoriesSection from "./pages/admin/categories/CategoriesSection";
 import OrderPage from "./pages/employee/OrderPage";
 import NewOrder from "./pages/employee/NewOrder";
 import OrderList from "./pages/employee/OrderList";
+import EditOrder from './pages/employee/EditOrder';
 
 // UI Components
 import Loading from "./components/ui/Loading";
@@ -77,6 +78,7 @@ function App() {
                 <Route path="orders" element={<OrderList />} />
                 <Route path="orders/new" element={<NewOrder />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
+                <Route path="/orders/:id/edit" element={<EditOrder />} />
               </Routes>
             </EmployeeLayout>
           }

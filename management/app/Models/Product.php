@@ -59,4 +59,27 @@ class Product extends MongoModel
     {
         $this->attributes['images'] = empty($value) ? [] : $value;
     }
+
+    /**
+     * Update product quantity after order
+     */
+    public function updateQuantity($quantityToReduce)
+    {
+        if ($this->quantity < $quantityToReduce) {
+            throw new \Exception("Số lượng sản phẩm {$this->name} trong kho không đủ");
+        }
+        
+        $this->quantity -= $quantityToReduce;
+        $this->save();
+        
+        return $this;
+    }
+
+    /**
+     * Check if product has enough quantity
+     */
+    public function hasEnoughQuantity($requestedQuantity)
+    {
+        return $this->quantity >= $requestedQuantity;
+    }
 }

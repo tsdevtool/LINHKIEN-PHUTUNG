@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Employees;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Customer;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Exception;
 
 class OrderController extends Controller
@@ -30,77 +32,73 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         try {
-            // Validate đầu vào
-            if (!$request->customerId || empty($request->items)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Thiếu thông tin khách hàng hoặc sản phẩm'
-                ], 400);
-            }
+            DB::beginTransaction();
 
-            // Lấy thông tin khách hàng
-            $customer = Customer::find($request->customerId);
-            if (!$customer) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không tìm thấy khách hàng'
-                ], 404);
-            }
-
-            // Tạo mã đơn hàng
-            $orderNumber = 'DH' . date('ymd') . str_pad(Order::count() + 1, 4, '0', STR_PAD_LEFT);
-
-            // Tính tổng tiền
-            $totalAmount = 0;
+            // Validate order data
+            $this->validateOrder($request);
+            
+            // Check product quantities before creating order
             foreach ($request->items as $item) {
-                $totalAmount += $item['price'] * $item['quantity'];
+                $product = Product::find($item['productId']);
+                if (!$product) {
+                    throw new \Exception("Không tìm thấy sản phẩm với ID: {$item['productId']}");
+                }
+                
+                if (!$product->hasEnoughQuantity($item['quantity'])) {
+                    throw new \Exception("Sản phẩm {$product->name} chỉ còn {$product->quantity} trong kho");
+                }
             }
 
-            // Tạo đơn hàng
-            $order = Order::create([
-                'orderNumber' => $orderNumber,
-                'customerId' => $request->customerId,
-                'customerInfo' => [
-                    'name' => $customer->name,
-                    'phone' => $customer->phone,
-                    'address' => $customer->address
-                ],
-                'items' => $request->items,
-                'totalAmount' => $totalAmount,
-                'discount' => $request->discount ?? 0,
-                'shippingFee' => $request->shippingFee ?? 0,
-                'finalTotal' => $totalAmount - ($request->discount ?? 0) + ($request->shippingFee ?? 0),
-                'paymentMethod' => $request->paymentMethod,
-                'paymentStatus' => $request->paymentStatus ?? 'pending',
-                'shippingMethod' => $request->shippingMethod,
-                'shippingStatus' => $request->shippingStatus ?? 'pending',
-                'note' => $request->note,
-                'status' => $request->status ?? 'pending',
-                'staffId' => $request->staffId,
-                'staffInfo' => $request->staffInfo ?? [
-                    'name' => null,
-                    'role' => 'employee'
-                ],
-                'createdAt' => now(),
-                'updatedAt' => now()
-            ]);
+            // Create order
+            $order = new Order($request->all());
+            $order->save();
 
-            // Cập nhật thông tin khách hàng
-            $customer->update([
-                'numberOfOrders' => $customer->numberOfOrders + 1,
-                'totalSpent' => $customer->totalSpent + $order->finalTotal
-            ]);
+            // Update product quantities
+            foreach ($request->items as $item) {
+                $product = Product::find($item['productId']);
+                $product->updateQuantity($item['quantity']);
+            }
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Tạo đơn hàng thành công',
                 'order' => $order
-            ], 201);
-        } catch (Exception $e) {
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage(),
-            ], 500);
+                'message' => 'Lỗi khi tạo đơn hàng: ' . $e->getMessage()
+            ], 400);
+        }
+    }
+
+    private function validateOrder(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'orderNumber' => 'required|string|unique:orders,orderNumber',
+            'customerId' => 'required|string',
+            'customerInfo' => 'required|array',
+            'customerInfo.name' => 'required|string',
+            'customerInfo.phone' => 'required|string',
+            'items' => 'required|array|min:1',
+            'items.*.productId' => 'required|string',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price' => 'required|numeric|min:0',
+            'totalAmount' => 'required|numeric|min:0',
+            'finalTotal' => 'required|numeric|min:0',
+            'paymentMethod' => 'required|string',
+            'shippingMethod' => 'required|string',
+            'staffId' => 'required|string',
+            'staffInfo' => 'required|array',
+            'staffInfo.name' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            throw new \Exception($validator->errors()->first());
         }
     }
 
@@ -130,15 +128,37 @@ class OrderController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            DB::beginTransaction();
+
             $order = Order::find($id);
             if (!$order) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không tìm thấy đơn hàng'
-                ], 404);
+                throw new \Exception('Không tìm thấy đơn hàng');
             }
 
+            // Validate update data
+            $validator = Validator::make($request->all(), [
+                'customerInfo' => 'required|array',
+                'customerInfo.name' => 'required|string',
+                'customerInfo.phone' => 'required|string',
+                'customerInfo.address' => 'required|string',
+                'items' => 'required|array|min:1',
+                'items.*.productId' => 'required|string',
+                'items.*.quantity' => 'required|integer|min:1',
+                'items.*.price' => 'required|numeric|min:0',
+                'totalAmount' => 'required|numeric|min:0',
+                'finalTotal' => 'required|numeric|min:0'
+            ]);
+
+            if ($validator->fails()) {
+                throw new \Exception($validator->errors()->first());
+            }
+
+            // Update all fields
             $order->update([
+                'customerInfo' => $request->customerInfo,
+                'items' => $request->items,
+                'totalAmount' => $request->totalAmount,
+                'finalTotal' => $request->finalTotal,
                 'status' => $request->status ?? $order->status,
                 'paymentStatus' => $request->paymentStatus ?? $order->paymentStatus,
                 'shippingStatus' => $request->shippingStatus ?? $order->shippingStatus,
@@ -146,16 +166,19 @@ class OrderController extends Controller
                 'updatedAt' => now()
             ]);
 
+            DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Cập nhật đơn hàng thành công',
                 'order' => $order
             ], 200);
         } catch (Exception $e) {
+            DB::rollback();
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage(),
-            ], 500);
+                'message' => 'Lỗi khi cập nhật đơn hàng: ' . $e->getMessage(),
+            ], 400);
         }
     }
 } 

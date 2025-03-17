@@ -96,12 +96,31 @@ const OrderList = () => {
     navigate(`/employee/orders/${orderId}`);
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status, shippingMethod, paymentStatus) => {
+    // Nếu là đơn nhận tại cửa hàng và đã thanh toán
+    if (shippingMethod === "Nhận tại cửa hàng" && paymentStatus === "paid") {
+      return 'text-green-600 bg-green-50';
+    }
+
     switch (status) {
       case 'pending': return 'text-yellow-600 bg-yellow-50';
       case 'completed': return 'text-green-600 bg-green-50';
       case 'cancelled': return 'text-red-600 bg-red-50';
       default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const getOrderStatus = (order) => {
+    // Nếu là đơn nhận tại cửa hàng và đã thanh toán
+    if (order.shippingMethod === "Nhận tại cửa hàng" && order.paymentStatus === "paid") {
+      return "Đã xử lý";
+    }
+
+    switch (order.status) {
+      case 'pending': return 'Chưa xử lý';
+      case 'completed': return 'Hoàn thành';
+      case 'cancelled': return 'Đã hủy';
+      default: return order.status;
     }
   };
 
@@ -310,10 +329,8 @@ const OrderList = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(order.status)}`}>
-                        {order.status === 'pending' ? 'Chưa xử lý' :
-                         order.status === 'completed' ? 'Hoàn thành' :
-                         order.status === 'cancelled' ? 'Đã hủy' : order.status}
+                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(order.status, order.shippingMethod, order.paymentStatus)}`}>
+                        {getOrderStatus(order)}
                       </span>
                     </td>
                   </tr>
