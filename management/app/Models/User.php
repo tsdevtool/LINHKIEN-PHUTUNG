@@ -16,7 +16,7 @@ class User extends \MongoDB\Laravel\Eloquent\Model implements Authenticatable
     protected $connection = 'mongodb';
     protected $collection = 'users';
     protected $fillable = [
-       'firstname','lastname','phone', 'password','image','numberOfOrder'
+       'firstname','lastname','phone', 'password','image','numberOfOrder', 'idrole'
     ];
     protected $hidden = [
         'password',
