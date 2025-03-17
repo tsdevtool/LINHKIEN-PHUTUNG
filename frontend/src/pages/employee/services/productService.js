@@ -1,8 +1,7 @@
 import axios from 'axios';
-
 const API_URL = 'http://localhost:8000/api';
 
-class ProductService {
+const productService = {
     async getProducts() {
         try {
             const response = await axios.get(`${API_URL}/products`);
@@ -10,7 +9,7 @@ class ProductService {
         } catch (error) {
             throw error.response?.data?.message || 'Có lỗi xảy ra khi lấy danh sách sản phẩm';
         }
-    }
+    },
 
     async searchProducts(query) {
         try {
@@ -21,16 +20,32 @@ class ProductService {
         } catch (error) {
             throw error.response?.data?.message || 'Có lỗi xảy ra khi tìm kiếm sản phẩm';
         }
-    }
+    },
 
     async getProductById(id) {
         try {
             const response = await axios.get(`${API_URL}/products/${id}`);
-            return response.data.product;
+            console.log('Product API response:', response.data);
+            
+            if (response.status === 200) {
+                return {
+                    success: true,
+                    product: response.data.product
+                };
+            }
+            
+            return {
+                success: false,
+                message: 'Không thể tải thông tin sản phẩm'
+            };
         } catch (error) {
-            throw error.response?.data?.message || 'Có lỗi xảy ra khi lấy thông tin sản phẩm';
+            console.error('Error in getProductById:', error);
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Lỗi khi tải thông tin sản phẩm'
+            };
         }
     }
-}
+};
 
-export default new ProductService(); 
+export default productService; 

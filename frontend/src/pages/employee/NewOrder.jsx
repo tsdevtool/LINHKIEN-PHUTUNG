@@ -91,12 +91,9 @@ const NewOrder = () => {
             },
             items: selectedProducts.map(product => ({
                 productId: product._id,
-                name: product.name,
                 price: parseFloat(product.price),
                 quantity: parseInt(product.quantity),
-                total: parseFloat(product.price) * parseInt(product.quantity),
-                sku: product.sku || '',
-                imageUrl: product.image_url || ''
+                total: parseFloat(product.price) * parseInt(product.quantity)
             })),
             totalAmount: parseFloat(totalProductPrice),
             discount: parseFloat(discount || 0),
@@ -105,7 +102,7 @@ const NewOrder = () => {
             paymentMethod,
             paymentStatus: (() => {
                 // Nếu chọn "Đã thanh toán" hoặc các phương thức thanh toán trực tiếp
-                if (paymentMethod === "Đã thanh toán" || 
+                if (
                     paymentMethod === "Tiền mặt" || 
                     paymentMethod === "Chuyển khoản" ||
                     paymentMethod === "Momo" ||
@@ -458,8 +455,6 @@ const NewOrder = () => {
                   onChange={(e) => setPaymentMethod(e.target.value)}
                 >
                   <option value="">Chọn phương thức thanh toán *</option>
-                  <option value="Đã thanh toán">Đã thanh toán</option>
-                  <option value="Thanh toán sau">Thanh toán sau</option>
                   <option value="Tiền mặt">Tiền mặt</option>
                   <option value="Chuyển khoản">Chuyển khoản ngân hàng</option>
                   <option value="Momo">Ví Momo</option>
@@ -475,39 +470,38 @@ const NewOrder = () => {
               <div className="border p-4 rounded-md mt-6">
                 <h3 className="font-semibold text-lg">Giao hàng</h3>
                 <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-2">
-                  <label className="flex items-center p-2 border rounded-md cursor-pointer w-full sm:w-auto">
+                  <label 
+                    className={`flex items-center p-2 border rounded-md cursor-pointer w-full sm:w-auto transition-colors duration-200 ${
+                      shippingMethod === "Nhận tại cửa hàng" 
+                        ? "bg-blue-500 text-white border-blue-500" 
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="shippingMethod"
-                      value="Đã qua hàng vận chuyển"
-                      checked={shippingMethod === "Đã qua hàng vận chuyển"}
-                      onChange={() => setShippingMethod("Đã qua hàng vận chuyển")}
+                      value="Nhận tại cửa hàng"
+                      checked={shippingMethod === "Nhận tại cửa hàng"}
+                      onChange={() => setShippingMethod("Nhận tại cửa hàng")}
                       className="hidden"
                     />
-                    <span className="w-5 h-5 border rounded-full mr-2 flex items-center justify-center">
-                      {shippingMethod === "Đã qua hàng vận chuyển" && (
-                        <span className="w-2 h-2 bg-gray-600 rounded-full"></span>
+                    <span className={`w-5 h-5 border rounded-full mr-2 flex items-center justify-center ${
+                      shippingMethod === "Nhận tại cửa hàng" ? "border-white" : "border-gray-400"
+                    }`}>
+                      {shippingMethod === "Nhận tại cửa hàng" && (
+                        <span className="w-2 h-2 bg-white rounded-full"></span>
                       )}
                     </span>
-                    <span className="text-gray-600">Đã qua hàng vận chuyển</span>
+                    <span>Nhận tại cửa hàng</span>
                   </label>
-                  <label className="flex items-center p-2 border rounded-md cursor-pointer w-full sm:w-auto">
-                    <input
-                      type="radio"
-                      name="shippingMethod"
-                      value="Đã giao hàng"
-                      checked={shippingMethod === "Đã giao hàng"}
-                      onChange={() => setShippingMethod("Đã giao hàng")}
-                      className="hidden"
-                    />
-                    <span className="w-5 h-5 border rounded-full mr-2 flex items-center justify-center">
-                      {shippingMethod === "Đã giao hàng" && (
-                        <span className="w-2 h-2 bg-gray-600 rounded-full"></span>
-                      )}
-                    </span>
-                    <span className="text-gray-600">Đã giao hàng</span>
-                  </label>
-                  <label className="flex items-center p-2 border rounded-md bg-blue-500 text-white cursor-pointer w-full sm:w-auto">
+
+                  <label 
+                    className={`flex items-center p-2 border rounded-md cursor-pointer w-full sm:w-auto transition-colors duration-200 ${
+                      shippingMethod === "Giao hàng sau" 
+                        ? "bg-blue-500 text-white border-blue-500" 
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="shippingMethod"
@@ -516,12 +510,39 @@ const NewOrder = () => {
                       onChange={() => setShippingMethod("Giao hàng sau")}
                       className="hidden"
                     />
-                    <span className="w-5 h-5 border rounded-full mr-2 flex items-center justify-center">
+                    <span className={`w-5 h-5 border rounded-full mr-2 flex items-center justify-center ${
+                      shippingMethod === "Giao hàng sau" ? "border-white" : "border-gray-400"
+                    }`}>
                       {shippingMethod === "Giao hàng sau" && (
                         <span className="w-2 h-2 bg-white rounded-full"></span>
                       )}
                     </span>
-                    <span className="text-white">Giao hàng sau</span>
+                    <span>Giao hàng sau</span>
+                  </label>
+
+                  <label 
+                    className={`flex items-center p-2 border rounded-md cursor-pointer w-full sm:w-auto transition-colors duration-200 ${
+                      shippingMethod === "Giao cho bên vận chuyển" 
+                        ? "bg-blue-500 text-white border-blue-500" 
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="shippingMethod"
+                      value="Giao cho bên vận chuyển"
+                      checked={shippingMethod === "Giao cho bên vận chuyển"}
+                      onChange={() => setShippingMethod("Giao cho bên vận chuyển")}
+                      className="hidden"
+                    />
+                    <span className={`w-5 h-5 border rounded-full mr-2 flex items-center justify-center ${
+                      shippingMethod === "Giao cho bên vận chuyển" ? "border-white" : "border-gray-400"
+                    }`}>
+                      {shippingMethod === "Giao cho bên vận chuyển" && (
+                        <span className="w-2 h-2 bg-white rounded-full"></span>
+                      )}
+                    </span>
+                    <span>Giao cho bên vận chuyển</span>
                   </label>
                 </div>
               </div>
