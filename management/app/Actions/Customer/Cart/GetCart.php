@@ -23,7 +23,7 @@ class GetCart
         try {
             $cart = Cart::with(['items.product'])
                 ->where('user_id', Auth::id())
-                ->where('status', 'pending')
+                ->where('status', $request->status)
                 ->first();
 
             if (!$cart) {

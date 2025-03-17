@@ -2,29 +2,40 @@
 
 namespace App\Http\Controllers\Employees;
 
+use App\Actions\Employee\Order\GetOrders;
+use App\Actions\Employee\Order\CreateOrderFromCart;
+use App\Actions\Employee\Order\UpdateOrderStatus;
+use App\Actions\Employee\Order\UpdatePaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Exception;
+use Illuminate\Http\JsonResponse;
 
 class OrderController extends Controller
 {
-    public function index()
+    private $getOrders;
+    private $createOrderFromCart;
+    private $updateOrderStatus;
+    private $updatePaymentStatus;
+
+    public function __construct(
+        GetOrders $getOrders,
+        CreateOrderFromCart $createOrderFromCart,
+        UpdateOrderStatus $updateOrderStatus,
+        UpdatePaymentStatus $updatePaymentStatus
+    ) {
+        $this->getOrders = $getOrders;
+        $this->createOrderFromCart = $createOrderFromCart;
+        $this->updateOrderStatus = $updateOrderStatus;
+        $this->updatePaymentStatus = $updatePaymentStatus;
+    }
+
+    public function index(): JsonResponse
     {
-        try {
-            $orders = Order::orderBy('createdAt', 'desc')->get();
-            return response()->json([
-                'success' => true,
-                'orders' => $orders
-            ], 200);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage(),
-            ], 500);
-        }
+        return $this->getOrders->execute();
     }
 
     public function store(Request $request)
@@ -157,5 +168,20 @@ class OrderController extends Controller
                 'message' => 'Lỗi hệ thống: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function createFromCart(Request $request): JsonResponse
+    {
+        return $this->createOrderFromCart->execute($request);
+    }
+
+    public function updateStatus(string $id, Request $request): JsonResponse
+    {
+        return $this->updateOrderStatus->execute($id, $request);
+    }
+
+    public function updatePaymentStatus(string $id, Request $request): JsonResponse
+    {
+        return $this->updatePaymentStatus->execute($id, $request);
     }
 } 

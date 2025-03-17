@@ -8,59 +8,36 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::connection('mongodb')->hasTable('orders')) {
-            Schema::connection('mongodb')->drop('orders');
-        }
-
-        Schema::connection('mongodb')->create('orders', function (Blueprint $collection) {
-            $collection->unique(['orderNumber']); // Đảm bảo mã đơn hàng là duy nhất
-            $collection->index('customerId');
+        // Chỉ tạo collection nếu chưa tồn tại
+        if (!Schema::connection('mongodb')->hasTable('orders')) {
+            Schema::connection('mongodb')->create('orders', function (Blueprint $collection) {
+                $collection->unique(['order_number']); // Đảm bảo mã đơn hàng là duy nhất
+                $collection->index('user_id');
+                $collection->index('status');
+                $collection->index('created_at');
+            });
+        } else {
+            // Nếu collection đã tồn tại, chỉ cập nhật indexes
+            $collection = Schema::connection('mongodb')->collection('orders');
+            
+            // Xóa index cũ nếu có
+            try {
+                $collection->dropIndex('orderNumber_1');
+            } catch (\Exception $e) {
+                // Bỏ qua nếu index không tồn tại
+            }
+            
+            // Tạo index mới
+            $collection->unique(['order_number']);
+            $collection->index('user_id');
             $collection->index('status');
-            $collection->index('createdAt');
-           
-        });
-
-        // Tạo đơn hàng mẫu
-        $order = [
-            'orderNumber' => 'DH001',
-            'customerId' => '1',
-            'customerInfo' => [
-                'name' => 'Nguyễn Văn A',
-                'phone' => '0123456789',
-                'address' => 'Hà Nội'
-            ],
-            'items' => [
-                [
-                    'productId' => '1',
-                    'name' => 'Sản phẩm 1',
-                    'price' => 100000,
-                    'quantity' => 2,
-                    'total' => 200000
-                ]
-            ],
-            'totalAmount' => 200000,
-            'discount' => 0,
-            'shippingFee' => 30000,
-            'finalTotal' => 230000,
-            'paymentMethod' => 'COD',
-            'paymentStatus' => 'pending',
-            'shippingMethod' => 'standard',
-            'shippingStatus' => 'pending',
-            'note' => 'Giao hàng giờ hành chính',
-            'status' => 'pending',
-            'staffId' => '1',
-            'staffInfo' => [
-                'name' => 'Nhân viên A'
-            ],
-            'createdAt' => now(),
-            'updatedAt' => now()
-        ];
-
-        \App\Models\Order::create($order);
+            $collection->index('created_at');
+        }
     }
 
     public function down(): void
     {
-        Schema::connection('mongodb')->dropIfExists('orders');
+        // Không xóa collection trong trường hợp rollback
+        // Schema::connection('mongodb')->dropIfExists('orders');
     }
 }; 

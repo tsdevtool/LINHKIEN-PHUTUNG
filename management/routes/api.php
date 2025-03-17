@@ -41,7 +41,7 @@ Route::prefix('client')->group(function () {
 });
 
 Route::prefix('cart')->middleware(AuthMiddleware::class)->group(function () {
-    Route::post('/', [CartController::class,'index']);
+    Route::post('/get', [CartController::class,'index']);
     Route::post('/', [CartController::class,'store'] );
     Route::put('/', [CartController::class,'update']);
     Route::delete('/', [CartController::class,'destroy']);
@@ -109,4 +109,18 @@ Route::prefix('orders')->group(function () {
     Route::post('/', [OrderController::class, 'store']);
     Route::get('/{id}', [OrderController::class, 'show']);
     Route::put('/{id}', [OrderController::class, 'update']);
+});
+
+// Customer Order Routes
+Route::prefix('orders')->middleware(AuthMiddleware::class)->group(function () {
+    Route::post('/create-from-cart', [App\Http\Controllers\Customers\OrderController::class, 'createFromCart']);
+    Route::post('/{id}/cancel', [App\Http\Controllers\Customers\OrderController::class, 'cancel']);
+});
+
+// Employee Order Routes
+Route::prefix('employee/orders')->middleware(AuthMiddleware::class)->group(function () {
+    Route::get('/', [App\Http\Controllers\Employees\OrderController::class, 'index']);
+    Route::post('/create-from-cart', [App\Http\Controllers\Employees\OrderController::class, 'createFromCart']);
+    Route::put('/{id}/status', [App\Http\Controllers\Employees\OrderController::class, 'updateStatus']);
+    Route::put('/{id}/payment-status', [App\Http\Controllers\Employees\OrderController::class, 'updatePaymentStatus']);
 });
