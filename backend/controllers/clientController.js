@@ -62,32 +62,3 @@ export const getChildCategories = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error", error: error.message });
   }
 };
-// Hàm lấy danh sách sản phẩm theo danh mục cha
-export const getProductsByParentCategory = async (req, res) => {
-  try {
-    const parentCategoryId = req.params.parentCategoryId;  // Lấy ID của danh mục cha từ URL
-
-    // Tìm danh mục con thuộc về danh mục cha
-    const childCategories = await Category.find({ parent_id: parentCategoryId });
-
-    // Nếu không tìm thấy danh mục con
-    if (!childCategories || childCategories.length === 0) {
-      return res.status(404).json({ success: false, message: "No child categories found" });
-    }
-
-    // Lấy tất cả sản phẩm thuộc các danh mục con
-    const products = await Product.find({
-      category_id: { $in: childCategories.map(category => category._id) }
-    });
-
-    if (!products || products.length === 0) {
-      return res.status(404).json({ success: false, message: "No products found in these categories" });
-    }
-
-    // Trả về danh sách sản phẩm
-    return res.status(200).json({ success: true, data: products });
-  } catch (error) {
-    console.error("Error fetching products by parent category:", error.message);
-    return res.status(500).json({ success: false, message: "Internal server error", error: error.message });
-  }
-};
