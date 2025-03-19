@@ -7,6 +7,8 @@ use App\Http\Controllers\Customers\HomeController;
 use App\Http\Controllers\Admins\CategoryController;
 use App\Http\Controllers\Admins\ProductController;
 use App\Http\Controllers\Admins\RoleController;
+use App\Http\Controllers\Admins\CustomerAdminController;
+use App\Http\Controllers\Admins\UserControllerAdmin;
 use App\Http\Controllers\Admins\SupplierController;
 use App\Http\Controllers\Admins\EmployeeController;
 use App\Http\Controllers\Customers\ClientController;
@@ -34,9 +36,9 @@ Route::prefix('home')->group(function () {
 
 Route::prefix('client')->group(function () {
     Route::get('/{id}/detail-product', [ClientController::class, 'showDetailProduct']);
-    
+
     Route::get('/{category_id}/get-all', [ClientController::class, 'showListProductFollowCategory']);
-    
+
     Route::get('/{category_id}/category', [ClientController::class, 'showListProductFollowChildCategory']);
 });
 
@@ -80,11 +82,11 @@ Route::prefix('customers')->group(function () {
     Route::delete('/{id}', [CustomerController::class, 'destroy']);
 });
 
-Route::controller(UserController::class)->group(function () {
-    Route::get('v1/users', [UserController::class,'index']);
-    Route::get('v1/user/{_id}', [UserController::class,'show']);
-    Route::delete('v1/user/delete/{_id}', [UserController::class,'destroy']);
-});
+// Route::controller(UserController::class)->group(function () {
+//     Route::get('v1/users', [UserController::class,'index']);
+//     Route::get('v1/user/{_id}', [UserController::class,'show']);
+//     Route::delete('v1/user/delete/{_id}', [UserController::class,'destroy']);
+// });
 
 Route::controller(SupplierController::class)->group(function () {
     Route::get('v1/suppliers', [SupplierController::class,'index']);
@@ -94,15 +96,48 @@ Route::controller(SupplierController::class)->group(function () {
     Route::delete('v1/supplier/delete/{_id}', [SupplierController::class,'destroy']);
 });
 
-Route::get('employees', [EmployeeController::class, 'index']);
+// Route::get('employees', [EmployeeController::class, 'index']);
+// Route::delete('employees/{_id}', [EmployeeController::class, 'deleteEmploy']);
+// Route::post('/employees', [EmployeeController::class, 'addEmploy']);
+// Route::put('employees/{_id}', [EmployeeController::class, 'unDeleteEmploy']);
+// Route::put('employees/{_id}', [EmployeeController::class, 'updateEmployee']);
+Route::prefix('employees')->group(function () {
+    Route::get('/', [EmployeeController::class, 'index']);
+    Route::post('/', [EmployeeController::class, 'addEmploy']);
+    Route::get('/{_id}', [EmployeeController::class, 'GetEmployee']);
+    Route::delete('/{_id}', [EmployeeController::class, 'deleteEmploy']);
+    Route::put('/{_id}', [EmployeeController::class, 'updateEmployee']);
+    Route::put('/{_id}/undelete', [EmployeeController::class, 'unDeleteEmploy']);
+});
+Route::prefix('customersadmin')->group(function () {
+    Route::get('/active', [CustomerAdminController::class, 'GetAllCustomer']);
+    Route::get('/unactive', [CustomerAdminController::class, 'GetAllCustomer_unActive']);
+    Route::put('/status/{_id}/{type}', [CustomerAdminController::class, 'Block_Active']);
+});
+
+Route::prefix('roles')->group(function () {
+    Route::post('/', [RoleController::class, 'addRole']);
+    Route::put('/delete/{_id}', [RoleController::class, 'deleRole']);
+    Route::put('/undelete/{_id}', [RoleController::class, 'undeleRole']);
+    Route::get('/', [RoleController::class, 'GetAll']);
+    Route::get('/nodele', [RoleController::class, 'GetAllnoDele']);
+    Route::put('/update/{_id}', [RoleController::class, 'UpdateRole']);
+
+});
+Route::prefix('users')->group(function () {
+    Route::get('/employees', [UserControllerAdmin::class, 'getAllEmployee']);
+    Route::post('/employees/add', [UserControllerAdmin::class, 'AddEmployee']);
+});
+
 // Route::post('employee',[EmployeeController::class,'upload']);
 
-Route::controller(RoleController::class)->group(function () {
-    Route::get('v1/roles', 'index');
-    Route::post('v1/roles', 'store');
-    Route::put('v1/roles/edit/{_id}', 'update');
-    Route::delete('v1/roles/delete/{_id}', 'destroy');
-});
+// Route::controller(RoleController::class)->group(function () {
+//     Route::get('v1/roles', 'index');
+//     Route::post('v1/roles', 'store');
+//     Route::put('v1/roles/edit/{_id}', 'update');
+//     Route::delete('v1/roles/delete/{_id}', 'destroy');
+//     Route::post('v1/roles', 'store');
+// });
 
 Route::prefix('orders')->group(function () {
     Route::get('/', [OrderController::class, 'index']);
