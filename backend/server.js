@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.route.js";
+import clientRoutes from "./routes/client.route.js";
 
 import { connectDB } from "./config/db.js";
 import { ENV_VARS } from "./config/envVars.js";
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api", clientRoutes); //client
 
 app.listen(PORT, () => {
   console.log("Server is running on port ", PORT);
