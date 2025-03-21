@@ -125,8 +125,13 @@ Route::prefix('roles')->group(function () {
 
 });
 Route::prefix('users')->group(function () {
-    Route::get('/employees', [UserControllerAdmin::class, 'getAllEmployee']);
-    Route::post('/employees/add', [UserControllerAdmin::class, 'AddEmployee']);
+    Route::get('/employees', [UserControllerAdmin::class, 'getAllEmployee']);//lấy all
+    Route::get('/employees/{_id}', [UserControllerAdmin::class, 'getEmployeeByID']);//lấy theo id
+    Route::post('/employees/add', [UserControllerAdmin::class, 'AddEmployee']);//add thêm nhân viên
+    Route::post('/employees/search', [UserControllerAdmin::class, 'getEmployee']);//get nhân viên theo tên hoặc theo idrole
+    Route::put('/employees/update/{_id}', [UserControllerAdmin::class, 'UpdateEmployee']);//chỉnh sửa
+    Route::delete('/employees/{_id}', [UserControllerAdmin::class, 'DeleteEmployee']);//delete theo id
+
 });
 
 // Route::post('employee',[EmployeeController::class,'upload']);
