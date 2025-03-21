@@ -12,6 +12,11 @@ class Role extends \MongoDB\Laravel\Eloquent\Model
     protected $collection = 'roles';
 
     protected $fillable = [
-        'name',
+        'name','created_at','deleted_at','updated_at'
+    ];
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 }

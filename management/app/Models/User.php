@@ -16,7 +16,11 @@ class User extends \MongoDB\Laravel\Eloquent\Model implements Authenticatable
     protected $connection = 'mongodb';
     protected $collection = 'users';
     protected $fillable = [
-       'firstname','lastname','phone', 'password','image','numberOfOrder'
+       'firstname','lastname','phone', 'username','password',
+        'address','image',
+        'numberOfOrder','numberOfOrders','totalSpent',
+        'idrole','status',
+        'created_at', 'updated_at','deleted_at'
     ];
     protected $hidden = [
         'password',
@@ -74,4 +78,12 @@ class User extends \MongoDB\Laravel\Eloquent\Model implements Authenticatable
     {
         return null;
     }
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+        'numberOfOrders' => 'integer',
+        'totalSpent' => 'float',
+        'phone'=>'string'
+    ];
 }
