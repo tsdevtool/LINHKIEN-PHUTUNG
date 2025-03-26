@@ -49,7 +49,7 @@ const OrderList = () => {
 
         const processedOrder = {
           _id: order._id || order.id, // Thử lấy id từ cả hai trường
-          orderNumber: order.orderNumber,
+          order_number: order.order_number || order.orderNumber, // Sử dụng cả hai trường
           customerInfo: {
             name: customerInfo?.name || 'Không có tên',
             phone: customerInfo?.phone || 'Không có SĐT',
@@ -160,7 +160,7 @@ const OrderList = () => {
     // Lọc theo search
     const searchLower = searchTerm.toLowerCase();
     return (
-      order.orderNumber?.toLowerCase().includes(searchLower) ||
+      order.order_number?.toLowerCase().includes(searchLower) ||
       order.customerInfo?.name?.toLowerCase().includes(searchLower) ||
       order.customerInfo?.phone?.includes(searchTerm)
     );
@@ -304,7 +304,7 @@ const OrderList = () => {
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.orderNumber}
+                      {order.order_number}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {order.staffInfo?.name || 'Admin'}

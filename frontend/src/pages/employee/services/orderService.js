@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'http://localhost:3000/api/v1';
 
 // Tạo instance của axios với cấu hình mặc định
 const axiosInstance = axios.create({
@@ -17,7 +17,25 @@ class OrderService {
             // Log request data
             console.log('Creating order with data:', orderData);
             
-            const response = await axiosInstance.post('/orders', orderData);
+            // Format data before sending
+            const { orderNumber, ...orderDataWithoutNumber } = orderData; // Loại bỏ orderNumber
+            
+            const formattedData = {
+                ...orderDataWithoutNumber,
+                // Ensure staffId is a string
+                staffId: typeof orderData.staffId === 'object' ? orderData.staffId.id || orderData.staffId._id : orderData.staffId,
+                // Ensure customerInfo has all required fields
+                customerInfo: {
+                    ...orderData.customerInfo,
+                    address: orderData.customerInfo.address || 'Chưa cập nhật'
+                },
+                // Map payment method to accepted values
+                paymentMethod: this.mapPaymentMethod(orderData.paymentMethod)
+            };
+            
+            console.log('Formatted data:', formattedData);
+            
+            const response = await axiosInstance.post('/orders', formattedData);
             console.log('API Response:', response);
             
             // Kiểm tra response
@@ -45,6 +63,21 @@ class OrderService {
                 'Có lỗi xảy ra khi tạo đơn hàng'
             );
         }
+    }
+
+    // Map payment method from UI to acceptable values in model
+    mapPaymentMethod(method) {
+        const mapping = {
+            'Tiền mặt': 'cash',
+            'Chuyển khoản': 'bank_transfer',
+            'Thẻ tín dụng': 'credit_card',
+            'Ví Momo': 'momo',
+            'ZaloPay': 'zalopay',
+            'VNPay': 'vnpay',
+            'COD (Thu hộ)': 'cod'
+        };
+        
+        return mapping[method] || method;
     }
 
     async getOrders() {

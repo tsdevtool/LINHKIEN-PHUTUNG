@@ -70,18 +70,11 @@ const NewOrder = () => {
             throw new Error('Vui lòng chọn ít nhất một sản phẩm');
         }
 
-        // Tạo mã đơn hàng với UUID
-        const now = new Date();
-        const uuid = uuidv4().split('-')[0]; // Lấy 8 ký tự đầu của UUID
-        const orderNumber = `DH${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${uuid}`;
-
         // Log thông tin trước khi tạo đơn hàng
-        console.log('Generated Order Number:', orderNumber);
         console.log('Selected customer:', selectedCustomer);
         console.log('Selected products:', selectedProducts);
 
         const orderData = {
-            orderNumber,
             customerId: selectedCustomer._id,
             customerInfo: {
                 name: selectedCustomer.name,
