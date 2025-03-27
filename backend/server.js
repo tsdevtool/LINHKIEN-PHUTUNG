@@ -20,9 +20,7 @@ app.use(cookieParser());
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/orders", orderRoutes);
-
-
-
+app.use("/api/orders", orderRoutes);
 
 app.listen(PORT, () => {
   console.log("Server is running on port ", PORT);

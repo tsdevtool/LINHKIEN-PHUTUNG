@@ -60,8 +60,8 @@ const orderSchema = new mongoose.Schema({
         type: String,
         required: true,
         enum: [
-            'cash', 'bank_transfer', 'credit_card', 'momo', 'zalopay', 'vnpay', 'cod',
-            'Tiền mặt', 'Chuyển khoản', 'Thẻ tín dụng', 'Ví Momo', 'ZaloPay', 'VNPay', 'COD (Thu hộ)'
+            'cash', 'bank_transfer', 'credit_card', 'momo', 'zalopay', 'vnpay', 'cod', 'payos',
+            'Tiền mặt', 'Chuyển khoản', 'Thẻ tín dụng', 'Ví Momo', 'ZaloPay', 'VNPay', 'COD (Thu hộ)', 'PayOS'
         ]
     },
     paymentStatus: {
@@ -90,6 +90,16 @@ const orderSchema = new mongoose.Schema({
     },
     staffInfo: {
         name: { type: String, required: true }
+    },
+    paymentInfo: {
+        provider: String,
+        paymentId: String,
+        status: {
+            type: String,
+            enum: ['pending', 'paid', 'failed', 'cancelled']
+        },
+        transactionId: String,
+        paidAt: Date
     }
 }, {
     timestamps: true
