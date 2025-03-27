@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api/v1';
+const API_URL = import.meta.env.VITE_BACKEND_URL + '/api/v1';
 
 // Tạo instance của axios với cấu hình mặc định
 const axiosInstance = axios.create({

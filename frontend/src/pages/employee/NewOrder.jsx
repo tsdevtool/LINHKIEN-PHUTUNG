@@ -8,6 +8,7 @@ import { useOrder } from "./hooks/useOrder";
 import { useCustomer } from "./hooks/useCustomer";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
 
 const NewOrder = () => {
   const {
@@ -94,17 +95,22 @@ const NewOrder = () => {
             finalTotal: parseFloat(finalTotal),
             paymentMethod,
             paymentStatus: (() => {
-                // Nếu chọn "Đã thanh toán" hoặc các phương thức thanh toán trực tiếp
+                // Nếu là PayOS, luôn để pending cho đến khi thanh toán thành công
+                if (paymentMethod === "PayOS") {
+                    return "pending";
+                }
+                
+                // Nếu chọn các phương thức thanh toán trực tiếp
                 if (
                     paymentMethod === "Tiền mặt" || 
                     paymentMethod === "Chuyển khoản" ||
-                    paymentMethod === "Momo" ||
+                    paymentMethod === "Ví Momo" ||
                     paymentMethod === "ZaloPay" ||
                     paymentMethod === "VNPay") {
                     return "paid";
                 }
                 // Nếu là thanh toán sau hoặc COD
-                if (paymentMethod === "Thanh toán sau" || paymentMethod === "COD") {
+                if (paymentMethod === "Thanh toán sau" || paymentMethod === "COD (Thu hộ)") {
                     return "pending";
                 }
                 return "unpaid";
@@ -128,12 +134,16 @@ const NewOrder = () => {
                 role: 'employee'
             },
             status: (() => {
+                // Nếu là PayOS, luôn để pending cho đến khi thanh toán thành công
+                if (paymentMethod === "PayOS") {
+                    return "pending";
+                }
+                
                 // Nếu đã giao hàng và đã thanh toán -> completed
                 if (shippingMethod === "Đã giao hàng" && 
-                    (paymentMethod === "Đã thanh toán" || 
-                     paymentMethod === "Tiền mặt" || 
+                    (paymentMethod === "Tiền mặt" || 
                      paymentMethod === "Chuyển khoản" ||
-                     paymentMethod === "Momo" ||
+                     paymentMethod === "Ví Momo" ||
                      paymentMethod === "ZaloPay" ||
                      paymentMethod === "VNPay")) {
                     return "completed";
@@ -154,6 +164,30 @@ const NewOrder = () => {
         console.log('Submitting order with data:', orderData);
         const response = await createOrder(orderData);
         console.log('Order creation successful:', response);
+
+        // Nếu phương thức thanh toán là PayOS, tạo payment link
+        if (paymentMethod === "PayOS") {
+            try {
+                console.log('Creating payment link for order:', response.order);
+                const orderId = response.order?._id || response.order?.id;
+                if (!orderId) {
+                    throw new Error('Không tìm thấy ID đơn hàng');
+                }
+                
+                const paymentResponse = await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/${orderId}/payment`
+                );
+                console.log('Payment link created:', paymentResponse.data);
+                
+                // Chuyển hướng người dùng đến trang thanh toán PayOS
+                window.location.href = paymentResponse.data.paymentUrl;
+                return;
+            } catch (error) {
+                console.error('Error creating payment link:', error);
+                toast.error('Không thể tạo link thanh toán PayOS');
+                // Vẫn tiếp tục flow bình thường nếu có lỗi
+            }
+        }
 
         // Hiển thị thông báo thành công
         toast.success('Tạo đơn hàng thành công!');
@@ -447,13 +481,15 @@ const NewOrder = () => {
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                 >
-                  <option value="">Chọn phương thức thanh toán *</option>
+                  <option value="">Chọn phương thức thanh toán</option>
                   <option value="Tiền mặt">Tiền mặt</option>
-                  <option value="Chuyển khoản">Chuyển khoản ngân hàng</option>
+                  <option value="Chuyển khoản">Chuyển khoản</option>
+                  <option value="PayOS">PayOS</option>
                   <option value="Momo">Ví Momo</option>
                   <option value="ZaloPay">ZaloPay</option>
                   <option value="VNPay">VNPay</option>
-                  <option value="COD">COD (Thu hộ)</option>
+                  <option value="COD (Thu hộ)">COD (Thu hộ)</option>
+                  <option value="Thanh toán sau">Thanh toán sau</option>
                 </select>
               </div>
             </div>

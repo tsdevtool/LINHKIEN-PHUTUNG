@@ -4,6 +4,7 @@ import { ArrowLeft, Printer, MoreHorizontal, CheckCircle2, Truck, CreditCard, XC
 import orderService from './services/orderService';
 import productService from './services/productService';
 import { toast } from 'react-hot-toast';
+import axios from 'axios';
 
 const OrderDetail = () => {
   const { id } = useParams();
@@ -119,22 +120,36 @@ const OrderDetail = () => {
         type: 'payment',
         title: 'Thanh toán thành công',
         description: `Thanh toán qua ${orderData.paymentMethod}`,
-        timestamp: orderData.updatedAt,
+        timestamp: orderData.paymentInfo?.paidAt || orderData.updatedAt,
         icon: CreditCard,
         color: 'green'
       });
     }
 
-    // Thêm sự kiện vận chuyển hoặc nhận tại cửa hàng
-    if (orderData.shippingMethod === "Nhận tại cửa hàng") {
+    // Thêm sự kiện xác nhận đơn nếu đã xác nhận
+    if (orderData.status === 'confirmed') {
       history.push({
-        type: 'completed',
-        title: 'Đã xử lý',
-        description: 'Khách hàng đã nhận hàng tại cửa hàng',
+        type: 'confirmed',
+        title: 'Đã xác nhận đơn',
+        description: 'Đơn hàng đã được xác nhận',
         timestamp: orderData.updatedAt,
         icon: CheckCircle2,
-        color: 'green'
+        color: 'blue'
       });
+    }
+
+    // Thêm sự kiện vận chuyển hoặc nhận tại cửa hàng
+    if (orderData.shippingMethod === "Nhận tại cửa hàng") {
+      if (orderData.paymentStatus === 'paid') {
+        history.push({
+          type: 'completed',
+          title: 'Đã xử lý',
+          description: 'Khách hàng đã nhận hàng tại cửa hàng',
+          timestamp: orderData.updatedAt,
+          icon: CheckCircle2,
+          color: 'green'
+        });
+      }
     } else {
       if (orderData.shippingStatus === 'shipping') {
         history.push({
@@ -143,7 +158,7 @@ const OrderDetail = () => {
           description: 'Đơn hàng đã được giao cho đơn vị vận chuyển',
           timestamp: orderData.updatedAt,
           icon: Truck,
-          color: 'yellow'
+          color: 'orange'
         });
       }
       if (orderData.shippingStatus === 'delivered') {
@@ -192,8 +207,13 @@ const OrderDetail = () => {
   const handleUpdateShippingStatus = async () => {
     try {
       console.log('Updating shipping status for order:', order);
+      const orderId = order?._id || order?.id;
       
-      const response = await orderService.updateOrder(order.id, {
+      if (!orderId) {
+        throw new Error('Không tìm thấy ID đơn hàng');
+      }
+      
+      const response = await orderService.updateOrder(orderId, {
         ...order,
         shippingStatus: 'shipping'
       });
@@ -227,8 +247,13 @@ const OrderDetail = () => {
   const handleConfirmDelivery = async () => {
     try {
       console.log('Confirming delivery for order:', order);
+      const orderId = order?._id || order?.id;
       
-      const response = await orderService.updateOrder(order.id, {
+      if (!orderId) {
+        throw new Error('Không tìm thấy ID đơn hàng');
+      }
+      
+      const response = await orderService.updateOrder(orderId, {
         ...order,
         shippingStatus: 'delivered',
         status: 'completed'
@@ -269,7 +294,7 @@ const OrderDetail = () => {
         <!DOCTYPE html>
         <html>
         <head>
-          <title>Đơn hàng ${order.orderNumber}</title>
+          <title>Đơn hàng #${order.order_number || order.orderNumber}</title>
           <meta charset="UTF-8">
           <style>
             body {
@@ -325,20 +350,32 @@ const OrderDetail = () => {
           <div class="header">
             <img src="/logo.png" alt="Logo" class="logo">
             <div>
-              <h1>ĐƠN HÀNG ${order.orderNumber}</h1>
+              <h1>ĐƠN HÀNG #${order.order_number || order.orderNumber}</h1>
               <p>Ngày tạo: ${formatDate(order.createdAt)}</p>
             </div>
           </div>
 
           <div class="order-info">
             <p><strong>Trạng thái:</strong> ${
-              order.shippingMethod === "Nhận tại cửa hàng" && order.paymentStatus === "paid"
-                ? "Đã xử lý"
+              order.shippingMethod === "Nhận tại cửa hàng"
+                ? order.paymentStatus === "paid"
+                  ? "Đã xử lý"
+                  : order.status === 'completed'
+                  ? 'Hoàn thành'
+                  : order.status === 'cancelled'
+                  ? 'Đã hủy'
+                  : 'Chưa xử lý'
+                : order.status === 'pending'
+                ? "bg-yellow-50 text-yellow-800"
+                : order.status === 'confirmed'
+                ? "bg-blue-50 text-blue-800"
+                : order.status === 'shipping'
+                ? "bg-orange-50 text-orange-800"
                 : order.status === 'completed'
-                ? 'Hoàn thành'
+                ? "bg-green-50 text-green-800"
                 : order.status === 'cancelled'
-                ? 'Đã hủy'
-                : 'Chưa xử lý'
+                ? "bg-red-50 text-red-800"
+                : "bg-gray-50 text-gray-800"
             }</p>
             <p><strong>Phương thức thanh toán:</strong> ${order.paymentMethod}</p>
             <p><strong>Phương thức vận chuyển:</strong> ${order.shippingMethod}</p>
@@ -406,6 +443,25 @@ const OrderDetail = () => {
     }
   };
 
+  const handleRepayment = async () => {
+    try {
+      console.log('Creating payment link for order:', order);
+      const orderId = order?._id || order?.id;
+      if (!orderId) {
+        throw new Error('Không tìm thấy ID đơn hàng');
+      }
+
+      const paymentResponse = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/${orderId}/payment`
+      );
+      console.log('Payment link created:', paymentResponse.data);
+      window.location.href = paymentResponse.data.paymentUrl;
+    } catch (error) {
+      console.error('Error creating payment link:', error);
+      toast.error('Không thể tạo link thanh toán PayOS');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -449,7 +505,7 @@ const OrderDetail = () => {
               </button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {order.orderNumber || 'Không có mã đơn hàng'}
+                  Đơn hàng #{order.order_number || order.orderNumber || 'Không có mã đơn hàng'}
                 </h1>
                 <p className="text-sm text-gray-500">
                   Tạo lúc: {formatDate(order.createdAt)}
@@ -491,18 +547,32 @@ const OrderDetail = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    order.shippingMethod === "Nhận tại cửa hàng" && order.paymentStatus === "paid"
-                      ? "bg-green-50 text-green-800"
+                    order.shippingMethod === "Nhận tại cửa hàng"
+                      ? order.paymentStatus === "paid"
+                        ? "bg-green-50 text-green-800"
+                        : "bg-yellow-50 text-yellow-800"
+                      : order.status === 'pending'
+                      ? "bg-yellow-50 text-yellow-800"
+                      : order.status === 'confirmed'
+                      ? "bg-blue-50 text-blue-800"
+                      : order.status === 'shipping'
+                      ? "bg-orange-50 text-orange-800"
                       : order.status === 'completed'
                       ? "bg-green-50 text-green-800"
                       : order.status === 'cancelled'
                       ? "bg-red-50 text-red-800"
-                      : "bg-yellow-50 text-yellow-800"
+                      : "bg-gray-50 text-gray-800"
                   }`}>
-                    {order.shippingMethod === "Nhận tại cửa hàng" && order.paymentStatus === "paid"
-                      ? "Đã xử lý"
+                    {order.shippingMethod === "Nhận tại cửa hàng"
+                      ? order.paymentStatus === "paid"
+                        ? "Đã xử lý"
+                        : "Chờ thanh toán"
                       : order.status === 'pending'
-                      ? 'Chưa xử lý'
+                      ? 'Chờ xử lý'
+                      : order.status === 'confirmed'
+                      ? 'Đã xác nhận'
+                      : order.status === 'shipping'
+                      ? 'Đang giao'
                       : order.status === 'completed'
                       ? 'Hoàn thành'
                       : order.status === 'cancelled'
@@ -622,6 +692,64 @@ const OrderDetail = () => {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* Payment Status Section */}
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-xl font-semibold mb-4">Thông tin thanh toán</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-gray-600">Phương thức thanh toán:</p>
+                  <p className="font-medium">{order.paymentMethod}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Trạng thái thanh toán:</p>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded-full text-sm ${
+                      order.paymentStatus === 'paid' 
+                        ? 'bg-green-100 text-green-800'
+                        : order.paymentStatus === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {order.paymentStatus === 'paid' 
+                        ? 'Đã thanh toán'
+                        : order.paymentStatus === 'pending'
+                        ? 'Chờ thanh toán'
+                        : 'Chưa thanh toán'}
+                    </span>
+                    
+                    {/* Hiển thị nút thanh toán lại cho PayOS */}
+                    {order.paymentMethod === 'PayOS' && 
+                     order.paymentStatus !== 'paid' && (
+                      <button
+                        onClick={handleRepayment}
+                        className="ml-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+                      >
+                        Thanh toán lại
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Hiển thị thông tin thanh toán PayOS nếu có */}
+                {order.paymentStatus === 'paid' && (
+                  <>
+                    <div>
+                      <p className="text-gray-600">Mã giao dịch:</p>
+                      <p className="font-medium">{order.transactionId || order.paymentInfo?.transactionId || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Thời gian thanh toán:</p>
+                      <p className="font-medium">
+                        {order.paidAt || order.paymentInfo?.paidAt 
+                          ? formatDate(order.paidAt || order.paymentInfo?.paidAt)
+                          : 'N/A'}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

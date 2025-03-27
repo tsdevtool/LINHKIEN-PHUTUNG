@@ -31,12 +31,14 @@ import OrderPage from "./pages/employee/OrderPage";
 import NewOrder from "./pages/employee/NewOrder";
 import OrderList from "./pages/employee/OrderList";
 import EditOrder from './pages/employee/EditOrder';
+import OrderDetail from "./pages/employee/OrderDetail";
+import PaymentSuccess from "./pages/employee/payment/PaymentSuccess";
+import PaymentCancel from "./pages/employee/payment/PaymentCancel";
 
 // UI Components
 import Loading from "./components/ui/Loading";
 import Footer from "./components/Footer";
 import CategoriesTreeSection from "./pages/admin/categories/CategoriesTreeSection";
-import OrderDetail from "./pages/employee/OrderDetail";
 
 function App() {
   const { user, isCheckingAuth, authCheck } = useAuthStore();
@@ -65,6 +67,8 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/payment/qr" element={<PaymentQRPage />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/cancel" element={<PaymentCancel />} />
         <Route path="/order-success" element={<OrderSuccessPage />} />
         <Route path="/orders" element={<OrderStatusPage />} />
 
@@ -77,8 +81,8 @@ function App() {
                 <Route path="" element={<OrderList />} />
                 <Route path="orders" element={<OrderList />} />
                 <Route path="orders/new" element={<NewOrder />} />
-                <Route path="/orders/:id" element={<OrderDetail />} />
-                <Route path="/orders/:id/edit" element={<EditOrder />} />
+                <Route path="orders/:id" element={<OrderDetail />} />
+                <Route path="orders/:id/edit" element={<EditOrder />} />
               </Routes>
             </EmployeeLayout>
           }

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const NODE_API_URL = 'http://localhost:3000/api/v1';
+const NODE_API_URL = import.meta.env.VITE_BACKEND_URL + '/api/v1';
 const PHP_API_URL = 'http://localhost:8000/api';
 
 class OrderRepository {
