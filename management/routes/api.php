@@ -131,6 +131,7 @@ Route::prefix('users')->group(function () {
     Route::post('/employees/search', [UserControllerAdmin::class, 'getEmployee']);//get nhân viên theo tên hoặc theo idrole
     Route::put('/employees/update/{_id}', [UserControllerAdmin::class, 'UpdateEmployee']);//chỉnh sửa
     Route::delete('/employees/{_id}', [UserControllerAdmin::class, 'DeleteEmployee']);//delete theo id
+    Route::put('/employees/undelete/{_id}', [UserControllerAdmin::class, 'UnDeleteEmployee']);
 
 });
 
