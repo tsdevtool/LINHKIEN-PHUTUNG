@@ -2,21 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
-class Role extends \MongoDB\Laravel\Eloquent\Model
+class Role extends Model
 {
-    use HasFactory;
     protected $connection = 'mongodb';
     protected $collection = 'roles';
 
     protected $fillable = [
-        'name','created_at','deleted_at','updated_at'
+        'name',
     ];
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime'
-    ];
+
+    public function users()
+    {
+        return $this->hasMany(User::class, 'idrole', '_id');
+    }
 }

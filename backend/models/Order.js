@@ -66,8 +66,8 @@ const orderSchema = new mongoose.Schema({
     },
     paymentStatus: {
         type: String,
-        default: 'unpaid',
-        enum: ['paid', 'unpaid', 'partially_paid', 'Đã thanh toán', 'Chưa thanh toán', 'Thanh toán một phần']
+        default: 'pending',
+        enum: ['paid', 'unpaid', 'pending', 'partially_paid', 'Đã thanh toán', 'Chưa thanh toán', 'Thanh toán một phần', 'Chờ thanh toán']
     },
     shippingMethod: {
         type: String,

@@ -1,6 +1,6 @@
 // Core React and Third-party imports
 import { useEffect } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 // Store/State Management
@@ -20,6 +20,8 @@ import PaymentQRPage from "./pages/payment/PaymentQRPage";
 import OrderSuccessPage from "./pages/order/OrderSuccessPage";
 import OrderStatusPage from "./pages/order/OrderStatusPage";
 import NotFound from "./pages/404/NotFound";
+import UnauthorizedPage from "./pages/401/UnauthorizedPage";
+import SettingPage from "./pages/setting/SettingPage";
 
 // Admin Components
 import DashBoardSection from "./pages/admin/dashboard/DashBoardSection";
@@ -39,20 +41,26 @@ import PaymentCancel from "./pages/employee/payment/PaymentCancel";
 import Loading from "./components/ui/Loading";
 import Footer from "./components/Footer";
 import CategoriesTreeSection from "./pages/admin/categories/CategoriesTreeSection";
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
-  const { user, isCheckingAuth, authCheck } = useAuthStore();
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    authCheck();
-  }, [authCheck]);
-
-  // Using a constant instead of state since setIsAdmin is never used
-  const isAdmin = true;
-
-  if (isCheckingAuth) {
-    return <Loading />;
-  }
+    // Only redirect on initial login
+    if (user && location.pathname === '/auth/login') {
+      const role = user.role?.name?.toLowerCase() || '';
+      if (role === 'admin') {
+        navigate('/admin');
+      } else if (role === 'employee') {
+        navigate('/employee');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [user, navigate, location.pathname]);
 
   return (
     <>
@@ -60,8 +68,8 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<HomePage />} />
         <Route
-          path="/auth"
-          element={!user ? <AuthPage /> : <Navigate to="/" />}
+          path="/auth/login"
+          element={!user ? <AuthPage /> : <Navigate to="/" replace />}
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/cart" element={<CartPage />} />
@@ -71,20 +79,35 @@ function App() {
         <Route path="/payment/cancel" element={<PaymentCancel />} />
         <Route path="/order-success" element={<OrderSuccessPage />} />
         <Route path="/orders" element={<OrderStatusPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+        {/* Protected Setting Route */}
+        <Route
+          path="/setting/:id"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'employee', 'customer']}>
+              <SettingPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Employee routes */}
         <Route
           path="/employee/*"
           element={
-            <EmployeeLayout>
-              <Routes>
-                <Route path="" element={<OrderList />} />
-                <Route path="orders" element={<OrderList />} />
-                <Route path="orders/new" element={<NewOrder />} />
-                <Route path="orders/:id" element={<OrderDetail />} />
-                <Route path="orders/:id/edit" element={<EditOrder />} />
-              </Routes>
-            </EmployeeLayout>
+            <ProtectedRoute allowedRoles={['admin', 'employee']}>
+              <EmployeeLayout>
+                <Routes>
+                  <Route index element={<OrderList />} />
+                  <Route path="orders">
+                    <Route index element={<OrderList />} />
+                    <Route path="new" element={<NewOrder />} />
+                    <Route path=":id" element={<OrderDetail />} />
+                    <Route path=":id/edit" element={<EditOrder />} />
+                  </Route>
+                </Routes>
+              </EmployeeLayout>
+            </ProtectedRoute>
           }
         />
 
@@ -92,27 +115,22 @@ function App() {
         <Route
           path="/admin/*"
           element={
-            isAdmin ? (
+            <ProtectedRoute allowedRoles={['admin']}>
               <AdminLayout>
                 <Routes>
-                  <Route path="" element={<DashBoardSection />} />
+                  <Route index element={<DashBoardSection />} />
                   <Route path="products" element={<ProductsSection />} />
                   <Route path="categories" element={<CategoriesSection />} />
-                  <Route
-                    path="categories-tree"
-                    element={<CategoriesTreeSection />}
-                  />
+                  <Route path="categories-tree" element={<CategoriesTreeSection />} />
                   <Route path="products/list" element={<ProductsSection />} />
                 </Routes>
               </AdminLayout>
-            ) : (
-              <Navigate to="/" />
-            )
+            </ProtectedRoute>
           }
         />
 
         {/* Catch-all route */}
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<Navigate to="/auth/login" replace />} />
       </Routes>
       <Footer />
       <Toaster />
