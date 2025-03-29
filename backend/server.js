@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.route.js";
 import roles from "./routes/role.route.js";
 import employees from "./routes/useradmin.route.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
 import { connectDB } from "./config/db.js";
 import { ENV_VARS } from "./config/envVars.js";
@@ -18,6 +19,10 @@ app.use(cookieParser());
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/roles", roles);
 app.use("/api/v1/employees", employees);
+app.use("/api/v1/roles", roles);
+app.use("/api/v1/employees", employees);
+app.use("/api/v1/orders", orderRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.listen(PORT, () => {
   console.log("Server is running on port ", PORT);
