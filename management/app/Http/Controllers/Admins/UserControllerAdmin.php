@@ -21,7 +21,7 @@ class UserControllerAdmin extends Controller
 
             //$roleIds = Role::where('name','!=' ,'customer')->pluck('_id');
             $roles = Role::select('_id')
-                ->where('name', '!=', 'customer')
+                ->where('name', '!=', 'CUSTOMER')
                 ->get();
             // $roles: Collection các Role, mỗi role chỉ có trường _id
             $roleIds = $roles->map(fn($role) => $role->_id);
@@ -252,6 +252,26 @@ class UserControllerAdmin extends Controller
             $em->update([
                 'status' => false,
                 'deleted_at'=>now()
+            ]);
+            return response()->json([
+                'status'  => 201,
+                'message' => 'Cập nhật dữ liệu thành công.'
+            ], 201);
+        }
+    }
+    public function UnDeleteEmployee($_id)
+    {
+        $em = User::find($_id);
+        if(!$em)
+        {
+            return response()->json([
+                'status'  => 404,
+                'message' => 'Không tìm thấy nhân viên.'
+            ], 404);
+        }else{
+            $em->update([
+                'status' => true,
+                'deleted_at'=> null
             ]);
             return response()->json([
                 'status'  => 201,
