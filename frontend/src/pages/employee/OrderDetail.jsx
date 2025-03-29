@@ -151,22 +151,25 @@ const OrderDetail = () => {
         });
       }
     } else {
-      if (orderData.shippingStatus === 'shipping') {
+      // Thêm sự kiện đẩy vận chuyển (luôn giữ lại nếu đã có)
+      if (orderData.shippingStatus === 'shipping' || orderData.shippingStatus === 'delivered') {
         history.push({
           type: 'shipping',
           title: 'Đang vận chuyển',
           description: 'Đơn hàng đã được giao cho đơn vị vận chuyển',
-          timestamp: orderData.updatedAt,
+          timestamp: orderData.shippingUpdatedAt || orderData.updatedAt, // Sử dụng thời gian cập nhật vận chuyển nếu có
           icon: Truck,
           color: 'orange'
         });
       }
+
+      // Thêm sự kiện giao hàng thành công
       if (orderData.shippingStatus === 'delivered') {
         history.push({
           type: 'delivered',
           title: 'Đã giao hàng',
           description: 'Đơn hàng đã được giao thành công',
-          timestamp: orderData.updatedAt,
+          timestamp: orderData.deliveredAt || orderData.updatedAt, // Sử dụng thời gian giao hàng nếu có
           icon: CheckCircle2,
           color: 'green'
         });
@@ -213,9 +216,12 @@ const OrderDetail = () => {
         throw new Error('Không tìm thấy ID đơn hàng');
       }
       
+      const currentTime = new Date().toISOString();
       const response = await orderService.updateOrder(orderId, {
         ...order,
-        shippingStatus: 'shipping'
+        shippingStatus: 'shipping',
+        shippingUpdatedAt: currentTime,
+        updatedAt: currentTime
       });
 
       console.log('Update response:', response);
@@ -224,18 +230,14 @@ const OrderDetail = () => {
         const updatedOrder = {
           ...order,
           shippingStatus: 'shipping',
-          updatedAt: new Date().toISOString()
+          shippingUpdatedAt: currentTime,
+          updatedAt: currentTime
         };
         
-        // Cập nhật state order
         setOrder(updatedOrder);
-        
-        // Tự động gọi lại generateOrderHistory với order mới
         generateOrderHistory(updatedOrder);
-
         toast.success('Đã cập nhật trạng thái vận chuyển');
       } else {
-        console.error('Failed to update order:', response);
         throw new Error(response.message || 'Không thể cập nhật trạng thái đơn hàng');
       }
     } catch (error) {
@@ -253,10 +255,13 @@ const OrderDetail = () => {
         throw new Error('Không tìm thấy ID đơn hàng');
       }
       
+      const currentTime = new Date().toISOString();
       const response = await orderService.updateOrder(orderId, {
         ...order,
         shippingStatus: 'delivered',
-        status: 'completed'
+        status: 'completed',
+        deliveredAt: currentTime,
+        updatedAt: currentTime
       });
 
       console.log('Update response:', response);
@@ -266,18 +271,14 @@ const OrderDetail = () => {
           ...order,
           shippingStatus: 'delivered',
           status: 'completed',
-          updatedAt: new Date().toISOString()
+          deliveredAt: currentTime,
+          updatedAt: currentTime
         };
         
-        // Cập nhật state order
         setOrder(updatedOrder);
-        
-        // Tự động gọi lại generateOrderHistory với order mới
         generateOrderHistory(updatedOrder);
-
         toast.success('Đã cập nhật trạng thái giao hàng thành công');
       } else {
-        console.error('Failed to update order:', response);
         throw new Error(response.message || 'Không thể cập nhật trạng thái đơn hàng');
       }
     } catch (error) {
@@ -525,7 +526,7 @@ const OrderDetail = () => {
                order.status !== 'completed' && 
                order.status !== 'cancelled' && (
                 <button 
-                  onClick={() => navigate(`/employee/orders/${order.id}/edit`)}
+                  onClick={() => navigate(`/employee/orders/${order._id}/edit`)}
                   className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-2"
                 >
                   <span>Sửa đơn</span>

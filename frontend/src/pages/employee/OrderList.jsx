@@ -3,6 +3,7 @@ import { Search, Download, Plus, Filter } from 'lucide-react';
 import orderService from './services/orderService';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import Loading from '../../components/ui/Loading';
 
 const OrderList = () => {
   const [orders, setOrders] = useState([]);
@@ -13,47 +14,34 @@ const OrderList = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    let mounted = true;
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await orderService.getOrders();
-      console.log('Raw API Response:', response);
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await orderService.getOrders();
 
-      // Kiểm tra và xử lý dữ liệu
-      let ordersData = [];
-      if (Array.isArray(response)) {
-        ordersData = response;
-      } else if (response?.orders && Array.isArray(response.orders)) {
-        ordersData = response.orders;
-      } else if (response?.data && Array.isArray(response.data)) {
-        ordersData = response.data;
-      }
+        if (!mounted) return;
 
-      // Validate và chuẩn hóa dữ liệu đơn hàng theo cấu trúc server
-      ordersData = ordersData.map(order => {
-        console.log('Processing order:', order);
-        // Parse customerInfo từ string nếu cần
-        let customerInfo = order.customerInfo;
-        if (typeof customerInfo === 'string') {
-          try {
-            customerInfo = JSON.parse(customerInfo);
-          } catch (e) {
-            console.warn('Error parsing customerInfo:', e);
-            customerInfo = { name: 'Không có tên', phone: 'Không có SĐT' };
-          }
+        // Kiểm tra và xử lý dữ liệu
+        let ordersData = [];
+        if (Array.isArray(response)) {
+          ordersData = response;
+        } else if (response?.orders && Array.isArray(response.orders)) {
+          ordersData = response.orders;
+        } else if (response?.data && Array.isArray(response.data)) {
+          ordersData = response.data;
         }
 
-        const processedOrder = {
-          _id: order._id || order.id, // Thử lấy id từ cả hai trường
-          order_number: order.order_number || order.orderNumber, // Sử dụng cả hai trường
+        // Validate và chuẩn hóa dữ liệu đơn hàng
+        ordersData = ordersData.map(order => ({
+          _id: order._id || order.id,
+          order_number: order.order_number || order.orderNumber,
           customerInfo: {
-            name: customerInfo?.name || 'Không có tên',
-            phone: customerInfo?.phone || 'Không có SĐT',
-            address: customerInfo?.address || 'Không có địa chỉ'
+            name: order.customerInfo?.name || 'Không có tên',
+            phone: order.customerInfo?.phone || 'Không có SĐT',
+            address: order.customerInfo?.address || 'Không có địa chỉ'
           },
           items: Array.isArray(order.items) ? order.items : [],
           totalAmount: parseFloat(order.totalAmount || 0),
@@ -68,23 +56,45 @@ const OrderList = () => {
           status: order.status || 'pending',
           staffInfo: order.staffInfo || { name: 'Admin' },
           createdAt: order.createdAt || order.created_at || new Date().toISOString()
-        };
+        }));
 
-        console.log('Processed order:', processedOrder);
-        return processedOrder;
-      });
+        setOrders(ordersData);
+      } catch (error) {
+        if (!mounted) return;
+        console.error('Error fetching orders:', error);
+        setError(error.message || 'Có lỗi xảy ra khi tải danh sách đơn hàng');
+        toast.error('Không thể tải danh sách đơn hàng');
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
 
-      console.log('Final orders data:', ordersData);
-      setOrders(ordersData);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      setError(error.message || 'Có lỗi xảy ra khi tải danh sách đơn hàng');
-      toast.error(error.message || 'Không thể tải danh sách đơn hàng');
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchOrders();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <p className="text-red-500 mb-4">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
 
   const handleOrderClick = (orderId) => {
     console.log('Clicking order with ID:', orderId);

@@ -1,8 +1,8 @@
-import Order from '../models/Order.js';
-import Product from '../models/Product.js';
+import Order from '../../models/Order.js';
+import Product from '../../models/Product.js';
 import mongoose from 'mongoose';
 import moment from 'moment';
-import payosService from '../services/payosService.js';
+import payosService from '../../services/payosService.js';
 
 // Get all orders
 export const getOrders = async (req, res) => {
@@ -44,7 +44,7 @@ export const createOrder = async (req, res) => {
         console.log("Generated order number in controller:", orderNumber);
         
         // Kiểm tra sản phẩm - có thể bỏ qua nếu không cần kiểm tra
-        /* 
+        
         for (const item of items) {
             const product = await Product.findById(item.productId);
             if (!product) {
@@ -54,7 +54,7 @@ export const createOrder = async (req, res) => {
                 throw new Error(`Sản phẩm ${product.name} chỉ còn ${product.quantity} trong kho`);
             }
         }
-        */
+        
 
         // Create order
         const order = new Order({
@@ -73,7 +73,7 @@ export const createOrder = async (req, res) => {
         await order.save({ session });
 
         // Skip product quantity update for now
-        /*
+        
         for (const item of items) {
             await Product.findByIdAndUpdate(
                 item.productId,
@@ -81,7 +81,7 @@ export const createOrder = async (req, res) => {
                 { session }
             );
         }
-        */
+        
 
         await session.commitTransaction();
         
@@ -281,6 +281,7 @@ export const paymentWebhook = async (req, res) => {
         const payload = req.body;
 
         console.log('Received webhook data:', payload);
+        console.log('Received signature:', signature);
 
         // Verify signature
         const isValid = payosService.verifyWebhookSignature(payload, signature);
@@ -289,8 +290,16 @@ export const paymentWebhook = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid signature' });
         }
 
+        console.log('Signature verified successfully');
+
         // Tìm đơn hàng theo orderReference
-        const order = await Order.findOne({ order_number: payload.orderReference });
+        const order = await Order.findOne({ 
+            $or: [
+                { order_number: payload.orderReference },
+                { "paymentInfo.paymentId": payload.paymentLinkId }
+            ]
+        });
+
         if (!order) {
             console.error('Order not found:', payload.orderReference);
             return res.status(404).json({ success: false, message: 'Order not found' });
@@ -300,32 +309,44 @@ export const paymentWebhook = async (req, res) => {
 
         // Cập nhật trạng thái thanh toán nếu status là PAID
         if (payload.status === 'PAID') {
-            // Cập nhật trạng thái thanh toán
-            order.paymentStatus = 'paid';
+            console.log('Processing PAID status for order:', order.order_number);
             
-            // Cập nhật thông tin thanh toán
-            order.paymentInfo = {
-                transactionId: payload.transactionId,
-                paidAt: new Date(),
-                amount: payload.amount,
-                paymentMethod: 'PayOS'
-            };
+            try {
+                // Cập nhật trạng thái thanh toán
+                order.paymentStatus = 'paid';
+                
+                // Cập nhật thông tin thanh toán
+                order.paymentInfo = {
+                    ...order.paymentInfo,
+                    provider: 'PayOS',
+                    status: 'paid',
+                    transactionId: payload.transactionId,
+                    paidAt: new Date(payload.orderInfo?.paymentAt || Date.now()),
+                    amount: payload.amount
+                };
 
-            // Cập nhật trạng thái đơn hàng
-            if (order.shippingMethod === 'Nhận tại cửa hàng') {
-                // Nếu nhận tại cửa hàng và đã thanh toán -> hoàn thành
-                order.status = 'completed';
-            } else if (order.status === 'pending') {
-                // Nếu đang chờ xử lý -> chuyển sang đã xác nhận
-                order.status = 'confirmed';
+                // Cập nhật trạng thái đơn hàng
+                if (order.shippingMethod === 'Nhận tại cửa hàng') {
+                    // Nếu nhận tại cửa hàng và đã thanh toán -> hoàn thành
+                    order.status = 'completed';
+                } else if (order.status === 'pending') {
+                    // Nếu đang chờ xử lý -> chuyển sang đã xác nhận
+                    order.status = 'confirmed';
+                }
+
+                await order.save();
+                console.log('Order updated successfully:', {
+                    orderNumber: order.order_number,
+                    paymentStatus: order.paymentStatus,
+                    status: order.status,
+                    paymentInfo: order.paymentInfo
+                });
+            } catch (saveError) {
+                console.error('Error saving order:', saveError);
+                throw saveError;
             }
-
-            await order.save();
-            console.log('Order updated successfully:', {
-                orderNumber: order.order_number,
-                paymentStatus: order.paymentStatus,
-                status: order.status
-            });
+        } else {
+            console.log('Payment status is not PAID:', payload.status);
         }
 
         res.status(200).json({ success: true });
@@ -333,4 +354,4 @@ export const paymentWebhook = async (req, res) => {
         console.error('Webhook processing error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
-}; 
+};  

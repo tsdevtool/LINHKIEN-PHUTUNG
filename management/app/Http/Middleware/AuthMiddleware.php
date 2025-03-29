@@ -19,24 +19,45 @@ class AuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->bearerToken() ?? $request->cookie('jwt-phutung');
+        try {
+            // First try bearer token, then cookie
+            $token = $request->bearerToken();
+            if (!$token) {
+                $token = $request->cookie('jwt-phutung');
+            }
 
-    if (!$token) {
-        return response()->json(['success' => false, 'message' => 'Unauthorized - No Token Provided'], 401);
-    }
+            if (!$token) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized - No Token Provided'], 401);
+            }
 
-    try {
-        $decoded = JWT::decode($token, new Key(env('JWT_SECRET'), 'HS256'));
-        $user = User::find($decoded->userId);
+            $key = env('JWT_SECRET');
+            if (!$key) {
+                throw new \Exception('JWT_SECRET not configured');
+            }
 
-        if (!$user) {
-            return response()->json(['success' => false, 'message' => 'User Not Found'], 401);
+            $decoded = JWT::decode($token, new Key($key, 'HS256'));
+            
+            // Get user with role relationship
+            $user = User::with('role')->find($decoded->userId);
+            if (!$user) {
+                throw new \Exception('User not found');
+            }
+
+            if (!$user->role) {
+                throw new \Exception('User role not found');
+            }
+
+            // Store role name in request
+            $request->attributes->add(['user_role' => $decoded->role]);
+            
+            Auth::login($user);
+            return $next($request);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - ' . $e->getMessage()
+            ], 401);
         }
-
-        Auth::login($user);
-        return $next($request);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'message' => 'Unauthorized - Invalid Token'], 401);
-    }
     }
 }

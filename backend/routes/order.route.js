@@ -1,10 +1,10 @@
 import express from 'express';
 // import authMiddleware from '../middleware/authMiddleware.js';
-import * as orderController from '../controllers/orderController.js';
+import * as orderController from '../controllers/Employee/order.Controller.js';
 
 const router = express.Router();
 
-// Apply auth middleware to all routes
+// // Apply auth middleware to all routes
 // router.use(authMiddleware); // khi nào có auth thì dùng
 
 // Get all orders

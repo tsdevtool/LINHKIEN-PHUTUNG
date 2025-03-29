@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import orderService from '../services/orderService';
 import productService from '../services/productService';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 // Constants
 const INITIAL_STATE = {
@@ -303,6 +305,164 @@ export const useOrder = () => {
         setNote: useCallback((value) => updateState({ note: value }), [updateState])
     };
 
+    // Xử lý submit đơn hàng
+    const handleSubmitOrder = async (selectedCustomer, navigate) => {
+        try {
+            if (!selectedCustomer?._id) {
+                console.error('Missing customer ID:', selectedCustomer);
+                throw new Error('Vui lòng chọn khách hàng');
+            }
+
+            if (!selectedProducts || selectedProducts.length === 0) {
+                console.error('No products selected');
+                throw new Error('Vui lòng chọn ít nhất một sản phẩm');
+            }
+
+            // Log thông tin trước khi tạo đơn hàng
+            console.log('Selected customer:', selectedCustomer);
+            console.log('Selected products:', selectedProducts);
+
+            const orderData = {
+                customerId: selectedCustomer._id,
+                customerInfo: {
+                    name: selectedCustomer.name,
+                    phone: selectedCustomer.phone,
+                    email: selectedCustomer.email || '',
+                    address: selectedCustomer.address || ''
+                },
+                items: selectedProducts.map(product => ({
+                    productId: product._id,
+                    price: parseFloat(product.price),
+                    quantity: parseInt(product.quantity),
+                    total: parseFloat(product.price) * parseInt(product.quantity)
+                })),
+                totalAmount: parseFloat(totalProductPrice),
+                discount: parseFloat(discount || 0),
+                shippingFee: parseFloat(shippingFee || 0),
+                finalTotal: parseFloat(finalTotal),
+                paymentMethod,
+                paymentStatus: (() => {
+                    // Nếu là PayOS, luôn để pending cho đến khi thanh toán thành công
+                    if (paymentMethod === "PayOS") {
+                        return "pending";
+                    }
+                    
+                    // Nếu chọn các phương thức thanh toán trực tiếp
+                    if (
+                        paymentMethod === "Tiền mặt" || 
+                        paymentMethod === "Chuyển khoản" ||
+                        paymentMethod === "Ví Momo" ||
+                        paymentMethod === "ZaloPay" ||
+                        paymentMethod === "VNPay") {
+                        return "paid";
+                    }
+                    // Nếu là thanh toán sau hoặc COD
+                    if (paymentMethod === "Thanh toán sau" || paymentMethod === "COD (Thu hộ)") {
+                        return "pending";
+                    }
+                    return "unpaid";
+                })(),
+                shippingMethod,
+                shippingStatus: (() => {
+                    switch (shippingMethod) {
+                        case "Đã giao hàng":
+                            return "delivered";
+                        case "Đã qua hàng vận chuyển":
+                            return "shipping";
+                        case "Giao hàng sau":
+                        default:
+                            return "pending";
+                    }
+                })(),
+                note: note || '',
+                staffId: staff,
+                staffInfo: {
+                    name: staff,
+                    role: 'employee'
+                },
+                status: (() => {
+                    // Nếu là PayOS, luôn để pending cho đến khi thanh toán thành công
+                    if (paymentMethod === "PayOS") {
+                        return "pending";
+                    }
+                    
+                    // Nếu đã giao hàng và đã thanh toán -> completed
+                    if (shippingMethod === "Đã giao hàng" && 
+                        (paymentMethod === "Tiền mặt" || 
+                         paymentMethod === "Chuyển khoản" ||
+                         paymentMethod === "Ví Momo" ||
+                         paymentMethod === "ZaloPay" ||
+                         paymentMethod === "VNPay")) {
+                        return "completed";
+                    }
+                    // Nếu chỉ đã giao hàng -> delivered
+                    if (shippingMethod === "Đã giao hàng") {
+                        return "delivered";
+                    }
+                    // Nếu đang giao hàng -> shipping
+                    if (shippingMethod === "Đã qua hàng vận chuyển") {
+                        return "shipping";
+                    }
+                    // Mặc định -> pending
+                    return "pending";
+                })()
+            };
+
+            console.log('Submitting order with data:', orderData);
+            const response = await createOrder(orderData);
+            console.log('Order creation successful:', response);
+
+            // Nếu phương thức thanh toán là PayOS, tạo payment link
+            if (paymentMethod === "PayOS") {
+                try {
+                    console.log('Creating payment link for order:', response.order);
+                    const orderId = response.order?._id || response.order?.id;
+                    if (!orderId) {
+                        throw new Error('Không tìm thấy ID đơn hàng');
+                    }
+                    
+                    const paymentResponse = await axios.post(
+                        `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/${orderId}/payment`
+                    );
+                    console.log('Payment link created:', paymentResponse.data);
+                    
+                    // Chuyển hướng người dùng đến trang thanh toán PayOS
+                    window.location.href = paymentResponse.data.paymentUrl;
+                    return;
+                } catch (error) {
+                    console.error('Error creating payment link:', error);
+                    toast.error('Không thể tạo link thanh toán PayOS');
+                    // Vẫn tiếp tục flow bình thường nếu có lỗi
+                }
+            }
+
+            // Hiển thị thông báo thành công
+            toast.success('Tạo đơn hàng thành công!');
+            
+            // Reset form
+            updateState({
+                selectedProducts: [],
+                shippingFee: 0,
+                discount: 0,
+                paymentMethod: '',
+                shippingMethod: '',
+                staff: '',
+                note: '',
+                error: null
+            });
+
+            // Chuyển hướng về trang danh sách đơn hàng
+            if (navigate) {
+                navigate('/employee/orders');
+            }
+
+        } catch (error) {
+            console.error('Order submission error:', error);
+            toast.error(error.message || 'Có lỗi xảy ra khi tạo đơn hàng');
+            throw error;
+        }
+    };
+
     return {
         // State
         products,
@@ -327,9 +487,12 @@ export const useOrder = () => {
         removeProduct,
         handleSearch,
         createOrder,
+        handleSubmitOrder,
 
         // Constants
         PAYMENT_METHODS,
         SHIPPING_METHODS
     };
-}; 
+};
+
+export default useOrder; 

@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import {
   Search, PlusCircle, Trash2,
-  SquareArrowLeft, X
+  SquareArrowLeft, X, UserPlus
 } from "lucide-react";
 import { useOrder } from "./hooks/useOrder";
 import { useCustomer } from "./hooks/useCustomer";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+import NewCustomer from "./components/NewCustomer";
 
 const NewOrder = () => {
   const {
@@ -38,7 +39,7 @@ const NewOrder = () => {
     updateProductQuantity,
     removeProduct,
     handleSearch: handleProductSearch,
-    createOrder
+    handleSubmitOrder
   } = useOrder();
 
   const {
@@ -57,155 +58,21 @@ const NewOrder = () => {
 
   const navigate = useNavigate();
 
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
-        if (!selectedCustomer?._id) {
-            console.error('Missing customer ID:', selectedCustomer);
-            throw new Error('Vui lòng chọn khách hàng');
-        }
-
-        if (!selectedProducts || selectedProducts.length === 0) {
-            console.error('No products selected');
-            throw new Error('Vui lòng chọn ít nhất một sản phẩm');
-        }
-
-        // Log thông tin trước khi tạo đơn hàng
-        console.log('Selected customer:', selectedCustomer);
-        console.log('Selected products:', selectedProducts);
-
-        const orderData = {
-            customerId: selectedCustomer._id,
-            customerInfo: {
-                name: selectedCustomer.name,
-                phone: selectedCustomer.phone,
-                email: selectedCustomer.email || '',
-                address: selectedCustomer.address || ''
-            },
-            items: selectedProducts.map(product => ({
-                productId: product._id,
-                price: parseFloat(product.price),
-                quantity: parseInt(product.quantity),
-                total: parseFloat(product.price) * parseInt(product.quantity)
-            })),
-            totalAmount: parseFloat(totalProductPrice),
-            discount: parseFloat(discount || 0),
-            shippingFee: parseFloat(shippingFee || 0),
-            finalTotal: parseFloat(finalTotal),
-            paymentMethod,
-            paymentStatus: (() => {
-                // Nếu là PayOS, luôn để pending cho đến khi thanh toán thành công
-                if (paymentMethod === "PayOS") {
-                    return "pending";
-                }
-                
-                // Nếu chọn các phương thức thanh toán trực tiếp
-                if (
-                    paymentMethod === "Tiền mặt" || 
-                    paymentMethod === "Chuyển khoản" ||
-                    paymentMethod === "Ví Momo" ||
-                    paymentMethod === "ZaloPay" ||
-                    paymentMethod === "VNPay") {
-                    return "paid";
-                }
-                // Nếu là thanh toán sau hoặc COD
-                if (paymentMethod === "Thanh toán sau" || paymentMethod === "COD (Thu hộ)") {
-                    return "pending";
-                }
-                return "unpaid";
-            })(),
-            shippingMethod,
-            shippingStatus: (() => {
-                switch (shippingMethod) {
-                    case "Đã giao hàng":
-                        return "delivered";
-                    case "Đã qua hàng vận chuyển":
-                        return "shipping";
-                    case "Giao hàng sau":
-                    default:
-                        return "pending";
-                }
-            })(),
-            note: note || '',
-            staffId: staff,
-            staffInfo: {
-                name: staff,
-                role: 'employee'
-            },
-            status: (() => {
-                // Nếu là PayOS, luôn để pending cho đến khi thanh toán thành công
-                if (paymentMethod === "PayOS") {
-                    return "pending";
-                }
-                
-                // Nếu đã giao hàng và đã thanh toán -> completed
-                if (shippingMethod === "Đã giao hàng" && 
-                    (paymentMethod === "Tiền mặt" || 
-                     paymentMethod === "Chuyển khoản" ||
-                     paymentMethod === "Ví Momo" ||
-                     paymentMethod === "ZaloPay" ||
-                     paymentMethod === "VNPay")) {
-                    return "completed";
-                }
-                // Nếu chỉ đã giao hàng -> delivered
-                if (shippingMethod === "Đã giao hàng") {
-                    return "delivered";
-                }
-                // Nếu đang giao hàng -> shipping
-                if (shippingMethod === "Đã qua hàng vận chuyển") {
-                    return "shipping";
-                }
-                // Mặc định -> pending
-                return "pending";
-            })()
-        };
-
-        console.log('Submitting order with data:', orderData);
-        const response = await createOrder(orderData);
-        console.log('Order creation successful:', response);
-
-        // Nếu phương thức thanh toán là PayOS, tạo payment link
-        if (paymentMethod === "PayOS") {
-            try {
-                console.log('Creating payment link for order:', response.order);
-                const orderId = response.order?._id || response.order?.id;
-                if (!orderId) {
-                    throw new Error('Không tìm thấy ID đơn hàng');
-                }
-                
-                const paymentResponse = await axios.post(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/${orderId}/payment`
-                );
-                console.log('Payment link created:', paymentResponse.data);
-                
-                // Chuyển hướng người dùng đến trang thanh toán PayOS
-                window.location.href = paymentResponse.data.paymentUrl;
-                return;
-            } catch (error) {
-                console.error('Error creating payment link:', error);
-                toast.error('Không thể tạo link thanh toán PayOS');
-                // Vẫn tiếp tục flow bình thường nếu có lỗi
-            }
-        }
-
-        // Hiển thị thông báo thành công
-        toast.success('Tạo đơn hàng thành công!');
-        
-        // Reset form
-        clearSelectedCustomer();
-
-        // Chuyển hướng về trang danh sách đơn hàng
-        navigate('/employee/orders');
+      await handleSubmitOrder(selectedCustomer, navigate);
+      clearSelectedCustomer();
     } catch (error) {
-        console.error('Order submission error:', error);
-        toast.error(error.message || 'Có lỗi xảy ra khi tạo đơn hàng');
+      console.error('Error in handleSubmit:', error);
     }
-};
+  };
 
   return (
     <div className="min-h-screen flex">
-      <div className="ml-5 flex-1 flex flex-col">
+      <div className="ml-5 flex-1 flex flex-col relative">
         <div className="max-w-5xl mx-auto w-full">
           <div className="mt-15 flex items-center gap-4 mb-4">
             <button className="text-gray-600 hover:text-gray-900">
@@ -367,7 +234,16 @@ const NewOrder = () => {
               <div className="space-y-6">
                 {/* Khách hàng */}
                 <div className="border p-4 rounded-md">
-                  <h3 className="font-semibold text-lg">Khách hàng</h3>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-semibold text-lg">Khách hàng</h3>
+                    <button
+                      onClick={() => setShowNewCustomer(true)}
+                      className="flex items-center gap-2 text-blue-500 hover:text-blue-600"
+                    >
+                      <UserPlus size={20} />
+                      <span>Thêm mới</span>
+                    </button>
+                  </div>
                   <div className="relative">
                     <div className="flex items-center border p-2 rounded-md">
                       <Search className="text-gray-400" />
@@ -389,6 +265,17 @@ const NewOrder = () => {
                       <div className="absolute w-full bg-white shadow-lg border rounded-md mt-1 max-h-48 overflow-auto z-10">
                         {customerLoading ? (
                           <div className="p-2 text-center">Đang tải...</div>
+                        ) : customers.length === 0 ? (
+                          <div className="p-4 text-center text-gray-500">
+                            <p>Không có khách hàng nào</p>
+                            <button
+                              onClick={() => setShowNewCustomer(true)}
+                              className="mt-2 text-blue-500 hover:text-blue-600 flex items-center gap-2 mx-auto"
+                            >
+                              <UserPlus size={16} />
+                              <span>Thêm khách hàng mới</span>
+                            </button>
+                          </div>
                         ) : (
                           customers.map((customer) => (
                             <button
@@ -422,6 +309,21 @@ const NewOrder = () => {
                     )}
                   </div>
                 </div>
+
+                {showNewCustomer && (
+                  <div className="fixed inset-0 z-[100] overflow-y-auto">
+                    <NewCustomer
+                      onClose={() => setShowNewCustomer(false)}
+                      onSuccess={(newCustomer) => {
+                        selectCustomer({
+                          _id: newCustomer._id,
+                          name: newCustomer.firstname + ' ' + (newCustomer.lastname || ''),
+                          phone: newCustomer.phone
+                        });
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Nhân viên phụ trách */}
                 <div className="border p-4 rounded-md">

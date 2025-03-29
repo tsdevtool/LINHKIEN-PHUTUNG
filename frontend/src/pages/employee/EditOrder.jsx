@@ -37,14 +37,27 @@ const EditOrder = () => {
     try {
       setLoading(true);
       const response = await orderService.getOrderById(id);
+      console.log('Order detail response:', response);
       
-      if (response.success && response.order) {
-        setOrder(response.order);
+      // Kiểm tra response và lấy dữ liệu đơn hàng
+      let orderData = null;
+      if (response.order) {
+        orderData = response.order;
+      } else if (response.data) {
+        orderData = response.data;
+      } else if (typeof response === 'object' && !response.success) {
+        orderData = response;
+      }
+
+      if (orderData) {
+        console.log('Setting order data:', orderData);
+        setOrder(orderData);
       } else {
         throw new Error('Không tìm thấy thông tin đơn hàng');
       }
     } catch (error) {
-      toast.error('Không thể tải thông tin đơn hàng');
+      console.error('Error fetching order:', error);
+      toast.error(error.message || 'Không thể tải thông tin đơn hàng');
     } finally {
       setLoading(false);
     }

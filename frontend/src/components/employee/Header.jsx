@@ -2,9 +2,22 @@ import { Search, Bell, Mail, Layers, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../store/authUser";
 
 const Header = ({ isSidebarOpen }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/auth/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
 
   return (
     <header
@@ -56,13 +69,15 @@ const Header = ({ isSidebarOpen }) => {
               className="flex items-center space-x-3 focus:outline-none"
             >
               <img
-                src="https://ui-avatars.com/api/?name=Employee&background=0D8ABC&color=fff"
+                src={user?.image || "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff"}
                 alt="User"
                 className="w-8 h-8 rounded-full"
               />
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-gray-700">Nhân viên</p>
-                <p className="text-xs text-gray-500">employee@motorking.com</p>
+                <p className="text-sm font-medium text-gray-700">
+                  {user ? `${user.firstname} ${user.lastname}` : 'Loading...'}
+                </p>
+                <p className="text-xs text-gray-500">{user?.email || user?.phone}</p>
               </div>
             </button>
 
@@ -72,7 +87,10 @@ const Header = ({ isSidebarOpen }) => {
                   <User className="w-4 h-4 mr-3" />
                   Thông tin cá nhân
                 </button>
-                <button className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
                   <LogOut className="w-4 h-4 mr-3" />
                   Đăng xuất
                 </button>

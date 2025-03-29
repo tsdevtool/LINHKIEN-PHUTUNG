@@ -127,20 +127,42 @@ class OrderService {
 
     async getOrderById(id) {
         try {
-            console.log('Fetching order details:', id);
-            const response = await axiosInstance.get(`/orders/${id}`);
-            console.log('Get Order Details Response:', response);
-
-            if (!response.data) {
-                throw new Error('Không tìm thấy thông tin đơn hàng');
+            if (!id) {
+                throw new Error('ID đơn hàng không hợp lệ');
             }
 
-            return response.data;
+            console.log('Fetching order details for ID:', id);
+            const response = await axiosInstance.get(`/orders/${id}`);
+            console.log('Raw API Response:', response);
+
+            // Kiểm tra và xử lý response
+            let orderData = null;
+            if (response.data) {
+                if (response.data.order) {
+                    orderData = response.data.order;
+                } else if (response.data.data) {
+                    orderData = response.data.data;
+                } else if (typeof response.data === 'object' && !response.data.success) {
+                    orderData = response.data;
+                }
+            }
+
+            if (!orderData) {
+                console.error('Invalid order data structure:', response.data);
+                throw new Error('Cấu trúc dữ liệu đơn hàng không hợp lệ');
+            }
+
+            console.log('Processed order data:', orderData);
+            return {
+                success: true,
+                order: orderData
+            };
         } catch (error) {
             console.error('Get Order Details Error:', {
                 orderId: id,
                 message: error.message,
-                response: error.response
+                response: error.response,
+                stack: error.stack
             });
 
             if (error.response?.status === 404) {

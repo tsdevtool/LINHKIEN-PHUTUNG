@@ -27,36 +27,8 @@ const menuItems = [
       { name: "", link: "/admin/orders/completed" },
     ],
   },
-  {
-    name: "Sản phẩm",
-    icon: <Package />,
-    link: "#",
-    subItems: [
-      { name: "Danh sách", link: "/admin/products/list" },
-      { name: "Đang được bán", link: "/admin/products/active" },
-      { name: "Hết hàng", link: "/admin/products/out-of-stock" },
-      { name: "Hàng tồn kho", link: "/admin/products/inventory" },
-    ],
-  },
-  {
-    name: "Danh mục",
-    icon: <List />,
-    link: "#",
-    subItems: [
-      { name: "Danh sách", link: "/admin/categories" },
-      { name: "Sơ đồ", link: "/admin/categories-tree" },
-    ],
-  },
-  { name: "Người dùng", icon: <Users />, link: "/admin/users" },
-  {
-    name: "Nhân viên",
-    icon: <User2 />,
-    link: "#",
-    subItems: [
-      { name: "Thông tin nhân viên", link: "/admin/employees/info" },
-      { name: "Lịch làm việc", link: "/admin/employees/schedule" },
-    ],
-  },
+  
+  
 ];
 
 const MenuItem = ({ item, isOpen, isLocked, isActive }) => {

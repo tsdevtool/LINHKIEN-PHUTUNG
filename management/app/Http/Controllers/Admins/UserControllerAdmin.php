@@ -260,6 +260,112 @@ class UserControllerAdmin extends Controller
         }
     }
 
+    public function getAllCustomers()
+    {
+        try {
+            $roleCustomer = Role::where('name', 'CUSTOMER')->first();
+            if (!$roleCustomer) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Không tìm thấy role customer'
+                ], 404);
+            }
+
+            $customers = User::where('idrole', $roleCustomer->_id)
+                ->whereNull('deleted_at')
+                ->get()
+                ->map(function ($customer) {
+                    return [
+                        '_id' => $customer->_id,
+                        'name' => $customer->firstname . ' ' . $customer->lastname,
+                        'phone' => $customer->phone,
+                        'address' => $customer->address,
+                        'email' => $customer->email,
+                        'username' => $customer->username,
+                        'numberOfOrders' => $customer->numberOfOrders ?? 0,
+                        'totalSpent' => $customer->totalSpent ?? 0,
+                        'status' => $customer->status ?? true,
+                        'created_at' => $customer->created_at,
+                        'updated_at' => $customer->updated_at
+                    ];
+                });
+
+            if ($customers->isEmpty()) {
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Không có khách hàng nào.',
+                    'customers' => []
+                ], 200);
+            }
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Lấy dữ liệu thành công.',
+                'customers' => $customers
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Lỗi server: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function AddCustomer(Request $request)
+    {
+        try {
+            // Xác thực dữ liệu đầu vào cho customer
+            $validatedData = $request->validate([
+                'firstname' => 'required|string|max:255',
+                'lastname' => 'nullable|string|max:255',
+                'phone' => 'required|string|max:15|unique:users,phone',
+                'username' => 'required|string|max:255|unique:users,username',
+                'password' => 'required|string',
+                'address' => 'nullable|string',
+                'image' => 'nullable|string',
+                'idrole' => 'required|string',
+                'status' => 'nullable|boolean',
+                'numberOfOrders' => 'nullable|integer',
+                'totalSpent' => 'nullable|numeric'
+            ]);
+
+            // Mã hóa mật khẩu
+            $validatedData['password'] = bcrypt($validatedData['password']);
+
+            // Thêm các trường mặc định
+            $data = array_merge($validatedData, [
+                'created_at' => now(),
+                'updated_at' => now(),
+                'deleted_at' => null,
+                'status' => true,
+                'numberOfOrders' => 0,
+                'totalSpent' => 0
+            ]);
+
+            // Tạo customer mới
+            $customer = User::create($data);
+
+            return response()->json([
+                'status' => 201,
+                'message' => 'Khách hàng đã được thêm thành công!',
+                'customer' => $customer
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => 422,
+                'message' => 'Lỗi xác thực thông tin.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Đã xảy ra lỗi khi thêm khách hàng.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
     //customer
 }

@@ -67,9 +67,12 @@ export const useCustomer = () => {
             updateState({ loading: true, error: null });
             const data = await customerService.getCustomers();
             console.log('Fetched customers:', data);
-            updateState({ customers: data });
+            // Ensure data is an array
+            const customersArray = Array.isArray(data) ? data : (data?.customers || []);
+            updateState({ customers: customersArray });
         } catch (error) {
             handleError(error, 'Error fetching customers:');
+            updateState({ customers: [] }); // Set empty array on error
         } finally {
             updateState({ loading: false });
         }
@@ -91,9 +94,12 @@ export const useCustomer = () => {
             updateState({ loading: true, error: null });
             const results = await customerService.searchCustomers(query);
             console.log('Search results:', results);
-            updateState({ customers: results });
+            // Ensure results is an array
+            const resultsArray = Array.isArray(results) ? results : (results?.customers || []);
+            updateState({ customers: resultsArray });
         } catch (error) {
             handleError(error, 'Error searching customers:');
+            updateState({ customers: [] }); // Set empty array on error
         } finally {
             updateState({ loading: false });
         }

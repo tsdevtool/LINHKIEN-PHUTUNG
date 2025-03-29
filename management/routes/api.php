@@ -12,7 +12,6 @@ use App\Http\Controllers\Admins\UserControllerAdmin;
 use App\Http\Controllers\Admins\SupplierController;
 use App\Http\Controllers\Admins\EmployeeController;
 use App\Http\Controllers\Customers\ClientController;
-use App\Http\Controllers\Employees\CustomerController;
 use App\Http\Controllers\Employees\OrderController;
 use App\Http\Middleware\AuthMiddleware;
 
@@ -25,8 +24,8 @@ use Illuminate\Support\Facades\Route;
 Route::controller(AuthController::class)->group(function () {
     Route::post('v1/auth/signup', 'signup');
     Route::post('v1/auth/login', 'login');
-    Route::post('v1/auth/logout', 'logout');
-    Route::get('v1/auth/auth-check', 'authCheck')->middleware(AuthMiddleware::class);
+    Route::post('v1/auth/logout', 'logout')->middleware('auth');
+    Route::get('v1/auth/auth-check', 'authCheck')->middleware('auth');
 });
 
 //Customer
@@ -73,14 +72,6 @@ Route::prefix('categories')->group(function () {
     Route::post('/restore/{id}', [CategoryController::class, 'restore']);
 });
 
-Route::prefix('customers')->group(function () {
-    Route::get('/', [CustomerController::class, 'index']);
-    Route::get('/search', [CustomerController::class, 'search']);
-    Route::get('/{id}', [CustomerController::class, 'show']);
-    Route::post('/', [CustomerController::class, 'store']);
-    Route::put('/{id}', [CustomerController::class, 'update']);
-    Route::delete('/{id}', [CustomerController::class, 'destroy']);
-});
 
 // Route::controller(UserController::class)->group(function () {
 //     Route::get('v1/users', [UserController::class,'index']);
@@ -122,16 +113,23 @@ Route::prefix('roles')->group(function () {
     Route::get('/', [RoleController::class, 'GetAll']);
     Route::get('/nodele', [RoleController::class, 'GetAllnoDele']);
     Route::put('/update/{_id}', [RoleController::class, 'UpdateRole']);
-
+    Route::get('/customer', [RoleController::class, 'getCustomerRoleId']);
 });
 Route::prefix('users')->group(function () {
-    Route::get('/employees', [UserControllerAdmin::class, 'getAllEmployee']);//lấy all
-    Route::get('/employees/{_id}', [UserControllerAdmin::class, 'getEmployeeByID']);//lấy theo id
-    Route::post('/employees/add', [UserControllerAdmin::class, 'AddEmployee']);//add thêm nhân viên
-    Route::post('/employees/search', [UserControllerAdmin::class, 'getEmployee']);//get nhân viên theo tên hoặc theo idrole
-    Route::put('/employees/update/{_id}', [UserControllerAdmin::class, 'UpdateEmployee']);//chỉnh sửa
-    Route::delete('/employees/{_id}', [UserControllerAdmin::class, 'DeleteEmployee']);//delete theo id
+    Route::get('/employees', [UserControllerAdmin::class, 'getAllEmployee']);
+    Route::get('/employees/{_id}', [UserControllerAdmin::class, 'getEmployeeByID']);
+    Route::post('/employees/add', [UserControllerAdmin::class, 'AddEmployee']);
+    Route::post('/employees/search', [UserControllerAdmin::class, 'getEmployee']);
+    Route::put('/employees/update/{_id}', [UserControllerAdmin::class, 'UpdateEmployee']);
+    Route::delete('/employees/{_id}', [UserControllerAdmin::class, 'DeleteEmployee']);
 
+    // Thêm routes cho customer
+    Route::get('/customers', [UserControllerAdmin::class, 'getAllCustomers']);
+    Route::get('/customers/{_id}', [UserControllerAdmin::class, 'getCustomerById']);
+    Route::post('/customers/add', [UserControllerAdmin::class, 'AddCustomer']);
+    Route::post('/customers/search', [UserControllerAdmin::class, 'searchCustomers']);
+    Route::put('/customers/update/{_id}', [UserControllerAdmin::class, 'UpdateCustomer']);
+    Route::delete('/customers/{_id}', [UserControllerAdmin::class, 'DeleteCustomer']);
 });
 
 // Route::post('employee',[EmployeeController::class,'upload']);
@@ -149,4 +147,27 @@ Route::prefix('orders')->group(function () {
     Route::post('/', [OrderController::class, 'store']);
     Route::get('/{id}', [OrderController::class, 'show']);
     Route::put('/{id}', [OrderController::class, 'update']);
+});
+
+// Customer Management
+Route::prefix('users/customers')->group(function () {
+    Route::get('/', [UserControllerAdmin::class, 'getAllCustomers']);
+    Route::get('/active', [UserControllerAdmin::class, 'getActiveCustomers']);
+    Route::get('/inactive', [UserControllerAdmin::class, 'getInactiveCustomers']);
+    Route::get('/{id}', [UserControllerAdmin::class, 'getCustomerById']);
+    Route::post('/', [UserControllerAdmin::class, 'AddCustomer']);
+    Route::post('/search', [UserControllerAdmin::class, 'searchCustomers']);
+    Route::put('/{id}', [UserControllerAdmin::class, 'UpdateCustomer']);
+    Route::delete('/{id}', [UserControllerAdmin::class, 'DeleteCustomer']);
+    Route::put('/status/{id}/{type}', [UserControllerAdmin::class, 'updateCustomerStatus']);
+});
+
+// Employee Management
+Route::prefix('users/employees')->group(function () {
+    Route::get('/', [UserControllerAdmin::class, 'getAllEmployee']);
+    Route::get('/{id}', [UserControllerAdmin::class, 'getEmployeeByID']);
+    Route::post('/', [UserControllerAdmin::class, 'AddEmployee']);
+    Route::post('/search', [UserControllerAdmin::class, 'getEmployee']);
+    Route::put('/{id}', [UserControllerAdmin::class, 'UpdateEmployee']);
+    Route::delete('/{id}', [UserControllerAdmin::class, 'DeleteEmployee']);
 });

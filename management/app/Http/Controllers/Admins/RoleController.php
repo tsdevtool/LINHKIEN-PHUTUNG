@@ -205,5 +205,28 @@ class RoleController extends Controller
         ], 404);
 
     }
+    public function getCustomerRoleId()
+    {
+        try {
+            $role = Role::where('name', 'customer')->first();
+            
+            if (!$role) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Không tìm thấy role customer'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => 200,
+                'roleId' => $role->_id
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Lỗi server: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
 }
