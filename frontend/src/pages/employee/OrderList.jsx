@@ -49,7 +49,7 @@ const OrderList = () => {
 
         const processedOrder = {
           _id: order._id || order.id, // Thử lấy id từ cả hai trường
-          orderNumber: order.orderNumber,
+          order_number: order.order_number || order.orderNumber, // Sử dụng cả hai trường
           customerInfo: {
             name: customerInfo?.name || 'Không có tên',
             phone: customerInfo?.phone || 'Không có SĐT',
@@ -97,13 +97,18 @@ const OrderList = () => {
   };
 
   const getStatusColor = (status, shippingMethod, paymentStatus) => {
-    // Nếu là đơn nhận tại cửa hàng và đã thanh toán
-    if (shippingMethod === "Nhận tại cửa hàng" && paymentStatus === "paid") {
-      return 'text-green-600 bg-green-50';
+    // Nếu là đơn nhận tại cửa hàng
+    if (shippingMethod === "Nhận tại cửa hàng") {
+      return paymentStatus === "paid" 
+        ? 'text-green-600 bg-green-50'  // Đã xử lý
+        : 'text-yellow-600 bg-yellow-50'; // Chờ thanh toán
     }
 
+    // Đơn giao hàng
     switch (status) {
       case 'pending': return 'text-yellow-600 bg-yellow-50';
+      case 'confirmed': return 'text-blue-600 bg-blue-50';
+      case 'shipping': return 'text-orange-600 bg-orange-50';
       case 'completed': return 'text-green-600 bg-green-50';
       case 'cancelled': return 'text-red-600 bg-red-50';
       default: return 'text-gray-600 bg-gray-50';
@@ -111,13 +116,18 @@ const OrderList = () => {
   };
 
   const getOrderStatus = (order) => {
-    // Nếu là đơn nhận tại cửa hàng và đã thanh toán
-    if (order.shippingMethod === "Nhận tại cửa hàng" && order.paymentStatus === "paid") {
-      return "Đã xử lý";
+    // Nếu là đơn nhận tại cửa hàng
+    if (order.shippingMethod === "Nhận tại cửa hàng") {
+      return order.paymentStatus === "paid"
+        ? "Đã xử lý"
+        : "Chờ thanh toán";
     }
 
+    // Đơn giao hàng
     switch (order.status) {
-      case 'pending': return 'Chưa xử lý';
+      case 'pending': return 'Chờ xử lý';
+      case 'confirmed': return 'Đã xác nhận';
+      case 'shipping': return 'Đang giao';
       case 'completed': return 'Hoàn thành';
       case 'cancelled': return 'Đã hủy';
       default: return order.status;
@@ -160,7 +170,7 @@ const OrderList = () => {
     // Lọc theo search
     const searchLower = searchTerm.toLowerCase();
     return (
-      order.orderNumber?.toLowerCase().includes(searchLower) ||
+      order.order_number?.toLowerCase().includes(searchLower) ||
       order.customerInfo?.name?.toLowerCase().includes(searchLower) ||
       order.customerInfo?.phone?.includes(searchTerm)
     );
@@ -304,7 +314,7 @@ const OrderList = () => {
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.orderNumber}
+                      {order.order_number}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {order.staffInfo?.name || 'Admin'}
