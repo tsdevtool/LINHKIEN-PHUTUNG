@@ -7,23 +7,23 @@ const orderSchema = new mongoose.Schema({
         unique: true,
         sparse: true
     },
-    customerId: {
+    customer_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Customer',
         required: true
     },
-    customerInfo: {
+    customer_info: {
         name: { type: String, required: true },
         phone: { type: String, required: true },
         address: { type: String, required: true }
     },
     items: [{
-        productId: {
+        product_id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Product',
             required: true
         },
-        quantity: {
+        quantity: { 
             type: Number,
             required: true,
             min: 1
@@ -33,10 +33,9 @@ const orderSchema = new mongoose.Schema({
             required: true,
             min: 0
         },
-        name: String,
-        total: Number
+        total: { type: Number, required: true }
     }],
-    totalAmount: {
+    total_amount: {
         type: Number,
         required: true,
         min: 0
@@ -46,17 +45,17 @@ const orderSchema = new mongoose.Schema({
         default: 0,
         min: 0
     },
-    shippingFee: {
+    shipping_fee: {
         type: Number,
         default: 0,
         min: 0
     },
-    finalTotal: {
+    finaltotal: {
         type: Number,
         required: true,
         min: 0
     },
-    paymentMethod: {
+    payment_method: {
         type: String,
         required: true,
         enum: ['cash', 'payos', 'cod', 'Tiền mặt', 'PayOS', 'COD'],
@@ -70,17 +69,17 @@ const orderSchema = new mongoose.Schema({
             return mapping[value] || value.toLowerCase();
         }
     },
-    paymentStatus: {
+    payment_status: {
         type: String,
         default: 'pending',
         enum: ['paid', 'unpaid', 'pending']
     },
-    shippingMethod: {
+    shipping_method: {
         type: String,
         required: true,
         enum: ['Nhận tại cửa hàng', 'Đã giao hàng', 'Giao cho bên vận chuyển', 'Giao hàng sau']
     },
-    shippingStatus: {
+    shipping_status: {
         type: String,
         default: 'pending',
         enum: ['pending', 'shipping', 'delivered']
@@ -91,39 +90,39 @@ const orderSchema = new mongoose.Schema({
         enum: ['pending', 'confirmed', 'shipping', 'delivered', 'completed', 'cancelled']
     },
     note: String,
-    staffId: {
+    staff_id: {
         type: String,
         required: true
     },
-    staffInfo: {
+    staff_info: {
         name: { type: String, required: true }
     },
-    paymentInfo: {
+    payment_info: {
         provider: String,
-        paymentId: String,
+        payment_id: String,
         status: {
             type: String,
             enum: ['pending', 'paid', 'failed', 'cancelled']
         },
-        transactionId: String,
-        paidAt: Date
+        transaction_id: String,
+        paid_at: Date
     },
-    confirmedAt: {
+    confirmed_at: {
         type: Date,
         default: null
-      },
-      shippingUpdatedAt: {
+    },
+    shipping_updated_at: {
         type: Date,
         default: null
-      },
-      deliveredAt: {
+    },
+    delivered_at: {
         type: Date,
         default: null
-      },
-      cancelledAt: {
+    },
+    cancelled_at: {
         type: Date,
         default: null
-      },
+    }
 }, {
     timestamps: true
 });

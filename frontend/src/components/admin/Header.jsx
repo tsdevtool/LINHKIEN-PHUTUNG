@@ -21,10 +21,15 @@ const Header = ({ isSidebarOpen, isSidebarLocked }) => {
 
   return (
     <header
-    className={cn(
-      "fixed top-0 right-0 bg-white p-4 shadow flex items-center justify-between transition-all duration-300 z-40",
-      isSidebarOpen ? "ml-64 w-[calc(100%-16rem)]" : "ml-20 w-[calc(100%-5rem)]"
-    )}
+
+      className={cn(
+
+        "fixed top-0 right-0 bg-white p-4 shadow-sm z-40 transition-all duration-300",
+        isSidebarOpen
+          ? "ml-64 w-[calc(100%-16rem)]"
+          : "ml-20 w-[calc(100%-5rem)]"
+      )}
+
     >
       <div className="flex items-center justify-between">
         {/* Search Box */}

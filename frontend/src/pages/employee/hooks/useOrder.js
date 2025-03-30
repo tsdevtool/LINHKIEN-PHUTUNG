@@ -40,12 +40,12 @@ const validateOrderData = (orderData) => {
     }
 
     const requiredFields = {
-        customerId: 'ID khách hàng',
-        customerInfo: 'thông tin khách hàng',
+        customer_id: 'ID khách hàng',
+        customer_info: 'thông tin khách hàng',
         items: 'sản phẩm',
-        paymentMethod: 'phương thức thanh toán',
-        shippingMethod: 'phương thức giao hàng',
-        staffId: 'nhân viên phụ trách'
+        payment_method: 'phương thức thanh toán',
+        shipping_method: 'phương thức giao hàng',
+        staff_id: 'nhân viên phụ trách'
     };
 
     for (const [field, label] of Object.entries(requiredFields)) {
@@ -54,7 +54,7 @@ const validateOrderData = (orderData) => {
         }
     }
 
-    if (!orderData.customerInfo.name || !orderData.customerInfo.phone) {
+    if (!orderData.customer_info.name || !orderData.customer_info.phone) {
         throw new Error('Thiếu thông tin tên hoặc số điện thoại khách hàng');
     }
 
@@ -264,21 +264,20 @@ export const useOrder = () => {
             // Validate order data
             validateOrderData(orderData);
 
-            // Set statuses
-            orderData.paymentStatus = determinePaymentStatus(orderData.paymentMethod);
-            orderData.shippingStatus = determineShippingStatus(orderData.shippingMethod);
-            orderData.status = determineOrderStatus(orderData.shippingMethod, orderData.paymentMethod);
-
-            // Set staff info
-            if (orderData.staffId) {
-                orderData.staffInfo = {
-                    name: orderData.staffId,
+            // Transform data to snake_case format
+            const transformedData = {
+                ...orderData,
+                payment_status: determinePaymentStatus(orderData.payment_method),
+                shipping_status: determineShippingStatus(orderData.shipping_method),
+                status: determineOrderStatus(orderData.shipping_method, orderData.payment_method),
+                staff_info: {
+                    name: orderData.staff_id,
                     role: 'employee'
-                };
-            }
+                }
+            };
 
-            console.log('Creating order with data:', orderData);
-            const response = await orderService.createOrder(orderData);
+            console.log('Transformed order data:', transformedData);
+            const response = await orderService.createOrder(transformedData);
 
             // Reset form
             updateState({
@@ -330,44 +329,46 @@ export const useOrder = () => {
             console.log('Selected customer:', selectedCustomer);
             console.log('Selected products:', selectedProducts);
 
+            // Đảm bảo các trường của customer_info có giá trị mặc định
+            const customer_info = {
+                name: selectedCustomer?.name || '',
+                phone: selectedCustomer?.phone || '',
+                email: selectedCustomer?.email || '',
+                address: selectedCustomer?.address || ''
+            };
+
+            // Kiểm tra các trường bắt buộc
+            if (!customer_info.name || !customer_info.phone || !customer_info.address) {
+                throw new Error('Thiếu thông tin khách hàng (tên, số điện thoại hoặc địa chỉ)');
+            }
+
             const orderData = {
-                customerId: selectedCustomer._id,
-                customerInfo: {
-                    name: selectedCustomer.name,
-                    phone: selectedCustomer.phone,
-                    email: selectedCustomer.email || '',
-                    address: selectedCustomer.address || ''
-                },
+                customer_id: selectedCustomer._id,
+                customer_info,
                 items: selectedProducts.map(product => {
                     const price = parseFloat(product.price);
                     const quantity = parseInt(product.quantity, 10) || 1;
                     return {
-                        productId: product._id,
+                        product_id: product._id,
                         price,
                         quantity,
                         total: price * quantity
                     };
                 }),
-                totalAmount: parseFloat(totalProductPrice),
+                total_amount: parseFloat(totalProductPrice),
                 discount: parseFloat(discount || 0),
-                shippingFee: parseFloat(shippingFee || 0),
-                finalTotal: parseFloat(finalTotal),
-                paymentMethod,
-                paymentStatus: determinePaymentStatus(paymentMethod),
-                shippingMethod,
-                shippingStatus: determineShippingStatus(shippingMethod),
+                shipping_fee: parseFloat(shippingFee || 0),
+                finaltotal: parseFloat(finalTotal),
+                payment_method: paymentMethod,
+                shipping_method: shippingMethod,
                 note: note || '',
-                staffId: staff,
-                staffInfo: {
-                    name: staff,
-                    role: 'employee'
-                },
-                status: determineOrderStatus(shippingMethod, paymentMethod)
+                staff_id: staff
             };
 
-          
+            // Log dữ liệu đơn hàng trước khi gửi
+            console.log('Order data before sending:', orderData);
+
             const response = await createOrder(orderData);
-         
 
             // Nếu phương thức thanh toán là PayOS, tạo payment link
             if (paymentMethod === "PayOS") {
@@ -389,7 +390,6 @@ export const useOrder = () => {
                 } catch (error) {
                     console.error('Error creating payment link:', error);
                     toast.error('Không thể tạo link thanh toán PayOS');
-                    // Vẫn tiếp tục flow bình thường nếu có lỗi
                 }
             }
 
@@ -414,7 +414,6 @@ export const useOrder = () => {
             }
 
         } catch (error) {
-         
             toast.error(error.message || 'Có lỗi xảy ra khi tạo đơn hàng');
             throw error;
         }

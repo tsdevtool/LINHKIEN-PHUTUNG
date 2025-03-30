@@ -11,8 +11,8 @@ export const getOrders = async (req, res) => {
         const sortBy = req.query.sortBy || 'createdAt';
         const sortOrder = req.query.sortOrder || 'desc';
         const status = req.query.status;
-        const paymentStatus = req.query.paymentStatus;
-        const shippingStatus = req.query.shippingStatus;
+        const payment_status = req.query.paymentStatus;
+        const shipping_status = req.query.shippingStatus;
         const dateRange = req.query.dateRange;
 
         // Build query
@@ -22,11 +22,11 @@ export const getOrders = async (req, res) => {
         if (status) {
             query.status = status;
         }
-        if (paymentStatus) {
-            query.paymentStatus = paymentStatus;
+        if (payment_status) {
+            query.payment_status = payment_status;
         }
-        if (shippingStatus) {
-            query.shippingStatus = shippingStatus;
+        if (shipping_status) {
+            query.shipping_status = shipping_status;
         }
 
         // Apply date range filter
@@ -67,16 +67,25 @@ export const getOrders = async (req, res) => {
             .sort(sort)
             .lean(); // Use lean() for better performance
 
-        // Transform data for response
-        const transformedOrders = orders.map(order => ({
-            ...order,
-            _id: order._id.toString(),
-            customerId: order.customerId?.toString(),
-            items: order.items.map(item => ({
-                ...item,
-                productId: item.productId.toString()
-            }))
-        }));
+        // Transform data for response with safe checks
+        const transformedOrders = orders.map(order => {
+            const transformedOrder = {
+                ...order,
+                _id: order._id?.toString() || null
+            };
+
+            // Safely transform items if they exist
+            if (Array.isArray(order.items)) {
+                transformedOrder.items = order.items.map(item => ({
+                    ...item,
+                    product_id: item.product_id?.toString() || null
+                }));
+            } else {
+                transformedOrder.items = [];
+            }
+
+            return transformedOrder;
+        });
 
         res.status(200).json({
             success: true,
@@ -84,8 +93,8 @@ export const getOrders = async (req, res) => {
             total: transformedOrders.length,
             filters: {
                 status,
-                paymentStatus,
-                shippingStatus,
+                payment_status,
+                shipping_status,
                 dateRange
             },
             sorting: {
@@ -108,57 +117,66 @@ export const createOrder = async (req, res) => {
     session.startTransaction();
 
     try {
-        const { items, customerId, customerInfo, totalAmount, finalTotal, 
-                paymentMethod, shippingMethod, staffId, staffInfo,
-                paymentStatus, shippingStatus, status } = req.body;
+        console.log('Received order data:', JSON.stringify(req.body, null, 2));
+        
+        // Data is already in snake_case from frontend
+        const orderData = {
+            customer_id: req.body.customer_id,
+            customer_info: req.body.customer_info,
+            items: req.body.items,
+            total_amount: req.body.total_amount,
+            discount: req.body.discount || 0,
+            shipping_fee: req.body.shipping_fee || 0,
+            finaltotal: req.body.finaltotal,
+            payment_method: req.body.payment_method,
+            payment_status: req.body.payment_status,
+            shipping_method: req.body.shipping_method,
+            shipping_status: req.body.shipping_status,
+            status: req.body.status,
+            staff_id: req.body.staff_id,
+            staff_info: req.body.staff_info,
+            note: req.body.note || ''
+        };
 
-        console.log('Order data received:', JSON.stringify(req.body, null, 2));
+        console.log('Processed order data:', JSON.stringify(orderData, null, 2));
 
         // Validate required fields
-        if (!items || !items.length || !customerId || !customerInfo || 
-            !totalAmount || !finalTotal || !paymentMethod || !shippingMethod ||
-            !staffId || !staffInfo) {
+        if (!orderData.items?.length || !orderData.customer_id || 
+            !orderData.customer_info?.name || !orderData.customer_info?.phone || 
+            !orderData.customer_info?.address || !orderData.total_amount || 
+            !orderData.finaltotal || !orderData.payment_method || 
+            !orderData.shipping_method || !orderData.staff_id || 
+            !orderData.staff_info?.name) {
             throw new Error('Thiếu thông tin bắt buộc');
         }
 
-        // Tạo mã đơn hàng trước khi tạo đơn - sử dụng phương thức tĩnh
+        // Tạo mã đơn hàng
         const orderNumber = await Order.generateOrderNumber();
-        console.log("Generated order number in controller:", orderNumber);
+        console.log("Generated order number:", orderNumber);
         
         // Kiểm tra sản phẩm và số lượng tồn kho
-        for (const item of items) {
-            const product = await Product.findById(item.productId);
+        for (const item of orderData.items) {
+            const product = await Product.findById(item.product_id);
             if (!product) {
-                throw new Error(`Không tìm thấy sản phẩm với ID: ${item.productId}`);
+                throw new Error(`Không tìm thấy sản phẩm với ID: ${item.product_id}`);
             }
             if (product.quantity < item.quantity) {
                 throw new Error(`Sản phẩm ${product.name} chỉ còn ${product.quantity} trong kho`);
             }
         }
 
-        // Create order with status values from frontend
+        // Create order
         const order = new Order({
             order_number: orderNumber,
-            customerId,
-            customerInfo,
-            items,
-            totalAmount,
-            finalTotal,
-            paymentMethod,
-            paymentStatus,
-            shippingMethod,
-            shippingStatus,
-            status,
-            staffId,
-            staffInfo
+            ...orderData
         });
 
         await order.save({ session });
 
         // Update product quantities
-        for (const item of items) {
+        for (const item of orderData.items) {
             await Product.findByIdAndUpdate(
-                item.productId,
+                item.product_id,
                 { $inc: { quantity: -item.quantity } },
                 { session }
             );
@@ -189,7 +207,10 @@ export const createOrder = async (req, res) => {
 // Get order by ID
 export const getOrder = async (req, res) => {
     try {
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findById(req.params.id)
+            .populate('customer_id')
+            .populate('items.product_id');
+
         if (!order) {
             return res.status(404).json({
                 success: false,
@@ -215,25 +236,25 @@ export const updateOrder = async (req, res) => {
     session.startTransaction();
 
     try {
-        const { customerInfo, items, totalAmount, finalTotal, 
-                status, paymentStatus, shippingStatus, note } = req.body;
+        const { customer_info, items, total_amount, finaltotal, 
+                status, payment_status, shipping_status, note } = req.body;
 
         const order = await Order.findById(req.params.id);
         if (!order) {
             throw new Error('Không tìm thấy đơn hàng');
         }
 
-        // Update order
+        // Update order with snake_case fields
         const updatedOrder = await Order.findByIdAndUpdate(
             req.params.id,
             {
-                customerInfo,
+                customer_info,
                 items,
-                totalAmount,
-                finalTotal,
+                total_amount,
+                finaltotal,
                 status: status || order.status,
-                paymentStatus: paymentStatus || order.paymentStatus,
-                shippingStatus: shippingStatus || order.shippingStatus,
+                payment_status: payment_status || order.payment_status,
+                shipping_status: shipping_status || order.shipping_status,
                 note: note || order.note
             },
             { new: true, session }
@@ -264,6 +285,7 @@ export const cancelOrder = async (req, res) => {
     session.startTransaction();
 
     try {
+        const { cancelReason } = req.body;
         const order = await Order.findById(req.params.id);
         if (!order) {
             throw new Error('Không tìm thấy đơn hàng');
@@ -280,13 +302,16 @@ export const cancelOrder = async (req, res) => {
         // Return products to inventory
         for (const item of order.items) {
             await Product.findByIdAndUpdate(
-                item.productId,
+                item.product_id,
                 { $inc: { quantity: item.quantity } },
                 { session }
             );
         }
 
+        // Cập nhật trạng thái và thông tin hủy đơn
         order.status = 'cancelled';
+        order.cancel_reason = cancelReason;
+        order.cancelled_at = new Date();
         await order.save({ session });
 
         await session.commitTransaction();
@@ -321,7 +346,7 @@ export const createPaymentLink = async (req, res) => {
             });
         }
 
-        if (order.paymentStatus === 'paid') {
+        if (order.payment_status === 'paid') {
             return res.status(400).json({
                 success: false,
                 message: 'Đơn hàng đã được thanh toán'
@@ -394,7 +419,7 @@ export const paymentWebhook = async (req, res) => {
             
             try {
                 // Cập nhật trạng thái thanh toán
-                order.paymentStatus = 'paid';
+                order.payment_status = 'paid';
                 
                 // Cập nhật thông tin thanh toán
                 order.paymentInfo = {
@@ -407,7 +432,7 @@ export const paymentWebhook = async (req, res) => {
                 };
 
                 // Cập nhật trạng thái đơn hàng
-                if (order.shippingMethod === 'Nhận tại cửa hàng') {
+                if (order.shipping_method === 'Nhận tại cửa hàng') {
                     // Nếu nhận tại cửa hàng và đã thanh toán -> hoàn thành
                     order.status = 'completed';
                 } else if (order.status === 'pending') {
@@ -418,7 +443,7 @@ export const paymentWebhook = async (req, res) => {
                 await order.save();
                 console.log('Order updated successfully:', {
                     orderNumber: order.order_number,
-                    paymentStatus: order.paymentStatus,
+                    payment_status: order.payment_status,
                     status: order.status,
                     paymentInfo: order.paymentInfo
                 });
