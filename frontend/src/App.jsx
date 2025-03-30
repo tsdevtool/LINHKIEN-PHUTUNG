@@ -42,6 +42,7 @@ import Loading from "./components/ui/Loading";
 import Footer from "./components/Footer";
 import CategoriesTreeSection from "./pages/admin/categories/CategoriesTreeSection";
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import OutOfStockProducts from "./pages/admin/products/OutOfStockProducts";
 
 function App() {
   const { user } = useAuthStore();
@@ -67,6 +68,7 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<HomePage />} />
+    
         <Route
           path="/auth/login"
           element={!user ? <AuthPage /> : <Navigate to="/" replace />}
@@ -120,9 +122,14 @@ function App() {
                 <Routes>
                   <Route index element={<DashBoardSection />} />
                   <Route path="products" element={<ProductsSection />} />
+                  <Route path="products/out-of-stock" element={<OutOfStockProducts />} />
                   <Route path="categories" element={<CategoriesSection />} />
                   <Route path="categories-tree" element={<CategoriesTreeSection />} />
                   <Route path="products/list" element={<ProductsSection />} />
+                  <Route path="orders"index element={<OrderList />} />
+                  <Route path="orders/:id" element={<OrderDetail />} />
+                  <Route path="orders/:id/edit" element={<EditOrder />} />
+                  <Route path="orders/new" element={<NewOrder />} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>

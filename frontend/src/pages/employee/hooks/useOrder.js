@@ -420,6 +420,55 @@ export const useOrder = () => {
         }
     };
 
+    const handleCancelOrder = async (orderId, reason) => {
+        try {
+            // Lấy thông tin đơn hàng trước khi hủy
+            const orderResponse = await orderService.getOrderById(orderId);
+            if (!orderResponse.success || !orderResponse.order) {
+                throw new Error('Không thể tải thông tin đơn hàng');
+            }
+
+            const order = orderResponse.order;
+
+            // Kiểm tra điều kiện có thể hủy đơn
+            if (order.shippingStatus === 'shipping' || order.shippingStatus === 'delivered') {
+                throw new Error('Không thể hủy đơn hàng đã giao cho đơn vị vận chuyển');
+            }
+
+            // Hủy đơn hàng
+            const response = await orderService.cancelOrder(orderId, reason);
+            
+            if (response.success) {
+                // Cập nhật lại số lượng trong kho
+                const updateStockPromises = order.items.map(async (item) => {
+                    try {
+                        const productResponse = await productService.getProductById(item.productId);
+                        if (productResponse.success && productResponse.product) {
+                            const newQuantity = productResponse.product.quantity + item.quantity;
+                            await productService.updateProduct(item.productId, {
+                                quantity: newQuantity
+                            });
+                        }
+                    } catch (error) {
+                        console.error(`Error updating stock for product ${item.productId}:`, error);
+                        // Ghi log lỗi nhưng không throw để tiếp tục xử lý các sản phẩm khác
+                    }
+                });
+
+                await Promise.all(updateStockPromises);
+                
+                toast.success('Hủy đơn hàng thành công');
+                return response;
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (error) {
+            console.error('Error in handleCancelOrder:', error);
+            toast.error(error.message || 'Không thể hủy đơn hàng');
+            throw error;
+        }
+    };
+
     return {
         // State
         products,
@@ -445,6 +494,7 @@ export const useOrder = () => {
         handleSearch,
         createOrder,
         handleSubmitOrder,
+        handleCancelOrder,
 
         // Constants
         PAYMENT_METHODS,

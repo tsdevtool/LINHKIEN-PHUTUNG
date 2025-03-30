@@ -20,9 +20,8 @@ const menuItems = [
     icon: <ClipboardList />,
     link: "#",
     subItems: [
-      { name: "Chưa xác nhận", link: "/admin/orders/pending" },
-      { name: "Đã xác nhận", link: "/admin/orders/confirmed" },
-      { name: "Đã hoàn thành", link: "/admin/orders/completed" },
+      { name: "Tạo Đơn Hàng", link: "/admin/orders/new" },
+      { name: "Danh sách đơn hàng", link: "/admin/orders" },
     ],
   },
   {
@@ -31,9 +30,7 @@ const menuItems = [
     link: "#",
     subItems: [
       { name: "Danh sách", link: "/admin/products/list" },
-      { name: "Đang được bán", link: "/admin/products/active" },
       { name: "Hết hàng", link: "/admin/products/out-of-stock" },
-      { name: "Hàng tồn kho", link: "/admin/products/inventory" },
     ],
   },
   {

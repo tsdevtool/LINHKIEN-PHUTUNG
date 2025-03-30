@@ -224,6 +224,32 @@ class OrderService {
             );
         }
     }
+
+    // Hủy đơn hàng
+    async cancelOrder(orderId, reason) {
+        try {
+            const response = await axiosInstance.put(`/orders/${orderId}/cancel`, {
+                cancelReason: reason,
+                cancelledAt: new Date().toISOString()
+            });
+
+            if (response.data.success) {
+                return {
+                    success: true,
+                    message: response.data.message || 'Hủy đơn hàng thành công',
+                    order: response.data.order
+                };
+            }
+
+            return {
+                success: false,
+                message: response.data.message || 'Không thể hủy đơn hàng'
+            };
+        } catch (error) {
+            console.error('Error cancelling order:', error);
+            throw error;
+        }
+    }
 }
 
 export default new OrderService(); 

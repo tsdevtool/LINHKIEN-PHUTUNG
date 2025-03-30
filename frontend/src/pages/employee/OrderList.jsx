@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, Plus, Filter } from 'lucide-react';
+import { Search, Download, Plus, Filter, ChevronUp, ChevronDown } from 'lucide-react';
 import orderService from './services/orderService';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import Loading from '../../components/ui/Loading';
 
@@ -11,72 +11,98 @@ const OrderList = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [sortConfig, setSortConfig] = useState({
+    field: 'createdAt',
+    order: 'desc'
+  });
+  const [filters, setFilters] = useState({
+    status: '',
+    shippingStatus: '',
+    dateRange: ''
+  });
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const fetchOrders = async (params = {}) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await orderService.getOrders({
+        ...params,
+        sortBy: sortConfig.field,
+        sortOrder: sortConfig.order,
+        ...filters
+      });
+
+      let ordersData = [];
+      if (Array.isArray(response)) {
+        ordersData = response;
+      } else if (response?.orders && Array.isArray(response.orders)) {
+        ordersData = response.orders;
+      } else if (response?.data && Array.isArray(response.data)) {
+        ordersData = response.data;
+      }
+
+      // Validate và chuẩn hóa dữ liệu đơn hàng
+      ordersData = ordersData.map(order => ({
+        _id: order._id || order.id,
+        order_number: order.order_number || order.orderNumber,
+        customerInfo: {
+          name: order.customerInfo?.name || 'Không có tên',
+          phone: order.customerInfo?.phone || 'Không có SĐT',
+          address: order.customerInfo?.address || 'Không có địa chỉ'
+        },
+        items: Array.isArray(order.items) ? order.items : [],
+        totalAmount: parseFloat(order.totalAmount || 0),
+        discount: parseFloat(order.discount || 0),
+        shippingFee: parseFloat(order.shippingFee || 0),
+        finalTotal: parseFloat(order.finalTotal || 0),
+        paymentMethod: order.paymentMethod || 'COD',
+        paymentStatus: order.paymentStatus || 'pending',
+        shippingMethod: order.shippingMethod || 'standard',
+        shippingStatus: order.shippingStatus || 'pending',
+        note: order.note || '',
+        status: order.status || 'pending',
+        staffInfo: order.staffInfo || { name: 'Admin' },
+        createdAt: order.createdAt || order.created_at || new Date().toISOString()
+      }));
+
+      setOrders(ordersData);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      setError(error.message || 'Có lỗi xảy ra khi tải danh sách đơn hàng');
+      toast.error('Không thể tải danh sách đơn hàng');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let mounted = true;
-
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await orderService.getOrders();
-
-        if (!mounted) return;
-
-        // Kiểm tra và xử lý dữ liệu
-        let ordersData = [];
-        if (Array.isArray(response)) {
-          ordersData = response;
-        } else if (response?.orders && Array.isArray(response.orders)) {
-          ordersData = response.orders;
-        } else if (response?.data && Array.isArray(response.data)) {
-          ordersData = response.data;
-        }
-
-        // Validate và chuẩn hóa dữ liệu đơn hàng
-        ordersData = ordersData.map(order => ({
-          _id: order._id || order.id,
-          order_number: order.order_number || order.orderNumber,
-          customerInfo: {
-            name: order.customerInfo?.name || 'Không có tên',
-            phone: order.customerInfo?.phone || 'Không có SĐT',
-            address: order.customerInfo?.address || 'Không có địa chỉ'
-          },
-          items: Array.isArray(order.items) ? order.items : [],
-          totalAmount: parseFloat(order.totalAmount || 0),
-          discount: parseFloat(order.discount || 0),
-          shippingFee: parseFloat(order.shippingFee || 0),
-          finalTotal: parseFloat(order.finalTotal || 0),
-          paymentMethod: order.paymentMethod || 'COD',
-          paymentStatus: order.paymentStatus || 'pending',
-          shippingMethod: order.shippingMethod || 'standard',
-          shippingStatus: order.shippingStatus || 'pending',
-          note: order.note || '',
-          status: order.status || 'pending',
-          staffInfo: order.staffInfo || { name: 'Admin' },
-          createdAt: order.createdAt || order.created_at || new Date().toISOString()
-        }));
-
-        setOrders(ordersData);
-      } catch (error) {
-        if (!mounted) return;
-        console.error('Error fetching orders:', error);
-        setError(error.message || 'Có lỗi xảy ra khi tải danh sách đơn hàng');
-        toast.error('Không thể tải danh sách đơn hàng');
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
     fetchOrders();
+  }, [sortConfig, filters]);
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const handleSort = (field) => {
+    setSortConfig(prevConfig => ({
+      field,
+      order: prevConfig.field === field && prevConfig.order === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
+  };
+
+  const getSortIcon = (field) => {
+    if (sortConfig.field !== field) {
+      return <ChevronDown className="w-4 h-4 text-gray-400" />;
+    }
+    return sortConfig.order === 'asc' 
+      ? <ChevronUp className="w-4 h-4 text-blue-500" />
+      : <ChevronDown className="w-4 h-4 text-blue-500" />;
+  };
 
   if (loading) {
     return <Loading />;
@@ -103,7 +129,18 @@ const OrderList = () => {
       toast.error('Không thể xem chi tiết đơn hàng do thiếu ID');
       return;
     }
-    navigate(`/employee/orders/${orderId}`);
+
+    // Xác định route prefix dựa vào current path
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    const routePrefix = isAdminRoute ? '/admin' : '/employee';
+    
+    navigate(`${routePrefix}/orders/${orderId}`);
+  };
+
+  const handleCreateOrder = () => {
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    const routePrefix = isAdminRoute ? '/admin' : '/employee';
+    navigate(`${routePrefix}/orders/new`);
   };
 
   const getStatusColor = (status, shippingMethod, paymentStatus) => {
@@ -197,7 +234,7 @@ const OrderList = () => {
               <span>Xuất file</span>
             </button>
             <button
-              onClick={() => navigate('/employee/orders/new')}
+              onClick={handleCreateOrder}
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-2"
             >
               <Plus size={20} />
@@ -229,7 +266,7 @@ const OrderList = () => {
           </div>
         </div>
 
-        {/* Search and Filters */}
+        {/* Filters */}
         <div className="mb-6 flex gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -242,22 +279,26 @@ const OrderList = () => {
             />
           </div>
           <div className="flex gap-2">
-            <select className="border rounded-lg px-4 py-2">
-              <option>Trạng thái giao hàng</option>
-              <option>Đã giao</option>
-              <option>Đang giao</option>
-              <option>Chưa giao</option>
+            <select 
+              className="border rounded-lg px-4 py-2"
+              value={filters.shippingStatus}
+              onChange={(e) => handleFilterChange('shippingStatus', e.target.value)}
+            >
+              <option value="">Trạng thái giao hàng</option>
+              <option value="delivered">Đã giao</option>
+              <option value="shipping">Đang giao</option>
+              <option value="pending">Chưa giao</option>
             </select>
-            <select className="border rounded-lg px-4 py-2">
-              <option>Ngày tạo</option>
-              <option>Hôm nay</option>
-              <option>7 ngày qua</option>
-              <option>30 ngày qua</option>
+            <select 
+              className="border rounded-lg px-4 py-2"
+              value={filters.dateRange}
+              onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+            >
+              <option value="">Ngày tạo</option>
+              <option value="today">Hôm nay</option>
+              <option value="week">7 ngày qua</option>
+              <option value="month">30 ngày qua</option>
             </select>
-            <button className="border rounded-lg px-4 py-2 flex items-center gap-2 hover:bg-gray-50">
-              <Filter size={20} />
-              <span>Bộ lọc khác</span>
-            </button>
           </div>
         </div>
 
@@ -283,26 +324,62 @@ const OrderList = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <input type="checkbox" className="rounded border-gray-300" />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mã đơn hàng
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('order_number')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Mã đơn hàng
+                      {getSortIcon('order_number')}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nguồn đơn
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('staffInfo.name')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Nguồn đơn
+                      {getSortIcon('staffInfo.name')}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ngày tạo
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('createdAt')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Ngày tạo
+                      {getSortIcon('createdAt')}
+                    </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Khách hàng
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Thành tiền
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('finalTotal')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Thành tiền
+                      {getSortIcon('finalTotal')}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Trạng thái thanh toán
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('paymentStatus')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Trạng thái thanh toán
+                      {getSortIcon('paymentStatus')}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Trạng thái xử lý
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('status')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Trạng thái xử lý
+                      {getSortIcon('status')}
+                    </div>
                   </th>
                 </tr>
               </thead>

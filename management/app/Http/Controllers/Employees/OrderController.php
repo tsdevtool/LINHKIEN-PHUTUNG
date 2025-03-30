@@ -15,10 +15,51 @@ use Carbon\Carbon;
 
 class OrderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $orders = Order::orderBy('createdAt', 'desc')->get();
+            // Get sorting parameters
+            $sortField = $request->input('sortBy', 'createdAt');
+            $sortOrder = $request->input('sortOrder', 'desc');
+            $filterStatus = $request->input('status');
+            $filterPaymentStatus = $request->input('paymentStatus');
+            $filterShippingStatus = $request->input('shippingStatus');
+            $dateRange = $request->input('dateRange');
+
+            // Start the query
+            $query = Order::query();
+
+            // Apply filters
+            if ($filterStatus) {
+                $query->where('status', $filterStatus);
+            }
+            if ($filterPaymentStatus) {
+                $query->where('paymentStatus', $filterPaymentStatus);
+            }
+            if ($filterShippingStatus) {
+                $query->where('shippingStatus', $filterShippingStatus);
+            }
+
+            // Apply date range filter
+            if ($dateRange) {
+                switch ($dateRange) {
+                    case 'today':
+                        $query->whereDate('createdAt', Carbon::today());
+                        break;
+                    case 'week':
+                        $query->where('createdAt', '>=', Carbon::now()->subDays(7));
+                        break;
+                    case 'month':
+                        $query->where('createdAt', '>=', Carbon::now()->subDays(30));
+                        break;
+                }
+            }
+
+            // Apply sorting
+            $query->orderBy($sortField, $sortOrder);
+
+            // Get results
+            $orders = $query->get();
             
             // Convert MongoDB documents to array manually
             $ordersArray = [];
@@ -46,7 +87,18 @@ class OrderController extends Controller
             
             return response()->json([
                 'success' => true,
-                'orders' => $ordersArray
+                'orders' => $ordersArray,
+                'total' => count($ordersArray),
+                'filters' => [
+                    'status' => $filterStatus,
+                    'paymentStatus' => $filterPaymentStatus,
+                    'shippingStatus' => $filterShippingStatus,
+                    'dateRange' => $dateRange
+                ],
+                'sorting' => [
+                    'field' => $sortField,
+                    'order' => $sortOrder
+                ]
             ]);
         } catch (Exception $e) {
             Log::error('Error fetching orders:', [

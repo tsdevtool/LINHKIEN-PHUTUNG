@@ -107,7 +107,23 @@ const orderSchema = new mongoose.Schema({
         },
         transactionId: String,
         paidAt: Date
-    }
+    },
+    confirmedAt: {
+        type: Date,
+        default: null
+      },
+      shippingUpdatedAt: {
+        type: Date,
+        default: null
+      },
+      deliveredAt: {
+        type: Date,
+        default: null
+      },
+      cancelledAt: {
+        type: Date,
+        default: null
+      },
 }, {
     timestamps: true
 });
