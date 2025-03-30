@@ -2,16 +2,16 @@ import { Search, Bell, Mail, Layers, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const Header = ({ isSidebarOpen }) => {
+const Header = ({ isSidebarOpen, isSidebarLocked }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 bg-white p-4 shadow flex items-center justify-between transition-all duration-300",
-        isSidebarOpen
+        "fixed top-0 right-0 bg-white p-4 shadow flex items-center justify-between transition-all duration-300 z-40",
+        isSidebarOpen || isSidebarLocked
           ? "ml-64 w-[calc(100%-16rem)]"
-          : "ml-16 w-[calc(100%-4rem)]"
+          : "ml-20 w-[calc(100%-5rem)]"
       )}
     >
       {/* Search Box */}
