@@ -28,7 +28,8 @@ export const createOrder = async (req, res) => {
 
     try {
         const { items, customerId, customerInfo, totalAmount, finalTotal, 
-                paymentMethod, shippingMethod, staffId, staffInfo } = req.body;
+                paymentMethod, shippingMethod, staffId, staffInfo,
+                paymentStatus, shippingStatus, status } = req.body;
 
         console.log('Order data received:', JSON.stringify(req.body, null, 2));
 
@@ -43,8 +44,7 @@ export const createOrder = async (req, res) => {
         const orderNumber = await Order.generateOrderNumber();
         console.log("Generated order number in controller:", orderNumber);
         
-        // Kiểm tra sản phẩm - có thể bỏ qua nếu không cần kiểm tra
-        
+        // Kiểm tra sản phẩm và số lượng tồn kho
         for (const item of items) {
             const product = await Product.findById(item.productId);
             if (!product) {
@@ -54,26 +54,27 @@ export const createOrder = async (req, res) => {
                 throw new Error(`Sản phẩm ${product.name} chỉ còn ${product.quantity} trong kho`);
             }
         }
-        
 
-        // Create order
+        // Create order with status values from frontend
         const order = new Order({
-            order_number: orderNumber,  // Gán mã đơn hàng đã tạo
+            order_number: orderNumber,
             customerId,
             customerInfo,
             items,
             totalAmount,
             finalTotal,
             paymentMethod,
+            paymentStatus,
             shippingMethod,
+            shippingStatus,
+            status,
             staffId,
             staffInfo
         });
 
         await order.save({ session });
 
-        // Skip product quantity update for now
-        
+        // Update product quantities
         for (const item of items) {
             await Product.findByIdAndUpdate(
                 item.productId,
@@ -81,7 +82,6 @@ export const createOrder = async (req, res) => {
                 { session }
             );
         }
-        
 
         await session.commitTransaction();
         

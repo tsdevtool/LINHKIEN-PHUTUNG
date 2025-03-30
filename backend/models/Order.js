@@ -59,29 +59,36 @@ const orderSchema = new mongoose.Schema({
     paymentMethod: {
         type: String,
         required: true,
-        enum: [
-            'cash', 'bank_transfer', 'credit_card', 'momo', 'zalopay', 'vnpay', 'cod', 'payos',
-            'Tiền mặt', 'Chuyển khoản', 'Thẻ tín dụng', 'Ví Momo', 'ZaloPay', 'VNPay', 'COD (Thu hộ)', 'PayOS'
-        ]
+        enum: ['cash', 'payos', 'cod', 'Tiền mặt', 'PayOS', 'COD'],
+        set: function(value) {
+            // Convert frontend values to database values
+            const mapping = {
+                'Tiền mặt': 'cash',
+                'PayOS': 'payos',
+                'COD': 'cod'
+            };
+            return mapping[value] || value.toLowerCase();
+        }
     },
     paymentStatus: {
         type: String,
         default: 'pending',
-        enum: ['paid', 'unpaid', 'pending', 'partially_paid', 'Đã thanh toán', 'Chưa thanh toán', 'Thanh toán một phần', 'Chờ thanh toán']
+        enum: ['paid', 'unpaid', 'pending']
     },
     shippingMethod: {
         type: String,
-        required: true
+        required: true,
+        enum: ['Nhận tại cửa hàng', 'Đã giao hàng', 'Giao cho bên vận chuyển', 'Giao hàng sau']
     },
     shippingStatus: {
         type: String,
         default: 'pending',
-        enum: ['pending', 'shipping', 'delivered', 'Chờ xử lý', 'Đang giao hàng', 'Đã giao hàng']
+        enum: ['pending', 'shipping', 'delivered']
     },
     status: {
         type: String,
         default: 'pending',
-        enum: ['pending', 'confirmed', 'shipping', 'completed', 'cancelled', 'Chờ xử lý', 'Đã xác nhận', 'Đang giao hàng', 'Hoàn thành', 'Đã hủy']
+        enum: ['pending', 'confirmed', 'shipping', 'delivered', 'completed', 'cancelled']
     },
     note: String,
     staffId: {

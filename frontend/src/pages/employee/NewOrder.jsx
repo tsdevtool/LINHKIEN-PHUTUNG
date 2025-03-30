@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import {
   Search, PlusCircle, Trash2,
@@ -10,6 +10,7 @@ import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import NewCustomer from "./components/NewCustomer";
+import { useAuthStore } from "../../store/authUser";
 
 const NewOrder = () => {
   const {
@@ -59,6 +60,14 @@ const NewOrder = () => {
   const navigate = useNavigate();
 
   const [showNewCustomer, setShowNewCustomer] = useState(false);
+
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (user) {
+      setStaff(user.firstname + ' ' + (user.lastname || ''));
+    }
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -328,18 +337,9 @@ const NewOrder = () => {
                 {/* Nhân viên phụ trách */}
                 <div className="border p-4 rounded-md">
                   <h3 className="font-semibold text-lg">Thông tin đơn hàng</h3>
-                  <select 
-                    className="w-full p-2 border rounded-md mt-2"
-                    value={staff}
-                    onChange={(e) => setStaff(e.target.value)}
-                    required
-                  >
-                    <option value="">Chọn nhân viên phụ trách *</option>
-                    <option value="Nguyễn Văn A">Nguyễn Văn A</option>
-                    <option value="Trần Thị B">Trần Thị B</option>
-                    <option value="Lê Văn C">Lê Văn C</option>
-                    <option value="Phạm Thị D">Phạm Thị D</option>
-                  </select>
+                  <div className="w-full p-2 border rounded-md mt-2 bg-gray-50">
+                    {user ? user.firstname + ' ' + (user.lastname || '') : 'Đang tải...'}
+                  </div>
                 </div>
 
                 {/* Ghi chú */}
@@ -385,13 +385,12 @@ const NewOrder = () => {
                 >
                   <option value="">Chọn phương thức thanh toán</option>
                   <option value="Tiền mặt">Tiền mặt</option>
-                  <option value="Chuyển khoản">Chuyển khoản</option>
+             
                   <option value="PayOS">PayOS</option>
-                  <option value="Momo">Ví Momo</option>
-                  <option value="ZaloPay">ZaloPay</option>
-                  <option value="VNPay">VNPay</option>
+                  
+               
                   <option value="COD (Thu hộ)">COD (Thu hộ)</option>
-                  <option value="Thanh toán sau">Thanh toán sau</option>
+                
                 </select>
               </div>
             </div>

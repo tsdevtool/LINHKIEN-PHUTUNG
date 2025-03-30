@@ -463,6 +463,55 @@ const OrderDetail = () => {
     }
   };
 
+  const handleConfirmPayment = async () => {
+    try {
+      console.log('Confirming payment for order:', order);
+      const orderId = order?._id || order?.id;
+      
+      if (!orderId) {
+        throw new Error('Không tìm thấy ID đơn hàng');
+      }
+      
+      const currentTime = new Date().toISOString();
+      const response = await orderService.updateOrder(orderId, {
+        ...order,
+        paymentStatus: 'paid',
+        status: order.shippingStatus === 'delivered' ? 'completed' : order.status,
+        paymentInfo: {
+          ...order.paymentInfo,
+          status: 'paid',
+          paidAt: currentTime
+        },
+        updatedAt: currentTime
+      });
+
+      console.log('Update response:', response);
+
+      if (response.success) {
+        const updatedOrder = {
+          ...order,
+          paymentStatus: 'paid',
+          status: order.shippingStatus === 'delivered' ? 'completed' : order.status,
+          paymentInfo: {
+            ...order.paymentInfo,
+            status: 'paid',
+            paidAt: currentTime
+          },
+          updatedAt: currentTime
+        };
+        
+        setOrder(updatedOrder);
+        generateOrderHistory(updatedOrder);
+        toast.success('Đã xác nhận thanh toán thành công');
+      } else {
+        throw new Error(response.message || 'Không thể cập nhật trạng thái thanh toán');
+      }
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      toast.error(error.message || 'Không thể xác nhận thanh toán');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -722,13 +771,25 @@ const OrderDetail = () => {
                     </span>
                     
                     {/* Hiển thị nút thanh toán lại cho PayOS */}
-                    {order.paymentMethod === 'PayOS' && 
+                    {order.paymentMethod.toLowerCase() === 'payos' && 
                      order.paymentStatus !== 'paid' && (
                       <button
                         onClick={handleRepayment}
                         className="ml-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
                       >
                         Thanh toán lại
+                      </button>
+                    )}
+
+                    {/* Hiển thị nút xác nhận thanh toán cho COD */}
+                    {order.paymentMethod.toLowerCase() === 'cod' && 
+                     order.paymentStatus !== 'paid' && (
+                      <button
+                        onClick={handleConfirmPayment}
+                        className="ml-2 px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm flex items-center gap-1"
+                      >
+                        <CheckCircle2 size={16} />
+                        Xác nhận thanh toán
                       </button>
                     )}
                   </div>

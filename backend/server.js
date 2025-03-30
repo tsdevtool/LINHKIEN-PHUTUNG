@@ -8,7 +8,7 @@ import roles from "./routes/role.route.js";
 import employees from "./routes/useradmin.route.js"
 
 
-import orderRoutes from "./routes/orderRoutes.js";
+import orderRoutes from "./routes/order.route.js";
 
 
 import { connectDB } from "./config/db.js";
