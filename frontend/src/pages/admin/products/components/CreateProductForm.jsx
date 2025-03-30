@@ -35,6 +35,7 @@ const CreateProductForm = () => {
   });
 
   const [isOpen, setIsOpen] = useState(false);
+  const [categoryError, setCategoryError] = useState(false);
 
   useEffect(() => {
     getAllCategories();
@@ -55,21 +56,37 @@ const CreateProductForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!product.category_id) {
+      setCategoryError(true);
+      return;
+    }
+    setCategoryError(false);
+  
     const formData = new FormData();
     formData.append("name", product.name);
     formData.append("description", product.description);
-    formData.append("quantity", product.quantity);
-    formData.append("price", product.price);
+    formData.append("quantity", parseInt(product.quantity, 10)); // Convert to integer
+    formData.append("price", parseFloat(product.price)); // Convert to float
     formData.append("category_id", product.category_id);
-    if (product.image_url) {
+  
+    if (product.image) {
       formData.append("image", product.image);
     }
+  
     if (product.images.length > 0) {
       product.images.forEach((image) => {
         formData.append("images[]", image);
       });
     }
-
+  
+    console.log("Kiểu dữ liệu của quantity:", typeof parseInt(product.quantity, 10)); // Should log "number"
+    console.log("Kiểu dữ liệu của price:", typeof parseFloat(product.price)); // Should log "number"
+  
+    console.log("FormData contents:");
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value instanceof File ? "[File]" : value);
+    }
+  
     try {
       await addProduct(formData);
       setIsOpen(false);
@@ -80,7 +97,7 @@ const CreateProductForm = () => {
         price: "",
         category_id: "",
         image: null,
-        images: [], // Reset images array
+        images: [],
       });
     } catch (error) {
       console.error("Error creating product:", error);
@@ -159,13 +176,30 @@ const CreateProductForm = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {categoryError && (
+                <p className="text-red-500 text-sm mt-1">
+                  Vui lòng chọn danh mục.
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="image">Hình ảnh</Label>
               <Input
                 id="image"
+                name="image"
                 type="file"
                 accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+            <div>
+              <Label htmlFor="images">Hình ảnh phụ</Label>
+              <Input
+                id="images"
+                name="images"
+                type="file"
+                accept="image/*"
+                multiple
                 onChange={handleFileChange}
               />
             </div>
