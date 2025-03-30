@@ -21,17 +21,13 @@ const INITIAL_STATE = {
 };
 
 const PAYMENT_METHODS = {
-    PAID: "Đã thanh toán",
     CASH: "Tiền mặt",
-    BANK_TRANSFER: "Chuyển khoản",
-    MOMO: "Momo",
-    ZALOPAY: "ZaloPay",
-    VNPAY: "VNPay",
-    COD: "COD",
-    PAY_LATER: "Thanh toán sau"
+    PAYOS: "PayOS",
+    COD: "COD"
 };
 
 const SHIPPING_METHODS = {
+    STORE_PICKUP: "Nhận tại cửa hàng",
     DELIVERED: "Đã giao hàng",
     SHIPPING: "Đã qua hàng vận chuyển",
     PENDING: "Giao hàng sau"
@@ -78,23 +74,16 @@ const validateProduct = (product) => {
 
 // Status determination functions
 const determinePaymentStatus = (paymentMethod) => {
-    const directPaymentMethods = [
-        PAYMENT_METHODS.PAID,
-        PAYMENT_METHODS.CASH,
-        PAYMENT_METHODS.BANK_TRANSFER,
-        PAYMENT_METHODS.MOMO,
-        PAYMENT_METHODS.ZALOPAY,
-        PAYMENT_METHODS.VNPAY
-    ];
-
-    const pendingPaymentMethods = [
-        PAYMENT_METHODS.PAY_LATER,
-        PAYMENT_METHODS.COD
-    ];
-
-    if (directPaymentMethods.includes(paymentMethod)) return "paid";
-    if (pendingPaymentMethods.includes(paymentMethod)) return "pending";
-    return "unpaid";
+    switch (paymentMethod) {
+        case PAYMENT_METHODS.PAYOS:
+            return "pending";
+        case PAYMENT_METHODS.CASH:
+            return "paid";
+        case PAYMENT_METHODS.COD:
+            return "pending";
+        default:
+            return "unpaid";
+    }
 };
 
 const determineShippingStatus = (shippingMethod) => {
@@ -103,22 +92,40 @@ const determineShippingStatus = (shippingMethod) => {
             return "delivered";
         case SHIPPING_METHODS.SHIPPING:
             return "shipping";
+        case SHIPPING_METHODS.STORE_PICKUP:
+            return "delivered";
         default:
             return "pending";
     }
 };
 
 const determineOrderStatus = (shippingMethod, paymentMethod) => {
-    if (shippingMethod === SHIPPING_METHODS.DELIVERED && 
-        determinePaymentStatus(paymentMethod) === "paid") {
+    // Nếu là PayOS, luôn để pending cho đến khi thanh toán thành công
+    if (paymentMethod === PAYMENT_METHODS.PAYOS) {
+        return "pending";
+    }
+    
+    // Nếu nhận tại cửa hàng và thanh toán tiền mặt -> completed
+    if (shippingMethod === SHIPPING_METHODS.STORE_PICKUP && paymentMethod === PAYMENT_METHODS.CASH) {
         return "completed";
     }
-    if (shippingMethod === SHIPPING_METHODS.DELIVERED) {
+
+    // Nếu đã giao hàng và thanh toán tiền mặt -> completed
+    if (shippingMethod === SHIPPING_METHODS.DELIVERED && paymentMethod === PAYMENT_METHODS.CASH) {
+        return "completed";
+    }
+
+    // Nếu chỉ đã giao hàng hoặc nhận tại cửa hàng -> delivered
+    if (shippingMethod === SHIPPING_METHODS.DELIVERED || shippingMethod === SHIPPING_METHODS.STORE_PICKUP) {
         return "delivered";
     }
+
+    // Nếu đang giao hàng -> shipping
     if (shippingMethod === SHIPPING_METHODS.SHIPPING) {
         return "shipping";
     }
+
+    // Mặc định -> pending
     return "pending";
 };
 
@@ -129,7 +136,7 @@ const normalizeProductData = (product, quantity = 1) => ({
     price: parseFloat(product.price),
     sku: product.sku || product.code || '',
     image_url: product.image_url || product.imageUrl || '',
-    quantity: parseInt(quantity)
+    quantity: parseInt(quantity, 10) || 1
 });
 
 export const useOrder = () => {
@@ -225,7 +232,8 @@ export const useOrder = () => {
 
     // Update product quantity
     const updateProductQuantity = useCallback((uniqueId, newQuantity) => {
-        if (newQuantity <= 0) {
+        const quantity = parseInt(newQuantity, 10);
+        if (quantity <= 0) {
             handleError(new Error('Số lượng phải lớn hơn 0'));
             return;
         }
@@ -233,7 +241,7 @@ export const useOrder = () => {
         updateState({
             selectedProducts: state.selectedProducts.map(product =>
                 product.uniqueId === uniqueId
-                    ? { ...product, quantity: newQuantity }
+                    ? { ...product, quantity: quantity }
                     : product
             )
         });
@@ -330,87 +338,36 @@ export const useOrder = () => {
                     email: selectedCustomer.email || '',
                     address: selectedCustomer.address || ''
                 },
-                items: selectedProducts.map(product => ({
-                    productId: product._id,
-                    price: parseFloat(product.price),
-                    quantity: parseInt(product.quantity),
-                    total: parseFloat(product.price) * parseInt(product.quantity)
-                })),
+                items: selectedProducts.map(product => {
+                    const price = parseFloat(product.price);
+                    const quantity = parseInt(product.quantity, 10) || 1;
+                    return {
+                        productId: product._id,
+                        price,
+                        quantity,
+                        total: price * quantity
+                    };
+                }),
                 totalAmount: parseFloat(totalProductPrice),
                 discount: parseFloat(discount || 0),
                 shippingFee: parseFloat(shippingFee || 0),
                 finalTotal: parseFloat(finalTotal),
                 paymentMethod,
-                paymentStatus: (() => {
-                    // Nếu là PayOS, luôn để pending cho đến khi thanh toán thành công
-                    if (paymentMethod === "PayOS") {
-                        return "pending";
-                    }
-                    
-                    // Nếu chọn các phương thức thanh toán trực tiếp
-                    if (
-                        paymentMethod === "Tiền mặt" || 
-                        paymentMethod === "Chuyển khoản" ||
-                        paymentMethod === "Ví Momo" ||
-                        paymentMethod === "ZaloPay" ||
-                        paymentMethod === "VNPay") {
-                        return "paid";
-                    }
-                    // Nếu là thanh toán sau hoặc COD
-                    if (paymentMethod === "Thanh toán sau" || paymentMethod === "COD (Thu hộ)") {
-                        return "pending";
-                    }
-                    return "unpaid";
-                })(),
+                paymentStatus: determinePaymentStatus(paymentMethod),
                 shippingMethod,
-                shippingStatus: (() => {
-                    switch (shippingMethod) {
-                        case "Đã giao hàng":
-                            return "delivered";
-                        case "Đã qua hàng vận chuyển":
-                            return "shipping";
-                        case "Giao hàng sau":
-                        default:
-                            return "pending";
-                    }
-                })(),
+                shippingStatus: determineShippingStatus(shippingMethod),
                 note: note || '',
                 staffId: staff,
                 staffInfo: {
                     name: staff,
                     role: 'employee'
                 },
-                status: (() => {
-                    // Nếu là PayOS, luôn để pending cho đến khi thanh toán thành công
-                    if (paymentMethod === "PayOS") {
-                        return "pending";
-                    }
-                    
-                    // Nếu đã giao hàng và đã thanh toán -> completed
-                    if (shippingMethod === "Đã giao hàng" && 
-                        (paymentMethod === "Tiền mặt" || 
-                         paymentMethod === "Chuyển khoản" ||
-                         paymentMethod === "Ví Momo" ||
-                         paymentMethod === "ZaloPay" ||
-                         paymentMethod === "VNPay")) {
-                        return "completed";
-                    }
-                    // Nếu chỉ đã giao hàng -> delivered
-                    if (shippingMethod === "Đã giao hàng") {
-                        return "delivered";
-                    }
-                    // Nếu đang giao hàng -> shipping
-                    if (shippingMethod === "Đã qua hàng vận chuyển") {
-                        return "shipping";
-                    }
-                    // Mặc định -> pending
-                    return "pending";
-                })()
+                status: determineOrderStatus(shippingMethod, paymentMethod)
             };
 
-            console.log('Submitting order with data:', orderData);
+          
             const response = await createOrder(orderData);
-            console.log('Order creation successful:', response);
+         
 
             // Nếu phương thức thanh toán là PayOS, tạo payment link
             if (paymentMethod === "PayOS") {
@@ -457,7 +414,7 @@ export const useOrder = () => {
             }
 
         } catch (error) {
-            console.error('Order submission error:', error);
+         
             toast.error(error.message || 'Có lỗi xảy ra khi tạo đơn hàng');
             throw error;
         }
