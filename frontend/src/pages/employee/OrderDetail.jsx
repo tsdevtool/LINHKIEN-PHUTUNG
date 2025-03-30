@@ -536,7 +536,11 @@ const OrderDetail = () => {
       await handleCancelOrder(order._id, cancelReason);
       setShowCancelModal(false);
       setCancelReason('');
-      await fetchOrderDetail(); // Tải lại thông tin đơn hàng
+      
+      // Kiểm tra route hiện tại để chuyển hướng đúng
+      const isAdminRoute = location.pathname.startsWith('/admin');
+      const routePrefix = isAdminRoute ? '/admin' : '/employee';
+      navigate(`${routePrefix}/orders`);
     } catch (error) {
       console.error('Error cancelling order:', error);
       // Toast error đã được xử lý trong handleCancelOrder
@@ -610,7 +614,11 @@ const OrderDetail = () => {
                order.status !== 'completed' && 
                order.status !== 'cancelled' && (
                 <button 
-                  onClick={() => navigate(`/employee/orders/${order._id}/edit`)}
+                  onClick={() => {
+                    const isAdminRoute = location.pathname.startsWith('/admin');
+                    const routePrefix = isAdminRoute ? '/admin' : '/employee';
+                    navigate(`${routePrefix}/orders/${order._id}/edit`);
+                  }}
                   className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-2"
                 >
                   <span>Sửa đơn</span>

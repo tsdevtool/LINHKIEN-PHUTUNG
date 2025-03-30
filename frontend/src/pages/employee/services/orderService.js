@@ -14,31 +14,59 @@ const axiosInstance = axios.create({
 class OrderService {
     async createOrder(orderData) {
         try {
+            // Validate required fields
+            if (!orderData.customer_info || !orderData.customer_info.name) {
+                throw new Error('Thiếu thông tin khách hàng');
+            }
+
+            if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+                throw new Error('Thiếu thông tin sản phẩm');
+            }
+
             // Log request data
-            console.log('Creating order with data:', orderData);
+            console.log('Creating order with data:', JSON.stringify(orderData, null, 2));
             
             // Format data before sending
-            const { orderNumber, ...orderDataWithoutNumber } = orderData; // Loại bỏ orderNumber
+            const { orderNumber, ...orderDataWithoutNumber } = orderData;
             
+            // Ensure all required fields are present and properly formatted
             const formattedData = {
                 ...orderDataWithoutNumber,
-                // Ensure staffId is a string
-                staffId: typeof orderData.staffId === 'object' ? orderData.staffId.id || orderData.staffId._id : orderData.staffId,
-                // Ensure customerInfo has all required fields
-                customerInfo: {
-                    ...orderData.customerInfo,
-                    address: orderData.customerInfo.address || 'Chưa cập nhật'
+                customer_id: orderData.customer_id,
+                customer_info: {
+                    name: orderData.customer_info.name,
+                    phone: orderData.customer_info.phone,
+                    address: orderData.customer_info.address || 'Chưa cập nhật',
+                    email: orderData.customer_info.email || ''
                 },
-                // Map payment method to accepted values
-                paymentMethod: this.mapPaymentMethod(orderData.paymentMethod)
+                items: orderData.items.map(item => ({
+                    product_id: item.product_id,
+                    quantity: item.quantity,
+                    price: item.price,
+                    total: item.total
+                })),
+                total_amount: orderData.total_amount,
+                discount: orderData.discount || 0,
+                shipping_fee: orderData.shipping_fee || 0,
+                finaltotal: orderData.finaltotal,
+                payment_method: this.mapPaymentMethod(orderData.payment_method),
+                payment_status: orderData.payment_status,
+                shipping_method: orderData.shipping_method,
+                shipping_status: orderData.shipping_status,
+                staff_id: orderData.staff_id,
+                staff_info: {
+                    name: orderData.staff_info.name,
+                    role: 'employee'
+                },
+                status: orderData.status,
+                note: orderData.note || ''
             };
             
-            console.log('Formatted data:', formattedData);
+            console.log('Formatted data to send:', JSON.stringify(formattedData, null, 2));
             
             const response = await axiosInstance.post('/orders', formattedData);
             console.log('API Response:', response);
             
-            // Kiểm tra response
             if (!response.data) {
                 throw new Error('Không nhận được phản hồi từ server');
             }
