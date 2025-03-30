@@ -42,6 +42,16 @@ class Product extends MongoModel
         'is_active'
     ];
 
+    public function setPriceAttribute($value)
+    {
+        $this->attributes['price'] = (float)$value;  // Ép kiểu price về float
+    }
+
+    public function setQuantityAttribute($value)
+    {
+        $this->attributes['quantity'] = (int)$value;  // Ép kiểu quantity về integer
+    }
+    
     public function category()
     {
         return $this->belongsTo(Category::class)->where('level', 1);

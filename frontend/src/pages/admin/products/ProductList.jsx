@@ -1,11 +1,15 @@
 import Loading from "@/components/ui/Loading";
 import { useProductStore } from "@/store/useProductStore";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ProductCard from "./components/ProductCard";
 import ProductCardSkeleton from "./components/ProductCardSkeleton";
+import EditProductForm from "./components/EditProductForm";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 const ProductList = () => {
   const { products, isLoadingProduct, getAllProducts } = useProductStore();
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const fetchProducts = useCallback(() => {
     getAllProducts();
@@ -15,10 +19,13 @@ const ProductList = () => {
     fetchProducts();
   }, [fetchProducts]);
 
-  console.log(products);
+  const handleEdit = (product) => {
+    setEditingProduct(product);
+    setIsEditOpen(true);
+  };
 
   return (
-    <div className="w-full flex flex-col items-center gap-4  ">
+    <div className="w-full flex flex-col items-center gap-4">
       <div className="flex flex-col w-full shadow-xl shadow-gray-300 rounded-4xl px-12 py-6">
         <h1 className="text-3xl font-bold mb-3">Danh sách sản phẩm</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-center gap-4">
@@ -28,7 +35,7 @@ const ProductList = () => {
             ))
           ) : products.length > 0 ? (
             products.map((product) => (
-              <ProductCard product={product} key={product.id} />
+              <ProductCard product={product} key={product.id} onEdit={handleEdit} />
             ))
           ) : (
             <p className="text-gray-500 text-center col-span-4">
@@ -37,6 +44,18 @@ const ProductList = () => {
           )}
         </div>
       </div>
+      {editingProduct && (
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent className="p-6 max-w-lg">
+            <DialogTitle>Sửa sản phẩm</DialogTitle>
+            <EditProductForm
+              initialProduct={editingProduct}
+              isOpen={isEditOpen}
+              setIsOpen={setIsEditOpen}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

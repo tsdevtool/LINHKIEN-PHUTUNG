@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authUser";
 
-const Header = ({ isSidebarOpen }) => {
+const Header = ({ isSidebarOpen, isSidebarLocked }) => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
@@ -22,10 +22,11 @@ const Header = ({ isSidebarOpen }) => {
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 bg-white p-4 shadow-sm z-40 transition-all duration-300",
-        isSidebarOpen
+
+        "fixed top-0 right-0 bg-white p-4 shadow flex items-center justify-between transition-all duration-300 z-40",
+
           ? "ml-64 w-[calc(100%-16rem)]"
-          : "ml-16 w-[calc(100%-4rem)]"
+          : "ml-20 w-[calc(100%-5rem)]"
       )}
     >
       <div className="flex items-center justify-between">
@@ -103,8 +104,11 @@ const Header = ({ isSidebarOpen }) => {
   );
 };
 
+
 Header.propTypes = {
   isSidebarOpen: PropTypes.bool.isRequired,
 };
 
 export default Header;
+
+

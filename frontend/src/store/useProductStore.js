@@ -39,7 +39,7 @@ export const useProductStore = create((set, get) => ({
   },
 
   // Tạo sản phẩm mới
-  createProduct: async (productData) => {
+  addProduct: async (productData) => {
     set({ isLoading: true });
     try {
       // Log request data
@@ -104,6 +104,7 @@ export const useProductStore = create((set, get) => ({
   updateProduct: async (id, productData) => {
     set({ isLoading: true });
     try {
+      productData.append("_method", "PUT");
       const response = await axios.post(`/api/products/${id}`, productData, {
         headers: {
           "Content-Type": "multipart/form-data",
