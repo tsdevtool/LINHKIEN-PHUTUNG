@@ -12,12 +12,16 @@ class Order extends Model
 
     protected $connection = 'mongodb';
     protected $collection = 'orders';
+    protected $dates = ['createdAt', 'updatedAt'];
+
+    // Disable Laravel's timestamps
+    public $timestamps = false;
 
     protected $fillable = [
-        'orderNumber',
+        'order_number',
         'customerId',
-        'customerInfo', // Lưu thông tin khách hàng tại thời điểm đặt hàng
-        'items', // Mảng các sản phẩm
+        'customerInfo',
+        'items',
         'totalAmount',
         'discount',
         'shippingFee',
@@ -26,10 +30,11 @@ class Order extends Model
         'paymentStatus',
         'shippingMethod',
         'shippingStatus',
+        'status',
         'note',
-        'status', // pending, confirmed, shipping, completed, cancelled
         'staffId',
         'staffInfo',
+        'paymentInfo',
         'createdAt',
         'updatedAt'
     ];
@@ -43,16 +48,24 @@ class Order extends Model
         'finalTotal' => 'float',
         'items' => 'array',
         'customerInfo' => 'array',
-        'staffInfo' => 'array'
+        'staffInfo' => 'array',
+        'paymentInfo' => 'array'
     ];
 
     protected $attributes = [
         'status' => 'pending',
-        'paymentStatus' => 'unpaid',
+        'paymentStatus' => 'pending',
         'shippingStatus' => 'pending',
         'discount' => 0,
         'shippingFee' => 0
     ];
+
+    // Định nghĩa các giá trị enum
+    public static $paymentMethods = ['cash', 'payos', 'cod', 'Tiền mặt', 'PayOS', 'COD'];
+    public static $paymentStatuses = ['paid', 'unpaid', 'pending'];
+    public static $shippingMethods = ['Nhận tại cửa hàng', 'Đã giao hàng', 'Giao cho bên vận chuyển', 'Giao hàng sau'];
+    public static $shippingStatuses = ['pending', 'shipping', 'delivered'];
+    public static $orderStatuses = ['pending', 'confirmed', 'shipping', 'delivered', 'completed', 'cancelled'];
 
     protected static function boot()
     {
@@ -62,66 +75,72 @@ class Order extends Model
             $order->createdAt = Carbon::now();
             $order->updatedAt = Carbon::now();
             
-            // Tạo mã đơn hàng nếu chưa có
-            if (!$order->orderNumber) {
-                $order->orderNumber = $order->generateOrderNumber();
+            if (!$order->order_number) {
+                $order->order_number = $order->generateOrderNumber();
+            }
+
+            // Convert payment method to standardized format
+            if ($order->paymentMethod) {
+                $order->paymentMethod = self::standardizePaymentMethod($order->paymentMethod);
             }
         });
 
         static::updating(function ($order) {
             $order->updatedAt = Carbon::now();
+            
+            if ($order->isDirty('paymentMethod')) {
+                $order->paymentMethod = self::standardizePaymentMethod($order->paymentMethod);
+            }
         });
+    }
+
+    public static function standardizePaymentMethod($value)
+    {
+        $mapping = [
+            'Tiền mặt' => 'cash',
+            'PayOS' => 'payos',
+            'COD' => 'cod'
+        ];
+        return $mapping[$value] ?? strtolower($value);
     }
 
     public function generateOrderNumber()
     {
         $prefix = 'DH';
         $date = Carbon::now()->format('ymd');
-        $lastOrder = self::where('orderNumber', 'like', $prefix . $date . '%')
-            ->orderBy('orderNumber', 'desc')
+        
+        $lastOrder = self::where('order_number', 'like', $prefix . $date . '%')
+            ->orderBy('order_number', 'desc')
             ->first();
 
+        $sequence = 1;
         if ($lastOrder) {
-            $sequence = intval(substr($lastOrder->orderNumber, -4)) + 1;
-        } else {
-            $sequence = 1;
+            $lastSequence = substr($lastOrder->order_number, -4);
+            if (is_numeric($lastSequence)) {
+                $sequence = intval($lastSequence) + 1;
+            }
         }
 
         return $prefix . $date . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 
-    public function customer()
+    public function updateStatus($newStatus)
     {
-        return $this->belongsTo(Customer::class, 'customerId');
+        if (in_array($newStatus, self::$orderStatuses)) {
+            $this->status = $newStatus;
+            return $this->save();
+        }
+        throw new \Exception('Invalid status value');
     }
 
+    public static function findByStatus($status)
+    {
+        return self::where('status', $status)->get();
+    }
+
+  
     public function staff()
     {
         return $this->belongsTo(User::class, 'staffId');
-    }
-
-    public function scopePending($query)
-    {
-        return $query->where('status', 'pending');
-    }
-
-    public function scopeConfirmed($query)
-    {
-        return $query->where('status', 'confirmed');
-    }
-
-    public function scopeShipping($query)
-    {
-        return $query->where('status', 'shipping');
-    }
-
-    public function scopeCompleted($query)
-    {
-        return $query->where('status', 'completed');
-    }
-
-    public function scopeCancelled($query)
-    {
-        return $query->where('status', 'cancelled');
     }
 } 
