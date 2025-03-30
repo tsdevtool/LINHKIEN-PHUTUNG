@@ -16,16 +16,10 @@ class User extends Model implements AuthenticatableContract
     protected $collection = 'users';
 
     protected $fillable = [
-        'firstname',
-        'lastname',
-        'phone',
-        'email',
-        'password',
-        'image',
-        'idrole',
-        'status',
-        'numberOfOrders',
-        'totalSpent'
+        'firstname', 'lastname', 'phone', 'email', 'password',
+        'address', 'image', 'numberOfOrder', 'numberOfOrders',
+        'totalSpent', 'status', 'idrole', 'created_at',
+        'updated_at', 'deleted_at'
     ];
 
     protected $hidden = [
