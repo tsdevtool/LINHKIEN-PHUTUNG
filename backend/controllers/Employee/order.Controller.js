@@ -7,13 +7,94 @@ import payosService from '../../services/payosService.js';
 // Get all orders
 export const getOrders = async (req, res) => {
     try {
-        const orders = await Order.find()
-            .sort({ createdAt: -1 });
+        // Get sorting and filtering parameters
+        const sortBy = req.query.sortBy || 'createdAt';
+        const sortOrder = req.query.sortOrder || 'desc';
+        const status = req.query.status;
+        const paymentStatus = req.query.paymentStatus;
+        const shippingStatus = req.query.shippingStatus;
+        const dateRange = req.query.dateRange;
+
+        // Build query
+        let query = {};
+
+        // Apply status filters
+        if (status) {
+            query.status = status;
+        }
+        if (paymentStatus) {
+            query.paymentStatus = paymentStatus;
+        }
+        if (shippingStatus) {
+            query.shippingStatus = shippingStatus;
+        }
+
+        // Apply date range filter
+        if (dateRange) {
+            const now = moment();
+            switch (dateRange) {
+                case 'today':
+                    query.createdAt = {
+                        $gte: moment().startOf('day'),
+                        $lte: moment().endOf('day')
+                    };
+                    break;
+                case 'week':
+                    query.createdAt = {
+                        $gte: moment().subtract(7, 'days').startOf('day')
+                    };
+                    break;
+                case 'month':
+                    query.createdAt = {
+                        $gte: moment().subtract(30, 'days').startOf('day')
+                    };
+                    break;
+            }
+        }
+
+        // Build sort object
+        let sort = {};
+        if (sortBy.includes('.')) {
+            // Handle nested fields (e.g., 'staffInfo.name')
+            const [parent, child] = sortBy.split('.');
+            sort[parent + '.' + child] = sortOrder === 'asc' ? 1 : -1;
+        } else {
+            sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+        }
+
+        // Execute query with sorting
+        const orders = await Order.find(query)
+            .sort(sort)
+            .lean(); // Use lean() for better performance
+
+        // Transform data for response
+        const transformedOrders = orders.map(order => ({
+            ...order,
+            _id: order._id.toString(),
+            customerId: order.customerId?.toString(),
+            items: order.items.map(item => ({
+                ...item,
+                productId: item.productId.toString()
+            }))
+        }));
+
         res.status(200).json({
             success: true,
-            orders
+            orders: transformedOrders,
+            total: transformedOrders.length,
+            filters: {
+                status,
+                paymentStatus,
+                shippingStatus,
+                dateRange
+            },
+            sorting: {
+                field: sortBy,
+                order: sortOrder
+            }
         });
     } catch (error) {
+        console.error('Error fetching orders:', error);
         res.status(500).json({
             success: false,
             message: 'Lỗi hệ thống: ' + error.message

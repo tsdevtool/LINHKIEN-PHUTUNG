@@ -51,11 +51,7 @@ const CategoryTable = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Quản lý danh mục</h2>
-        <Button>
-          <BadgePlus className="w-5 h-5 mr-2" />
-          Thêm danh mục
-        </Button>
+       
       </div>
 
       <Table>

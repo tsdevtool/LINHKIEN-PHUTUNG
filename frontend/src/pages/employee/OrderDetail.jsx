@@ -1,20 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Printer, MoreHorizontal, CheckCircle2, Truck, CreditCard, XCircle } from 'lucide-react';
 import orderService from './services/orderService';
 import productService from './services/productService';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+import useOrder from './hooks/useOrder';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 const OrderDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [order, setOrder] = useState(null);
   const [productDetails, setProductDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [orderHistory, setOrderHistory] = useState([]);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const { handleCancelOrder } = useOrder();
 
   useEffect(() => {
     fetchOrderDetail();
@@ -114,6 +128,18 @@ const OrderDetail = () => {
       color: 'blue'
     });
 
+    // Thêm sự kiện đơn được xác nhận
+    if (orderData.status === 'confirmed' || orderData.status === 'shipping' || orderData.status === 'completed') {
+      history.push({
+        type: 'confirmed',
+        title: 'Đã xác nhận đơn',
+        description: 'Đơn hàng đã được xác nhận',
+        timestamp: orderData.confirmedAt || orderData.createdAt,
+        icon: CheckCircle2,
+        color: 'blue'
+      });
+    }
+
     // Thêm sự kiện thanh toán nếu đã thanh toán
     if (orderData.paymentStatus === 'paid') {
       history.push({
@@ -126,18 +152,6 @@ const OrderDetail = () => {
       });
     }
 
-    // Thêm sự kiện xác nhận đơn nếu đã xác nhận
-    if (orderData.status === 'confirmed') {
-      history.push({
-        type: 'confirmed',
-        title: 'Đã xác nhận đơn',
-        description: 'Đơn hàng đã được xác nhận',
-        timestamp: orderData.updatedAt,
-        icon: CheckCircle2,
-        color: 'blue'
-      });
-    }
-
     // Thêm sự kiện vận chuyển hoặc nhận tại cửa hàng
     if (orderData.shippingMethod === "Nhận tại cửa hàng") {
       if (orderData.paymentStatus === 'paid') {
@@ -145,19 +159,19 @@ const OrderDetail = () => {
           type: 'completed',
           title: 'Đã xử lý',
           description: 'Khách hàng đã nhận hàng tại cửa hàng',
-          timestamp: orderData.updatedAt,
+          timestamp: orderData.paymentInfo?.paidAt || orderData.updatedAt,
           icon: CheckCircle2,
           color: 'green'
         });
       }
     } else {
-      // Thêm sự kiện đẩy vận chuyển (luôn giữ lại nếu đã có)
+      // Thêm sự kiện đẩy vận chuyển
       if (orderData.shippingStatus === 'shipping' || orderData.shippingStatus === 'delivered') {
         history.push({
           type: 'shipping',
           title: 'Đang vận chuyển',
           description: 'Đơn hàng đã được giao cho đơn vị vận chuyển',
-          timestamp: orderData.shippingUpdatedAt || orderData.updatedAt, // Sử dụng thời gian cập nhật vận chuyển nếu có
+          timestamp: orderData.shippingUpdatedAt || orderData.updatedAt,
           icon: Truck,
           color: 'orange'
         });
@@ -169,7 +183,7 @@ const OrderDetail = () => {
           type: 'delivered',
           title: 'Đã giao hàng',
           description: 'Đơn hàng đã được giao thành công',
-          timestamp: orderData.deliveredAt || orderData.updatedAt, // Sử dụng thời gian giao hàng nếu có
+          timestamp: orderData.deliveredAt || orderData.updatedAt,
           icon: CheckCircle2,
           color: 'green'
         });
@@ -182,7 +196,7 @@ const OrderDetail = () => {
         type: 'cancelled',
         title: 'Đơn hàng đã hủy',
         description: orderData.cancelReason || 'Không có lý do',
-        timestamp: orderData.updatedAt,
+        timestamp: orderData.cancelledAt || orderData.updatedAt,
         icon: XCircle,
         color: 'red'
       });
@@ -512,6 +526,23 @@ const OrderDetail = () => {
     }
   };
 
+  const handleCancelClick = async () => {
+    try {
+      if (!cancelReason.trim()) {
+        toast.error('Vui lòng nhập lý do hủy đơn');
+        return;
+      }
+
+      await handleCancelOrder(order._id, cancelReason);
+      setShowCancelModal(false);
+      setCancelReason('');
+      await fetchOrderDetail(); // Tải lại thông tin đơn hàng
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      // Toast error đã được xử lý trong handleCancelOrder
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -548,7 +579,11 @@ const OrderDetail = () => {
           <div className="p-6 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/employee/orders')}
+                onClick={() => {
+                  const isAdminRoute = location.pathname.startsWith('/admin');
+                  const routePrefix = isAdminRoute ? '/admin' : '/employee';
+                  navigate(`${routePrefix}/orders`);
+                }}
                 className="p-2 hover:bg-gray-100 rounded-full"
               >
                 <ArrowLeft size={20} />
@@ -649,6 +684,20 @@ const OrderDetail = () => {
                           <span>Đẩy vận chuyển</span>
                         </button>
                       )}
+                    </>
+                  )}
+                  {order.shippingStatus !== 'shipping' && 
+                   order.shippingStatus !== 'delivered' && 
+                   order.status !== 'completed' && 
+                   order.status !== 'cancelled' && (
+                    <>
+                      <button 
+                        onClick={() => setShowCancelModal(true)}
+                        className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-2"
+                      >
+                        <XCircle size={20} />
+                        <span>Hủy đơn</span>
+                      </button>
                     </>
                   )}
                 </div>
@@ -879,6 +928,43 @@ const OrderDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal xác nhận hủy đơn */}
+      <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận hủy đơn hàng</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Lý do hủy đơn
+            </label>
+            <Textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Nhập lý do hủy đơn..."
+              className="w-full"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCancelModal(false);
+                setCancelReason('');
+              }}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelClick}
+            >
+              Xác nhận hủy
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
