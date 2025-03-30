@@ -17,9 +17,6 @@ use App\Http\Middleware\AuthMiddleware;
 
 use Illuminate\Support\Facades\Route;
 
-// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
 
 Route::controller(AuthController::class)->group(function () {
     Route::post('v1/auth/signup', 'signup');
@@ -73,11 +70,6 @@ Route::prefix('categories')->group(function () {
 });
 
 
-// Route::controller(UserController::class)->group(function () {
-//     Route::get('v1/users', [UserController::class,'index']);
-//     Route::get('v1/user/{_id}', [UserController::class,'show']);
-//     Route::delete('v1/user/delete/{_id}', [UserController::class,'destroy']);
-// });
 
 Route::controller(SupplierController::class)->group(function () {
     Route::get('v1/suppliers', [SupplierController::class,'index']);
@@ -87,11 +79,7 @@ Route::controller(SupplierController::class)->group(function () {
     Route::delete('v1/supplier/delete/{_id}', [SupplierController::class,'destroy']);
 });
 
-// Route::get('employees', [EmployeeController::class, 'index']);
-// Route::delete('employees/{_id}', [EmployeeController::class, 'deleteEmploy']);
-// Route::post('/employees', [EmployeeController::class, 'addEmploy']);
-// Route::put('employees/{_id}', [EmployeeController::class, 'unDeleteEmploy']);
-// Route::put('employees/{_id}', [EmployeeController::class, 'updateEmployee']);
+
 Route::prefix('employees')->group(function () {
     Route::get('/', [EmployeeController::class, 'index']);
     Route::post('/', [EmployeeController::class, 'addEmploy']);
@@ -100,11 +88,7 @@ Route::prefix('employees')->group(function () {
     Route::put('/{_id}', [EmployeeController::class, 'updateEmployee']);
     Route::put('/{_id}/undelete', [EmployeeController::class, 'unDeleteEmploy']);
 });
-Route::prefix('customersadmin')->group(function () {
-    Route::get('/active', [CustomerAdminController::class, 'GetAllCustomer']);
-    Route::get('/unactive', [CustomerAdminController::class, 'GetAllCustomer_unActive']);
-    Route::put('/status/{_id}/{type}', [CustomerAdminController::class, 'Block_Active']);
-});
+
 
 Route::prefix('roles')->group(function () {
     Route::post('/', [RoleController::class, 'addRole']);

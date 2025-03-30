@@ -8,23 +8,55 @@ use App\Models\Product;
 use App\Services\PayOSService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+use MongoDB\Laravel\Collection;
 use Exception;
+use Carbon\Carbon;
 
 class OrderController extends Controller
 {
     public function index()
     {
         try {
-            $orders = Order::orderBy('created_at', 'desc')->get();
+            $orders = Order::orderBy('createdAt', 'desc')->get();
+            
+            // Convert MongoDB documents to array manually
+            $ordersArray = [];
+            foreach ($orders as $order) {
+                $orderData = $order->getAttributes();
+                
+                // Convert ObjectIds to strings
+                if (isset($orderData['_id'])) {
+                    $orderData['_id'] = (string) $orderData['_id'];
+                }
+                if (isset($orderData['customerId'])) {
+                    $orderData['customerId'] = (string) $orderData['customerId'];
+                }
+                
+                // Convert dates to ISO format
+                if (isset($orderData['createdAt'])) {
+                    $orderData['createdAt'] = $orderData['createdAt']->toISOString();
+                }
+                if (isset($orderData['updatedAt'])) {
+                    $orderData['updatedAt'] = $orderData['updatedAt']->toISOString();
+                }
+                
+                $ordersArray[] = $orderData;
+            }
+            
             return response()->json([
                 'success' => true,
-                'orders' => $orders
+                'orders' => $ordersArray
             ]);
         } catch (Exception $e) {
+            Log::error('Error fetching orders:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+                'message' => 'Lỗi khi lấy danh sách đơn hàng: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -34,69 +66,76 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            $data = $request->all();
-
-            // Validate
-            $validator = Validator::make($data, [
-                'customerId' => 'required|string',
-                'customerInfo' => 'required|array',
-                'items' => 'required|array|min:1',
-                'totalAmount' => 'required|numeric',
-                'finalTotal' => 'required|numeric',
-                'paymentMethod' => 'required|string',
-                'shippingMethod' => 'required|string',
-                'staffId' => 'required|string',
-                'staffInfo' => 'required|array'
+            // Log request data
+            Log::info('Order creation request:', [
+                'content_type' => $request->header('Content-Type'),
+                'body' => $request->all()
             ]);
 
-            if ($validator->fails()) {
-                throw new Exception($validator->errors()->first());
+            $data = $request->all();
+
+            // Validate required fields
+            $requiredFields = [
+                'items' => 'Danh sách sản phẩm',
+                'customerId' => 'ID khách hàng',
+                'customerInfo' => 'Thông tin khách hàng',
+                'totalAmount' => 'Tổng tiền hàng',
+                'finalTotal' => 'Tổng tiền thanh toán',
+                'paymentMethod' => 'Phương thức thanh toán',
+                'shippingMethod' => 'Phương thức giao hàng',
+                'staffId' => 'ID nhân viên',
+                'staffInfo' => 'Thông tin nhân viên'
+            ];
+
+            $missingFields = [];
+            foreach ($requiredFields as $field => $label) {
+                if (!isset($data[$field])) {
+                    $missingFields[] = $label;
+                }
             }
 
-            // Tạo mã đơn hàng tự động
-            $orderNumber = Order::generateOrderNumber(); // Viết hàm này trong Model
+            if (!empty($missingFields)) {
+                throw new Exception('Thiếu thông tin: ' . implode(', ', $missingFields));
+            }
 
-            // Kiểm tra tồn kho
+            // Check product stock
             foreach ($data['items'] as $item) {
                 $product = Product::find($item['productId']);
                 if (!$product) {
-                    throw new Exception("Không tìm thấy sản phẩm: {$item['productId']}");
+                    throw new Exception("Không tìm thấy sản phẩm với ID: {$item['productId']}");
                 }
                 if ($product->quantity < $item['quantity']) {
                     throw new Exception("Sản phẩm {$product->name} chỉ còn {$product->quantity} trong kho");
                 }
             }
 
-            // Lưu đơn hàng
-            $order = Order::create([
-                'order_number' => $orderNumber,
-                'customerId' => $data['customerId'],
-                'customerInfo' => $data['customerInfo'],
-                'items' => $data['items'],
-                'totalAmount' => $data['totalAmount'],
-                'finalTotal' => $data['finalTotal'],
-                'paymentMethod' => $data['paymentMethod'],
-                'shippingMethod' => $data['shippingMethod'],
-                'staffId' => $data['staffId'],
-                'staffInfo' => $data['staffInfo'],
-                'status' => 'pending'
-            ]);
+            // Create order
+            $order = new Order($data);
+            $order->save();
 
-            // Trừ kho
+            // Update product quantities
             foreach ($data['items'] as $item) {
-                Product::where('id', $item['productId'])
-                    ->decrement('quantity', $item['quantity']);
+                $product = Product::find($item['productId']);
+                $product->quantity -= $item['quantity'];
+                $product->save();
             }
 
             DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Tạo đơn hàng thành công',
-                'order' => $order
+                'order' => $order->toArray()
             ], 201);
 
         } catch (Exception $e) {
             DB::rollBack();
+            
+            Log::error('Order creation error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Lỗi khi tạo đơn hàng: ' . $e->getMessage()
@@ -115,14 +154,25 @@ class OrderController extends Controller
                 ], 404);
             }
 
+            $orderArray = $order->toArray();
+            $orderArray['_id'] = (string) $orderArray['_id'];
+            if (isset($orderArray['customerId'])) {
+                $orderArray['customerId'] = (string) $orderArray['customerId'];
+            }
+
             return response()->json([
                 'success' => true,
-                'order' => $order
+                'order' => $orderArray
             ]);
         } catch (Exception $e) {
+            Log::error('Error fetching order:', [
+                'id' => $id,
+                'message' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+                'message' => 'Lỗi khi lấy thông tin đơn hàng: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -137,26 +187,24 @@ class OrderController extends Controller
                 throw new Exception('Không tìm thấy đơn hàng');
             }
 
-            $order->update([
-                'customerInfo' => $request->customerInfo,
-                'items' => $request->items,
-                'totalAmount' => $request->totalAmount,
-                'finalTotal' => $request->finalTotal,
-                'status' => $request->status ?? $order->status,
-                'paymentStatus' => $request->paymentStatus ?? $order->paymentStatus,
-                'shippingStatus' => $request->shippingStatus ?? $order->shippingStatus,
-                'note' => $request->note ?? $order->note
-            ]);
+            $data = $request->all();
+            $order->update($data);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Cập nhật đơn hàng thành công',
-                'order' => $order
+                'order' => $order->toArray()
             ]);
         } catch (Exception $e) {
             DB::rollBack();
+            
+            Log::error('Order update error:', [
+                'id' => $id,
+                'message' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Lỗi khi cập nhật đơn hàng: ' . $e->getMessage()
@@ -170,27 +218,45 @@ class OrderController extends Controller
 
         try {
             $order = Order::find($id);
-            if (!$order) throw new Exception('Không tìm thấy đơn hàng');
-            if ($order->status === 'cancelled') throw new Exception('Đơn hàng đã được huỷ');
+            if (!$order) {
+                throw new Exception('Không tìm thấy đơn hàng');
+            }
+
+            if ($order->status === 'cancelled') {
+                throw new Exception('Đơn hàng đã được huỷ');
+            }
+
             if (in_array($order->status, ['completed', 'shipping'])) {
                 throw new Exception('Không thể huỷ đơn hàng ở trạng thái hiện tại');
             }
 
+            // Return products to inventory
             foreach ($order->items as $item) {
-                Product::where('id', $item['productId'])
-                    ->increment('quantity', $item['quantity']);
+                $product = Product::find($item['productId']);
+                if ($product) {
+                    $product->quantity += $item['quantity'];
+                    $product->save();
+                }
             }
 
-            $order->update(['status' => 'cancelled']);
+            $order->status = 'cancelled';
+            $order->save();
 
             DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Huỷ đơn hàng thành công',
-                'order' => $order
+                'order' => $order->toArray()
             ]);
         } catch (Exception $e) {
             DB::rollBack();
+            
+            Log::error('Order cancellation error:', [
+                'id' => $id,
+                'message' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Lỗi khi huỷ đơn hàng: ' . $e->getMessage()
@@ -202,13 +268,20 @@ class OrderController extends Controller
     {
         try {
             $order = Order::find($id);
-            if (!$order) throw new Exception('Không tìm thấy đơn hàng');
+            if (!$order) {
+                throw new Exception('Không tìm thấy đơn hàng');
+            }
+
             if ($order->paymentStatus === 'paid') {
                 throw new Exception('Đơn hàng đã thanh toán');
             }
 
+            Log::info('Creating payment for order:', ['order_id' => $id]);
+            
             $payos = new PayOSService();
             $paymentResult = $payos->createPayment($order);
+
+            Log::info('Payment result:', $paymentResult);
 
             $order->update([
                 'paymentInfo' => [
@@ -224,6 +297,11 @@ class OrderController extends Controller
                 'paymentId' => $paymentResult['paymentLinkId']
             ]);
         } catch (Exception $e) {
+            Log::error('Payment link creation error:', [
+                'order_id' => $id,
+                'message' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Lỗi khi tạo link thanh toán: ' . $e->getMessage()
@@ -237,32 +315,62 @@ class OrderController extends Controller
             $signature = $request->header('x-payos-signature');
             $payload = $request->all();
 
+            Log::info('Received webhook:', [
+                'payload' => $payload,
+                'signature' => $signature
+            ]);
+
             $payos = new PayOSService();
             if (!$payos->verifyWebhookSignature($payload, $signature)) {
-                return response()->json(['success' => false, 'message' => 'Invalid signature'], 400);
+                throw new Exception('Invalid signature');
             }
 
-            $order = Order::where('order_number', $payload['orderReference'])->first();
+            $order = Order::where('order_number', $payload['orderReference'])
+                         ->orWhere('paymentInfo.paymentId', $payload['paymentLinkId'])
+                         ->first();
+
             if (!$order) {
-                return response()->json(['success' => false, 'message' => 'Order not found'], 404);
+                throw new Exception('Order not found');
             }
 
             if ($payload['status'] === 'PAID') {
-                $order->update([
-                    'paymentStatus' => 'paid',
-                    'paymentInfo' => [
-                        'transactionId' => $payload['transactionId'],
-                        'paidAt' => now(),
-                        'amount' => $payload['amount'],
-                        'paymentMethod' => 'PayOS'
-                    ],
-                    'status' => $order->shippingMethod === 'Nhận tại cửa hàng' ? 'completed' : 'confirmed'
+                $order->paymentStatus = 'paid';
+                $order->paymentInfo = [
+                    'provider' => 'PayOS',
+                    'status' => 'paid',
+                    'transactionId' => $payload['transactionId'],
+                    'paidAt' => isset($payload['orderInfo']['paymentAt']) 
+                        ? Carbon::createFromTimestamp($payload['orderInfo']['paymentAt']) 
+                        : now(),
+                    'amount' => $payload['amount']
+                ];
+
+                if ($order->shippingMethod === 'Nhận tại cửa hàng') {
+                    $order->status = 'completed';
+                } elseif ($order->status === 'pending') {
+                    $order->status = 'confirmed';
+                }
+
+                $order->save();
+
+                Log::info('Order payment completed:', [
+                    'order_number' => $order->order_number,
+                    'status' => $order->status,
+                    'payment_status' => $order->paymentStatus
                 ]);
             }
 
             return response()->json(['success' => true]);
         } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error('Webhook processing error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 }
