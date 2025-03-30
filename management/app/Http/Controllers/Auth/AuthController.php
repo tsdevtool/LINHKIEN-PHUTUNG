@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Exception;
 
+use function PHPUnit\Framework\isEmpty;
+
 class AuthController extends Controller
 {
     public function signup(Request $request)
@@ -22,9 +24,17 @@ class AuthController extends Controller
             'password' => 'required|min:6',
             'firstname' => 'required',
             'lastname' => 'required',
-            'email' => 'nullable|email',
-            'idrole' => 'required|exists:roles,_id'
+            'email' => 'nullable|email'
         ]);
+
+        $roleId = Role::where('name', 'EMPLOYEE')
+            ->where('deleted_at', null)
+            ->value('_id');  // Lấy trực tiếp giá trị _id dưới dạng chuỗi
+
+        // Kiểm tra nếu không tìm thấy bất kỳ _id nào
+        if (is_null($roleId)) {  // Vì value() trả về null nếu không tìm thấy
+        return response()->json(['success' => false, 'message' => 'Không tìm thấy quyền hạn nhân viên! Hãy quay lại sau'], 400);
+        }
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'message' => $validator->errors()->first()], 400);
@@ -39,8 +49,16 @@ class AuthController extends Controller
                 'phone' => $request->phone,
                 'email' => $request->email,
                 'password' => $hashedPassword,
+                'address' => '',
                 'image' => $image,
-                'idrole' => $request->idrole
+                'numberOfOrder'  => null,
+                'numberOfOrders' => null,
+                'totalSpent'     => null,
+                'status' => true,
+                'idrole' => $roleId,
+                'created_at' => now()->setTimezone('Asia/Ho_Chi_Minh'),
+                'updated_at' => now()->setTimezone('Asia/Ho_Chi_Minh'),
+                'deleted_at' => null
             ]);
 
             // Get role name for token
@@ -55,16 +73,16 @@ class AuthController extends Controller
             $user = User::with('role')->find($user->_id);
 
             return response()->json([
-                'success' => true, 
-                'user' => $user, 
+                'success' => true,
+                'user' => $user,
                 'token' => $token
             ], 201)->withCookie(
                 cookie('jwt-phutung', $token, 15 * 24 * 60, '/', null, false, true)
             );
-        
+
         } catch (\Throwable $th) {
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Lỗi server: ' . $th->getMessage()
             ], 500);
         }
@@ -87,8 +105,8 @@ class AuthController extends Controller
         $token = $this->generateTokenAndSetCookie($user->_id, $user->role->name);
 
         return response()->json([
-            'success' => true, 
-            'user' => $user, 
+            'success' => true,
+            'user' => $user,
             'token' => $token
         ])->withCookie(
             cookie('jwt-phutung', $token, 15 * 24 * 60, '/', null, false, true)
@@ -155,11 +173,11 @@ class AuthController extends Controller
         $token = JWT::encode($payload, $key, 'HS256');
 
         Cookie::queue(
-            'jwt-phutung', 
-            $token, 
+            'jwt-phutung',
+            $token,
             15 * 24 * 60,
-            '/', 
-            null, 
+            '/',
+            null,
             false,
             true,
             false,

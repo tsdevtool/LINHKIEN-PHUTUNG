@@ -76,7 +76,6 @@ class UserControllerAdmin extends Controller
                 'firstname'      => 'required|string|max:255',
                 'lastname'       => 'required|string|max:255',
                 'phone'          => 'required|string|max:10|unique:users,phone',
-                'username'       => 'required|string|max:255|unique:users,username',
                 'password'       => 'required|string|min:6',
                 'address'        => 'nullable|string',
                 'image'          => 'nullable|string',
@@ -90,8 +89,6 @@ class UserControllerAdmin extends Controller
                 'lastname.required'  => 'Lastname không được để trống.',
                 'phone.required'     => 'Phone không được để trống.',
                 'phone.unique'       => 'Số điện thoại đã tồn tại.',
-                'username.required'  => 'Username không được để trống.',
-                'username.unique'    => 'Username đã tồn tại.',
                 'password.required'  => 'Password không được để trống.',
                 // Bạn có thể thêm các thông báo lỗi khác tương tự...
             ]);
