@@ -12,84 +12,126 @@ class Order extends Model
 
     protected $connection = 'mongodb';
     protected $collection = 'orders';
-    protected $dates = ['createdAt', 'updatedAt'];
+    protected $dates = ['created_at', 'updated_at'];
 
     // Disable Laravel's timestamps
     public $timestamps = false;
 
     protected $fillable = [
         'order_number',
-        'customerId',
-        'customerInfo',
+        'customer_id',
+        'customer_info',
         'items',
-        'totalAmount',
+        'total_amount',
         'discount',
-        'shippingFee',
-        'finalTotal',
-        'paymentMethod',
-        'paymentStatus',
-        'shippingMethod',
-        'shippingStatus',
+        'shipping_fee',
+        'finaltotal',
+        'payment_method',
+        'payment_status',
+        'shipping_method',
+        'shipping_status',
         'status',
         'note',
-        'staffId',
-        'staffInfo',
-        'paymentInfo',
-        'createdAt',
-        'updatedAt'
+        'staff_id',
+        'staff_info',
+        'payment_info',
+        'created_at',
+        'updated_at',
+        'confirmed_at',
+        'shipping_updated_at',
+        'delivered_at',
+        'cancelled_at',
     ];
 
     protected $casts = [
-        'createdAt' => 'datetime',
-        'updatedAt' => 'datetime',
-        'totalAmount' => 'float',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'total_amount' => 'float',
         'discount' => 'float',
-        'shippingFee' => 'float',
-        'finalTotal' => 'float',
+        'shipping_fee' => 'float',
+        'finaltotal' => 'float',
         'items' => 'array',
-        'customerInfo' => 'array',
-        'staffInfo' => 'array',
-        'paymentInfo' => 'array'
+        'customer_info' => 'array',
+        'staff_info' => 'array',
+        'payment_info' => 'array',
+        'confirmed_at' => 'datetime',
+        'shipping_updated_at' => 'datetime',
+        'delivered_at' => 'datetime',
+        'cancelled_at' => 'datetime'
     ];
 
     protected $attributes = [
         'status' => 'pending',
-        'paymentStatus' => 'pending',
-        'shippingStatus' => 'pending',
+        'payment_status' => 'pending',
+        'shipping_status' => 'pending',
         'discount' => 0,
-        'shippingFee' => 0
+        'shipping_fee' => 0,
+        'confirmed_at' => null,
+        'shipping_updated_at' => null,
+        'delivered_at' => null,
+        'cancelled_at' => null
+    ];
+
+    // Định nghĩa cấu trúc cho customer_info
+    protected $customer_info_structure = [
+        'name' => ['type' => 'string', 'required' => true],
+        'phone' => ['type' => 'string', 'required' => true],
+        'address' => ['type' => 'string', 'required' => true]
+    ];
+
+    // Định nghĩa cấu trúc cho items
+    protected $items_structure = [
+        'product_id' => ['type' => 'ObjectId', 'required' => true],
+        'quantity' => ['type' => 'integer', 'required' => true, 'min' => 1],
+        'price' => ['type' => 'float', 'required' => true, 'min' => 0],
+        'total' => ['type' => 'float', 'required' => true]
+    ];
+
+    // Định nghĩa cấu trúc cho staff_info
+    protected $staff_info_structure = [
+        'name' => ['type' => 'string', 'required' => true]
+    ];
+
+    // Định nghĩa cấu trúc cho payment_info
+    protected $payment_info_structure = [
+        'provider' => ['type' => 'string'],
+        'payment_id' => ['type' => 'string'],
+        'status' => ['type' => 'string', 'enum' => ['pending', 'paid', 'failed', 'cancelled']],
+        'transaction_id' => ['type' => 'string'],
+        'paid_at' => ['type' => 'datetime']
     ];
 
     // Định nghĩa các giá trị enum
-    public static $paymentMethods = ['cash', 'payos', 'cod', 'Tiền mặt', 'PayOS', 'COD'];
-    public static $paymentStatuses = ['paid', 'unpaid', 'pending'];
-    public static $shippingMethods = ['Nhận tại cửa hàng', 'Đã giao hàng', 'Giao cho bên vận chuyển', 'Giao hàng sau'];
-    public static $shippingStatuses = ['pending', 'shipping', 'delivered'];
-    public static $orderStatuses = ['pending', 'confirmed', 'shipping', 'delivered', 'completed', 'cancelled'];
+    public static $payment_methods = ['cash', 'payos', 'cod', 'Tiền mặt', 'PayOS', 'COD'];
+    public static $payment_statuses = ['paid', 'unpaid', 'pending'];
+    public static $shipping_methods = ['Nhận tại cửa hàng', 'Đã giao hàng', 'Giao cho bên vận chuyển', 'Giao hàng sau'];
+    public static $shipping_statuses = ['pending', 'shipping', 'delivered'];
+    public static $order_statuses = ['pending', 'confirmed', 'shipping', 'delivered', 'completed', 'cancelled'];
+    public static $payment_info_statuses = ['pending', 'paid', 'failed', 'cancelled'];
 
     protected static function boot()
     {
         parent::boot();
         
         static::creating(function ($order) {
-            $order->createdAt = Carbon::now();
-            $order->updatedAt = Carbon::now();
+            $order->created_at = Carbon::now();
+            $order->updated_at = Carbon::now();
             
             if (!$order->order_number) {
                 $order->order_number = $order->generateOrderNumber();
             }
 
             // Convert payment method to standardized format
-            if ($order->paymentMethod) {
-                $order->paymentMethod = self::standardizePaymentMethod($order->paymentMethod);
+            if ($order->payment_method) {
+                $order->payment_method = self::standardizePaymentMethod($order->payment_method);
             }
         });
 
         static::updating(function ($order) {
-            $order->updatedAt = Carbon::now();
+            $order->updated_at = Carbon::now();
             
-            if ($order->isDirty('paymentMethod')) {
-                $order->paymentMethod = self::standardizePaymentMethod($order->paymentMethod);
+            if ($order->isDirty('payment_method')) {
+                $order->payment_method = self::standardizePaymentMethod($order->payment_method);
             }
         });
     }
@@ -126,7 +168,7 @@ class Order extends Model
 
     public function updateStatus($newStatus)
     {
-        if (in_array($newStatus, self::$orderStatuses)) {
+        if (in_array($newStatus, self::$order_statuses)) {
             $this->status = $newStatus;
             return $this->save();
         }
@@ -138,9 +180,8 @@ class Order extends Model
         return self::where('status', $status)->get();
     }
 
-  
     public function staff()
     {
-        return $this->belongsTo(User::class, 'staffId');
+        return $this->belongsTo(User::class, 'staff_id');
     }
 } 
