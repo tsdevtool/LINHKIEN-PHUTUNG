@@ -55,20 +55,30 @@ class PayOSService {
     }
 
     // Tạo payment link
-    async createPayment(order) {
+    async createPayment(order, returnOptions = {}) {
         try {
             console.log('Creating PayOS payment for order:', order);
 
             // Tạo mã đơn hàng PayOS từ order number
             const payosOrderCode = parseInt(Date.now());
 
+            // Đảm bảo amount là số hợp lệ
+            const amount = Math.round(order.finaltotal || 0);
+            if (!amount || isNaN(amount) || amount <= 0) {
+                throw new Error('Số tiền thanh toán không hợp lệ');
+            }
+
+            // Sử dụng return URLs từ request hoặc từ biến môi trường nếu không có
+            const returnUrl = returnOptions.return_url || PAYOS_RETURN_URL;
+            const cancelUrl = returnOptions.cancel_url || PAYOS_CANCEL_URL;
+
             // Tạo dữ liệu cơ bản
             const baseData = {
                 orderCode: payosOrderCode,
-                amount: Math.round(order.finalTotal),
-                description: `TT ${order.order_number}`,  // Rút gọn description
-                cancelUrl: PAYOS_CANCEL_URL,
-                returnUrl: PAYOS_RETURN_URL
+                amount: amount,
+                description: `TT ${order.order_number}`,
+                cancelUrl: cancelUrl,
+                returnUrl: returnUrl
             };
 
             // Tạo chữ ký từ dữ liệu cơ bản
@@ -78,11 +88,11 @@ class PayOSService {
             const paymentData = {
                 ...baseData,
                 signature,
-                webHookUrl: `${process.env.BACKEND_URL}/api/orders/webhook`,
-                customerEmail: order.customerInfo?.email || '',
-                customerPhone: order.customerInfo?.phone || '',
-                customerName: order.customerInfo?.name || '',
-                orderReference: order.order_number  // Thêm mã đơn hàng gốc vào reference
+                webHookUrl: `${process.env.BACKEND_URL}/api/v1/orders/webhook`,
+                customerEmail: order.customer_info?.email || '',
+                customerPhone: order.customer_info?.phone || '',
+                customerName: order.customer_info?.name || '',
+                orderReference: order.order_number
             };
 
             console.log('PayOS payment data:', paymentData);

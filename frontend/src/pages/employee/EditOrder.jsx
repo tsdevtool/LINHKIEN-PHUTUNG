@@ -12,7 +12,7 @@ const EditOrder = () => {
   const [productDetails, setProductDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [customerInfo, setCustomerInfo] = useState({
+  const [customer_info, setCustomerInfo] = useState({
     name: '',
     phone: '',
     address: ''
@@ -25,7 +25,7 @@ const EditOrder = () => {
 
   useEffect(() => {
     if (order) {
-      setCustomerInfo(order.customerInfo || {});
+      setCustomerInfo(order.customer_info || {});
       setItems(order.items || []);
       if (order.items?.length > 0) {
         fetchProductDetails(order.items);
@@ -65,12 +65,12 @@ const EditOrder = () => {
 
   const fetchProductDetails = async (orderItems) => {
     try {
-      const productIds = orderItems.map(item => item.productId);
-      const productPromises = productIds.map(productId => 
-        productService.getProductById(productId)
+      const productIds = orderItems.map(item => item.product_id);
+      const productPromises = productIds.map(product_id => 
+        productService.getProductById(product_id)
           .then(response => {
             if (response.success && response.product) {
-              return [productId, response.product];
+              return [product_id, response.product];
             }
             return null;
           })
@@ -81,8 +81,8 @@ const EditOrder = () => {
       
       results.forEach(result => {
         if (result) {
-          const [productId, product] = result;
-          details[productId] = product;
+          const [product_id, product] = result;
+          details[product_id] = product;
         }
       });
 
@@ -115,20 +115,20 @@ const EditOrder = () => {
   };
 
   const calculateTotals = () => {
-    const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shippingFee = order?.shippingFee || 0;
+    const total_amount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const shipping_fee = order?.shipping_fee || 0;
     const discount = order?.discount || 0;
-    const finalTotal = totalAmount + shippingFee - discount;
-    return { totalAmount, finalTotal };
+    const finaltotal = total_amount + shipping_fee - discount;
+    return { total_amount, finaltotal };
   };
 
   const handleSave = async () => {
     try {
       setSaving(true);
-      const { totalAmount, finalTotal } = calculateTotals();
+      const { total_amount, finaltotal } = calculateTotals();
       
       // Validate required fields
-      if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
+      if (!customer_info.name || !customer_info.phone || !customer_info.address) {
         toast.error('Vui lòng điền đầy đủ thông tin khách hàng');
         return;
       }
@@ -145,14 +145,14 @@ const EditOrder = () => {
 
       const updatedOrder = {
         ...order,
-        customerInfo,
+        customer_info,
         items: items.map(item => ({
           ...item,
           total: item.price * item.quantity
         })),
-        totalAmount,
-        finalTotal,
-        updatedAt: new Date().toISOString()
+        total_amount,
+        finaltotal,
+        updated_at: new Date().toISOString()
       };
 
       console.log('Updating order with data:', updatedOrder);
@@ -200,7 +200,7 @@ const EditOrder = () => {
               </button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Sửa đơn hàng {order?.orderNumber}
+                  Sửa đơn hàng {order?.order_number}
                 </h1>
               </div>
             </div>
@@ -225,7 +225,7 @@ const EditOrder = () => {
               <h2 className="text-lg font-semibold mb-4">Sản phẩm</h2>
               <div className="space-y-4">
                 {items.map((item, index) => {
-                  const productDetail = productDetails[item.productId];
+                  const productDetail = productDetails[item.product_id];
                   return (
                     <div key={index} className="flex items-center gap-4 py-4 border-b last:border-0">
                       <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
@@ -268,7 +268,7 @@ const EditOrder = () => {
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Tổng tiền hàng</span>
-                  <span>{calculateTotals().totalAmount.toLocaleString('vi-VN')} đ</span>
+                  <span>{calculateTotals().total_amount.toLocaleString('vi-VN')} đ</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Giảm giá</span>
@@ -276,11 +276,11 @@ const EditOrder = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Phí giao hàng</span>
-                  <span>{(order?.shippingFee || 0).toLocaleString('vi-VN')} đ</span>
+                  <span>{(order?.shipping_fee || 0).toLocaleString('vi-VN')} đ</span>
                 </div>
                 <div className="flex justify-between font-medium text-lg pt-2 border-t">
                   <span>Thành tiền</span>
-                  <span>{calculateTotals().finalTotal.toLocaleString('vi-VN')} đ</span>
+                  <span>{calculateTotals().finaltotal.toLocaleString('vi-VN')} đ</span>
                 </div>
               </div>
             </div>
@@ -299,7 +299,7 @@ const EditOrder = () => {
                   <input
                     type="text"
                     name="name"
-                    value={customerInfo.name || ''}
+                    value={customer_info.name || ''}
                     onChange={handleCustomerInfoChange}
                     className="w-full px-3 py-2 border rounded-md"
                   />
@@ -311,7 +311,7 @@ const EditOrder = () => {
                   <input
                     type="text"
                     name="phone"
-                    value={customerInfo.phone || ''}
+                    value={customer_info.phone || ''}
                     onChange={handleCustomerInfoChange}
                     className="w-full px-3 py-2 border rounded-md"
                   />
@@ -322,7 +322,7 @@ const EditOrder = () => {
                   </label>
                   <textarea
                     name="address"
-                    value={customerInfo.address || ''}
+                    value={customer_info.address || ''}
                     onChange={handleCustomerInfoChange}
                     rows={3}
                     className="w-full px-3 py-2 border rounded-md"

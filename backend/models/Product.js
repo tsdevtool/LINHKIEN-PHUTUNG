@@ -120,6 +120,6 @@ productSchema.query.active = function() {
     return this.where({ is_active: true });
 };
 
-const Product = mongoose.model('Product', productSchema);
+const Product = mongoose.model('products', productSchema);
 
 export default Product; 

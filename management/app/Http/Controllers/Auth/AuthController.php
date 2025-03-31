@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 use function PHPUnit\Framework\isEmpty;
 
@@ -108,8 +109,18 @@ class AuthController extends Controller
             'success' => true,
             'user' => $user,
             'token' => $token
-        ])->withCookie(
-            cookie('jwt-phutung', $token, 15 * 24 * 60, '/', null, false, true)
+        ], 200)->withCookie(
+            cookie(
+                'jwt-phutung',
+                $token,
+                15 * 24 * 60, // 15 days
+                '/',
+                null,
+                false, // secure = false on localhost
+                false, // httpOnly = false để JS đọc được cookie
+                false,
+                'Lax'  // sameSite = Lax để cho phép cross-domain trên localhost
+            )
         );
     }
 
@@ -124,30 +135,86 @@ class AuthController extends Controller
     public function authCheck()
     {
         try {
-            $user = Auth::user();
-            if (!$user) {
+            // Get token from cookie or Authorization header
+            $request = request();
+            $token = $request->cookie('jwt-phutung');
+            
+            // If no cookie, try Authorization header
+            if (!$token && $request->hasHeader('Authorization')) {
+                $bearerToken = $request->header('Authorization');
+                // Clean bearer token - fix the Bearer prefix removal
+                $token = trim(str_replace('Bearer ', '', $bearerToken));
+               
+            }
+
+            if (!$token) {
+                Log::info('No token found in request');
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized'
+                    'message' => 'No token found'
                 ], 401);
             }
 
-            // Load role relationship
-            $user = User::with('role')->find($user->_id);
+            Log::info('Processing token: ' . substr($token, 0, 10) . '...');
+
+            // Verify token
+            try {
+                $key = env('JWT_SECRET');
+               
+                
+                $decoded = JWT::decode($token, new \Firebase\JWT\Key($key, 'HS256'));
+                $userId = $decoded->userId;
+               
+            } catch (\Exception $e) {
+              
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid token: ' . $e->getMessage()
+                ], 401);
+            }
+
+            // Get user with role
+            $user = User::with('role')
+                ->where('_id', $userId)
+                ->where('deleted_at', null)
+                ->first();
 
             if (!$user || !$user->role) {
+               
                 return response()->json([
                     'success' => false,
-                    'message' => 'User role not found'
+                    'message' => 'User not found or no role assigned'
                 ], 401);
             }
+
+            // Check if token needs refresh
+            $timeUntilExpiry = $decoded->exp - time();
+            $newToken = ($timeUntilExpiry < 24 * 60 * 60) 
+                ? $this->generateTokenAndSetCookie($user->_id, $user->role->name)
+                : $token;
+
+           
 
             return response()->json([
                 'success' => true,
                 'message' => 'Authenticated',
-                'user' => $user
-            ]);
+                'user' => $user,
+                'token' => $newToken
+            ])->withCookie(
+                cookie(
+                    'jwt-phutung',
+                    $newToken,
+                    15 * 24 * 60,
+                    '/',
+                    null,
+                    false,
+                    false,
+                    false,
+                    'Lax'
+                )
+            );
         } catch (\Exception $e) {
+            Log::error('Auth check failed with error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Authentication check failed: ' . $e->getMessage()
@@ -159,8 +226,14 @@ class AuthController extends Controller
     {
         $key = env('JWT_SECRET');
 
-        if (!$key || !is_string($key)) {
-            throw new \Exception("JWT_SECRET không hợp lệ hoặc không phải là chuỗi.");
+        if (empty($key)) {
+            Log::error('JWT_SECRET is empty in .env file');
+            throw new \Exception("JWT_SECRET không được để trống trong file .env");
+        }
+
+        if (!is_string($key)) {
+            Log::error('JWT_SECRET must be a string, got: ' . gettype($key));
+            throw new \Exception("JWT_SECRET phải là chuỗi");
         }
 
         $payload = [
@@ -170,20 +243,28 @@ class AuthController extends Controller
             'exp' => time() + (15 * 24 * 60 * 60) // 15 ngày
         ];
 
-        $token = JWT::encode($payload, $key, 'HS256');
+        try {
+            $token = JWT::encode($payload, $key, 'HS256');
+            Log::info('Token generated successfully');
 
-        Cookie::queue(
-            'jwt-phutung',
-            $token,
-            15 * 24 * 60,
-            '/',
-            null,
-            false,
-            true,
-            false,
-            'Lax'
-        );
+            // Set cookie
+            $cookie = cookie(
+                'jwt-phutung',
+                $token,
+                15 * 24 * 60,
+                '/',
+                null,
+                false,
+                false,
+                false,
+                'Lax'
+            );
 
-        return $token;
+            Cookie::queue($cookie);
+            return $token;
+        } catch (\Exception $e) {
+            Log::error('Failed to generate token: ' . $e->getMessage());
+            throw new \Exception("Không thể tạo token: " . $e->getMessage());
+        }
     }
 }
