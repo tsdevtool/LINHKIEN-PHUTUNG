@@ -27,7 +27,8 @@ import SettingPage from "./pages/setting/SettingPage";
 import DashBoardSection from "./pages/admin/dashboard/DashBoardSection";
 import ProductsSection from "./pages/admin/products/ProductsSection";
 import CategoriesSection from "./pages/admin/categories/CategoriesSection";
-
+//Admin Employees
+import EmployeesSection from "./pages/admin/employees/EmployeesSection";
 // Employee Components
 import OrderPage from "./pages/employee/OrderPage";
 import NewOrder from "./pages/employee/NewOrder";
@@ -130,6 +131,7 @@ function App() {
                   <Route path="orders/:id" element={<OrderDetail />} />
                   <Route path="orders/:id/edit" element={<EditOrder />} />
                   <Route path="orders/new" element={<NewOrder />} />
+                  <Route path="employees/info" element={<EmployeesSection />} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>
