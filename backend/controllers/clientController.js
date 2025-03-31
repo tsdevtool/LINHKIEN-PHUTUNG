@@ -64,39 +64,42 @@ export const getChildCategories = async (req, res) => {
   }
 };
 
-// Hàm lấy danh sách danh mục con theo danh mục cha
-
-//Hàm lấy danh sách danh mục sản phẩm theo danh mục con
 
 //Hàm lấy danh sách danh mục sản phẩm theo danh mục cha
 export const getProductListByCategoryId = async (req, res) => {
   try {
     const categoryId = req.params.categoryId; // Lấy category_id từ URL
-    console.log("Category ID received: ", categoryId);
+    console.log("Category ID received:", categoryId);
 
-    // Kiểm tra categoryId có phải là ObjectId hợp lệ không
+    // Kiểm tra categoryId có hợp lệ không
     if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId)) {
-      return res.status(400).json({ success: false, message: "ID danh mục không hợp lệ" });
+      return res.status(400).json({ success: false, message: "Invalid category ID" });
     }
 
-    // Kiểm tra xem category_id có tồn tại trong collection Category
-    const category = await Category.findById(categoryId);
-    if (!category) {
-      return res.status(404).json({ success: false, message: "Category not found" });
-    }
+    // Chuyển categoryId thành ObjectId
+    const categoryIdObject = new mongoose.Types.ObjectId(categoryId);
+    console.log("Converted ObjectId:", categoryIdObject);
 
-    // Tìm tất cả sản phẩm thuộc category_id
-    const products = await Product.find({ category_id: categoryId });
+    // Lấy tất cả sản phẩm
+    const products = await Product.find(); 
+    console.log("All products fetched:", products);
 
-    // Nếu không tìm thấy sản phẩm nào
-    if (!products || products.length === 0) {
+    // Lọc các sản phẩm theo category_id
+    const filteredProducts = products.filter(product => {
+      return product.category_id.toString() === categoryIdObject.toString();
+    });
+    console.log("Filtered products:", filteredProducts);
+
+    // Nếu không tìm thấy sản phẩm phù hợp
+    if (!filteredProducts || filteredProducts.length === 0) {
       return res.status(404).json({ success: false, message: "No products found for this category" });
     }
 
-    // Trả về danh sách sản phẩm
-    return res.status(200).json({ success: true, data: products });
+    // Trả về sản phẩm đã lọc
+    return res.status(200).json({ success: true, data: filteredProducts });
   } catch (error) {
     console.error("Error fetching products by category ID:", error.message);
     return res.status(500).json({ success: false, message: "Internal server error", error: error.message });
   }
 };
+
