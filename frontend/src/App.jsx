@@ -27,7 +27,8 @@ import SettingPage from "./pages/setting/SettingPage";
 import DashBoardSection from "./pages/admin/dashboard/DashBoardSection";
 import ProductsSection from "./pages/admin/products/ProductsSection";
 import CategoriesSection from "./pages/admin/categories/CategoriesSection";
-
+//Admin Employees
+import EmployeesSection from "./pages/admin/employees/EmployeesSection";
 // Employee Components
 import OrderPage from "./pages/employee/OrderPage";
 import NewOrder from "./pages/employee/NewOrder";
@@ -125,24 +126,28 @@ function App() {
         } />
 
         {/* Admin routes */}
-        <Route path="/admin/*" element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <AdminLayout>
-              <Routes>
-                <Route index element={<DashBoardSection />} />
-                <Route path="products" element={<ProductsSection />} />
-                <Route path="products/out-of-stock" element={<OutOfStockProducts />} />
-                <Route path="categories" element={<CategoriesSection />} />
-                <Route path="categories-tree" element={<CategoriesTreeSection />} />
-                <Route path="products/list" element={<ProductsSection />} />
-                <Route path="orders" index element={<OrderList />} />
-                <Route path="orders/:id" element={<OrderDetail />} />
-                <Route path="orders/:id/edit" element={<EditOrder />} />
-                <Route path="orders/new" element={<NewOrder />} />
-              </Routes>
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <Routes>
+                  <Route index element={<DashBoardSection />} />
+                  <Route path="products" element={<ProductsSection />} />
+                  <Route path="products/out-of-stock" element={<OutOfStockProducts />} />
+                  <Route path="categories" element={<CategoriesSection />} />
+                  <Route path="categories-tree" element={<CategoriesTreeSection />} />
+                  <Route path="products/list" element={<ProductsSection />} />
+                  <Route path="orders"index element={<OrderList />} />
+                  <Route path="orders/:id" element={<OrderDetail />} />
+                  <Route path="orders/:id/edit" element={<EditOrder />} />
+                  <Route path="orders/new" element={<NewOrder />} />
+                  <Route path="employees/info" element={<EmployeesSection />} />
+                </Routes>
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />

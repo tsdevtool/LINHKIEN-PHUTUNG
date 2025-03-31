@@ -26,7 +26,6 @@ class UserControllerAdmin extends Controller
             // $roles: Collection các Role, mỗi role chỉ có trường _id
             $roleIds = $roles->map(fn($role) => $role->_id);
             $users = User::whereIn('idrole', $roleIds)
-                        ->whereNull('deleted_at')
                         ->get();
 
 

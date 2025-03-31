@@ -28,7 +28,7 @@ class AuthController extends Controller
             'email' => 'nullable|email'
         ]);
 
-        $roleId = Role::where('name', 'EMPLOYEE')
+        $roleId = Role::where('name', 'CUSTOMER')
             ->where('deleted_at', null)
             ->value('_id');  // Lấy trực tiếp giá trị _id dưới dạng chuỗi
 
