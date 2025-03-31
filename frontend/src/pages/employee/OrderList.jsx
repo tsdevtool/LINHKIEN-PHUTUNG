@@ -12,13 +12,13 @@ const OrderList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [sortConfig, setSortConfig] = useState({
-    field: 'createdAt',
+    field: 'created_at',
     order: 'desc'
   });
   const [filters, setFilters] = useState({
     status: '',
-    shippingStatus: '',
-    dateRange: ''
+    shipping_status: '',
+    date_range: ''
   });
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,8 +29,8 @@ const OrderList = () => {
       setError(null);
       const response = await orderService.getOrders({
         ...params,
-        sortBy: sortConfig.field,
-        sortOrder: sortConfig.order,
+        sort_by: sortConfig.field,
+        sort_order: sortConfig.order,
         ...filters
       });
 
@@ -46,25 +46,25 @@ const OrderList = () => {
       // Validate và chuẩn hóa dữ liệu đơn hàng
       ordersData = ordersData.map(order => ({
         _id: order._id || order.id,
-        order_number: order.order_number || order.orderNumber,
-        customerInfo: {
-          name: order.customerInfo?.name || 'Không có tên',
-          phone: order.customerInfo?.phone || 'Không có SĐT',
-          address: order.customerInfo?.address || 'Không có địa chỉ'
+        order_number: order.order_number,
+        customer_info: {
+          name: order.customer_info?.name || 'Không có tên',
+          phone: order.customer_info?.phone || 'Không có SĐT',
+          address: order.customer_info?.address || 'Không có địa chỉ'
         },
         items: Array.isArray(order.items) ? order.items : [],
-        totalAmount: parseFloat(order.totalAmount || 0),
+        total_amount: parseFloat(order.total_amount || 0),
         discount: parseFloat(order.discount || 0),
-        shippingFee: parseFloat(order.shippingFee || 0),
-        finalTotal: parseFloat(order.finalTotal || 0),
-        paymentMethod: order.paymentMethod || 'COD',
-        paymentStatus: order.paymentStatus || 'pending',
-        shippingMethod: order.shippingMethod || 'standard',
-        shippingStatus: order.shippingStatus || 'pending',
+        shipping_fee: parseFloat(order.shipping_fee || 0),
+        finaltotal: parseFloat(order.finaltotal || 0),
+        payment_method: order.payment_method || 'COD',
+        payment_status: order.payment_status || 'pending',
+        shipping_method: order.shipping_method || 'standard',
+        shipping_status: order.shipping_status || 'pending',
         note: order.note || '',
         status: order.status || 'pending',
-        staffInfo: order.staffInfo || { name: 'Admin' },
-        createdAt: order.createdAt || order.created_at || new Date().toISOString()
+        staff_info: order.staff_info || { name: 'Admin' },
+        created_at: order.created_at || new Date().toISOString()
       }));
 
       setOrders(ordersData);
@@ -143,10 +143,10 @@ const OrderList = () => {
     navigate(`${routePrefix}/orders/new`);
   };
 
-  const getStatusColor = (status, shippingMethod, paymentStatus) => {
+  const getStatusColor = (status, shipping_method, payment_status) => {
     // Nếu là đơn nhận tại cửa hàng
-    if (shippingMethod === "Nhận tại cửa hàng") {
-      return paymentStatus === "paid" 
+    if (shipping_method === "Nhận tại cửa hàng") {
+      return payment_status === "paid" 
         ? 'text-green-600 bg-green-50'  // Đã xử lý
         : 'text-yellow-600 bg-yellow-50'; // Chờ thanh toán
     }
@@ -164,8 +164,8 @@ const OrderList = () => {
 
   const getOrderStatus = (order) => {
     // Nếu là đơn nhận tại cửa hàng
-    if (order.shippingMethod === "Nhận tại cửa hàng") {
-      return order.paymentStatus === "paid"
+    if (order.shipping_method === "Nhận tại cửa hàng") {
+      return order.payment_status === "paid"
         ? "Đã xử lý"
         : "Chờ thanh toán";
     }
@@ -210,16 +210,16 @@ const OrderList = () => {
   const filteredOrders = orders.filter(order => {
     // Lọc theo tab
     if (activeTab === 'pending' && order.status !== 'pending') return false;
-    if (activeTab === 'shipping' && order.shippingStatus !== 'pending') return false;
-    if (activeTab === 'delivering' && order.shippingStatus !== 'delivering') return false;
-    if (activeTab === 'unpaid' && order.paymentStatus !== 'unpaid') return false;
+    if (activeTab === 'shipping' && order.shipping_status !== 'pending') return false;
+    if (activeTab === 'delivering' && order.shipping_status !== 'delivering') return false;
+    if (activeTab === 'unpaid' && order.payment_status !== 'unpaid') return false;
 
     // Lọc theo search
     const searchLower = searchTerm.toLowerCase();
     return (
       order.order_number?.toLowerCase().includes(searchLower) ||
-      order.customerInfo?.name?.toLowerCase().includes(searchLower) ||
-      order.customerInfo?.phone?.includes(searchTerm)
+      order.customer_info?.name?.toLowerCase().includes(searchLower) ||
+      order.customer_info?.phone?.includes(searchTerm)
     );
   });
 
@@ -281,8 +281,8 @@ const OrderList = () => {
           <div className="flex gap-2">
             <select 
               className="border rounded-lg px-4 py-2"
-              value={filters.shippingStatus}
-              onChange={(e) => handleFilterChange('shippingStatus', e.target.value)}
+              value={filters.shipping_status}
+              onChange={(e) => handleFilterChange('shipping_status', e.target.value)}
             >
               <option value="">Trạng thái giao hàng</option>
               <option value="delivered">Đã giao</option>
@@ -291,8 +291,8 @@ const OrderList = () => {
             </select>
             <select 
               className="border rounded-lg px-4 py-2"
-              value={filters.dateRange}
-              onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+              value={filters.date_range}
+              onChange={(e) => handleFilterChange('date_range', e.target.value)}
             >
               <option value="">Ngày tạo</option>
               <option value="today">Hôm nay</option>
@@ -335,20 +335,20 @@ const OrderList = () => {
                   </th>
                   <th 
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('staffInfo.name')}
+                    onClick={() => handleSort('staff_info.name')}
                   >
                     <div className="flex items-center gap-1">
                       Nguồn đơn
-                      {getSortIcon('staffInfo.name')}
+                      {getSortIcon('staff_info.name')}
                     </div>
                   </th>
                   <th 
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('createdAt')}
+                    onClick={() => handleSort('created_at')}
                   >
                     <div className="flex items-center gap-1">
                       Ngày tạo
-                      {getSortIcon('createdAt')}
+                      {getSortIcon('created_at')}
                     </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -356,20 +356,20 @@ const OrderList = () => {
                   </th>
                   <th 
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('finalTotal')}
+                    onClick={() => handleSort('finaltotal')}
                   >
                     <div className="flex items-center gap-1">
                       Thành tiền
-                      {getSortIcon('finalTotal')}
+                      {getSortIcon('finaltotal')}
                     </div>
                   </th>
                   <th 
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('paymentStatus')}
+                    onClick={() => handleSort('payment_status')}
                   >
                     <div className="flex items-center gap-1">
                       Trạng thái thanh toán
-                      {getSortIcon('paymentStatus')}
+                      {getSortIcon('payment_status')}
                     </div>
                   </th>
                   <th 
@@ -404,29 +404,29 @@ const OrderList = () => {
                       {order.order_number}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.staffInfo?.name || 'Admin'}
+                      {order.staff_info?.name || 'Admin'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-500">
-                        {formatDate(order.createdAt)}
+                        {formatDate(order.created_at)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{order.customerInfo.name}</div>
-                      <div className="text-sm text-gray-500">{order.customerInfo.phone}</div>
+                      <div className="text-sm text-gray-900">{order.customer_info.name}</div>
+                      <div className="text-sm text-gray-500">{order.customer_info.phone}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-900">
-                        {order.finalTotal?.toLocaleString()} đ
+                        {order.finaltotal?.toLocaleString()} đ
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getPaymentStatusColor(order.paymentStatus)}`}>
-                        {order.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                      <span className={`px-2 py-1 text-xs rounded-full ${getPaymentStatusColor(order.payment_status)}`}>
+                        {order.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(order.status, order.shippingMethod, order.paymentStatus)}`}>
+                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(order.status, order.shipping_method, order.payment_status)}`}>
                         {getOrderStatus(order)}
                       </span>
                     </td>

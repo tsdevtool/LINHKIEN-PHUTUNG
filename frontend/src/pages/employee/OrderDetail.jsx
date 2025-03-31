@@ -77,37 +77,57 @@ const OrderDetail = () => {
       }
 
       console.log('Starting to fetch product details');
-      const productIds = order.items.map(item => item.productId);
-      console.log('Product IDs to fetch:', productIds);
+      const product_ids = order.items.map(item => {
+        let id;
+      
+        if (typeof item.product_id === 'object' && item.product_id !== null) {
+          id = item.product_id._id || item.product_id.toString(); // Sửa ở đây
+        } else {
+          id = item.product_id;
+        }
+      
+        console.log('Processed ID:', id);
+        return id;
+      });
+      
+      
+      console.log('Product IDs to fetch:', product_ids);
       
       // Fetch all products in parallel instead of sequential
-      const productPromises = productIds.map(productId => 
-        productService.getProductById(productId)
+      const productPromises = product_ids.map(product_id => {
+        if (!product_id) {
+          console.error('Invalid product ID:', product_id);
+          return Promise.resolve(null);
+        }
+        
+        console.log('Sending request for product_id:', product_id);
+        return productService.getProductById(product_id)
           .then(response => {
-            console.log('Response for product', productId, ':', response);
+            console.log('Response for product', product_id, ':', response);
             if (response.success && response.product) {
-              return [productId, response.product];
+              return [product_id, response.product];
             }
-            console.error('Failed to get product details for:', productId, response);
+            console.error('Failed to get product details for:', product_id, response);
             return null;
           })
           .catch(error => {
-            console.error('Error fetching product', productId, ':', error);
+            console.error('Error fetching product', product_id, ':', error);
             return null;
-          })
-      );
+          });
+      });
 
       const results = await Promise.all(productPromises);
-      const details = {};
+      console.log('All product fetch results:', results);
       
+      const details = {};
       results.forEach(result => {
         if (result) {
-          const [productId, product] = result;
-          details[productId] = product;
+          const [product_id, product] = result;
+          details[product_id] = product;
         }
       });
 
-      console.log('Final product details:', details);
+      console.log('Final product details object:', details);
       setProductDetails(details);
     } catch (error) {
       console.error('Error in fetchProductDetails:', error);
@@ -117,12 +137,13 @@ const OrderDetail = () => {
 
   const generateOrderHistory = (orderData) => {
     const history = [];
+    const isInStorePickup = orderData.shipping_method === "Nhận tại cửa hàng";
 
     // Thêm sự kiện tạo đơn
     history.push({
       type: 'created',
       title: 'Tạo đơn hàng',
-      description: `Đơn hàng được tạo bởi ${orderData.staffInfo?.name || 'Admin'}`,
+      description: `Đơn hàng được tạo bởi ${orderData.staff_info?.name || 'Admin'}`,
       timestamp: orderData.createdAt,
       icon: CheckCircle2,
       color: 'blue'
@@ -134,69 +155,70 @@ const OrderDetail = () => {
         type: 'confirmed',
         title: 'Đã xác nhận đơn',
         description: 'Đơn hàng đã được xác nhận',
-        timestamp: orderData.confirmedAt || orderData.createdAt,
+        timestamp: orderData.confirmed_at || orderData.createdAt,
         icon: CheckCircle2,
         color: 'blue'
       });
     }
 
     // Thêm sự kiện thanh toán nếu đã thanh toán
-    if (orderData.paymentStatus === 'paid') {
+    if (orderData.payment_status === 'paid') {
       history.push({
         type: 'payment',
         title: 'Thanh toán thành công',
-        description: `Thanh toán qua ${orderData.paymentMethod}`,
-        timestamp: orderData.paymentInfo?.paidAt || orderData.updatedAt,
+        description: `Thanh toán qua ${orderData.payment_method}`,
+        timestamp: orderData.payment_info?.paid_at || orderData.updated_at,
         icon: CreditCard,
         color: 'green'
       });
     }
 
-    // Thêm sự kiện vận chuyển hoặc nhận tại cửa hàng
-    if (orderData.shippingMethod === "Nhận tại cửa hàng") {
-      if (orderData.paymentStatus === 'paid') {
-        history.push({
-          type: 'completed',
-          title: 'Đã xử lý',
-          description: 'Khách hàng đã nhận hàng tại cửa hàng',
-          timestamp: orderData.paymentInfo?.paidAt || orderData.updatedAt,
-          icon: CheckCircle2,
-          color: 'green'
-        });
-      }
-    } else {
-      // Thêm sự kiện đẩy vận chuyển
-      if (orderData.shippingStatus === 'shipping' || orderData.shippingStatus === 'delivered') {
+    // Chỉ thêm sự kiện vận chuyển và giao hàng nếu KHÔNG phải nhận tại cửa hàng
+    if (!isInStorePickup) {
+      // Thêm sự kiện vận chuyển
+      if (orderData.shipping_status === 'shipping' || orderData.shipping_status === 'delivered') {
         history.push({
           type: 'shipping',
           title: 'Đang vận chuyển',
           description: 'Đơn hàng đã được giao cho đơn vị vận chuyển',
-          timestamp: orderData.shippingUpdatedAt || orderData.updatedAt,
+          timestamp: orderData.shipping_updated_at || orderData.updated_at,
           icon: Truck,
           color: 'orange'
         });
       }
 
       // Thêm sự kiện giao hàng thành công
-      if (orderData.shippingStatus === 'delivered') {
+      if (orderData.shipping_status === 'delivered') {
         history.push({
           type: 'delivered',
           title: 'Đã giao hàng',
           description: 'Đơn hàng đã được giao thành công',
-          timestamp: orderData.deliveredAt || orderData.updatedAt,
+          timestamp: orderData.delivered_at || orderData.updated_at,
+          icon: CheckCircle2,
+          color: 'green'
+        });
+      }
+    } else {
+      // Nếu là nhận tại cửa hàng và đã thanh toán, thêm sự kiện hoàn thành
+      if (orderData.status === 'completed') {
+        history.push({
+          type: 'completed',
+          title: 'Đã nhận hàng',
+          description: 'Khách hàng đã nhận hàng tại cửa hàng',
+          timestamp: orderData.updated_at,
           icon: CheckCircle2,
           color: 'green'
         });
       }
     }
 
-    // Thêm sự kiện hủy đơn nếu đơn bị hủy
+    // Thêm sự kiện hủy đơn nếu có
     if (orderData.status === 'cancelled') {
       history.push({
         type: 'cancelled',
-        title: 'Đơn hàng đã hủy',
-        description: orderData.cancelReason || 'Không có lý do',
-        timestamp: orderData.cancelledAt || orderData.updatedAt,
+        title: 'Đã hủy đơn',
+        description: orderData.cancel_reason || 'Đơn hàng đã bị hủy',
+        timestamp: orderData.cancelled_at || orderData.updated_at,
         icon: XCircle,
         color: 'red'
       });
@@ -208,13 +230,19 @@ const OrderDetail = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
+    }
   };
 
   const formatCurrency = (amount) => {
@@ -231,32 +259,40 @@ const OrderDetail = () => {
       }
       
       const currentTime = new Date().toISOString();
-      const response = await orderService.updateOrder(orderId, {
-        ...order,
-        shippingStatus: 'shipping',
-        shippingUpdatedAt: currentTime,
-        updatedAt: currentTime
-      });
+      
+      // Tạo updateData đơn giản với format rõ ràng
+      const updateData = {
+        shipping_status: 'shipping',
+        status: 'shipping',
+        shipping_updated_at: currentTime,
+        confirmed_at: currentTime
+      };
 
-      console.log('Update response:', response);
-
+      console.log('Sending update data (original):', updateData);
+      
+      // Kiểm tra response từ server
+      console.log('Order ID for update:', orderId);
+      console.log('updateData stringify:', JSON.stringify(updateData));
+      
+      const response = await orderService.updateOrder(orderId, updateData);
+      console.log('Update response complete:', response);
+      
       if (response.success) {
-        const updatedOrder = {
-          ...order,
-          shippingStatus: 'shipping',
-          shippingUpdatedAt: currentTime,
-          updatedAt: currentTime
-        };
-        
-        setOrder(updatedOrder);
-        generateOrderHistory(updatedOrder);
-        toast.success('Đã cập nhật trạng thái vận chuyển');
+        toast.success('Cập nhật trạng thái vận chuyển thành công');
+        // Cập nhật lại dữ liệu đơn hàng từ response
+        if (response.order) {
+          setOrder(response.order);
+          console.log('New order data after update:', response.order);
+        } else {
+          // Tải lại dữ liệu nếu response không có order
+          await fetchOrderDetails();
+        }
       } else {
-        throw new Error(response.message || 'Không thể cập nhật trạng thái đơn hàng');
+        throw new Error(response.message || 'Cập nhật thất bại');
       }
     } catch (error) {
       console.error('Error updating shipping status:', error);
-      toast.error(error.message || 'Không thể cập nhật trạng thái vận chuyển');
+      toast.error(error.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
     }
   };
 
@@ -270,25 +306,28 @@ const OrderDetail = () => {
       }
       
       const currentTime = new Date().toISOString();
-      const response = await orderService.updateOrder(orderId, {
-        ...order,
-        shippingStatus: 'delivered',
+      const updateData = {
         status: 'completed',
-        deliveredAt: currentTime,
-        updatedAt: currentTime
-      });
+        shipping_status: 'delivered',
+        delivered_at: currentTime,
+        shipping_updated_at: order.shipping_updated_at,
+        confirmed_at: order.confirmed_at,
+        cancelled_at: order.cancelled_at
+      };
+
+      console.log('Sending delivery confirmation data:', updateData);
+      
+      const response = await orderService.updateOrder(orderId, updateData);
 
       console.log('Update response:', response);
 
       if (response.success) {
         const updatedOrder = {
           ...order,
-          shippingStatus: 'delivered',
-          status: 'completed',
-          deliveredAt: currentTime,
-          updatedAt: currentTime
+          ...updateData
         };
         
+        console.log('Updated order:', updatedOrder);
         setOrder(updatedOrder);
         generateOrderHistory(updatedOrder);
         toast.success('Đã cập nhật trạng thái giao hàng thành công');
@@ -372,8 +411,8 @@ const OrderDetail = () => {
 
           <div class="order-info">
             <p><strong>Trạng thái:</strong> ${
-              order.shippingMethod === "Nhận tại cửa hàng"
-                ? order.paymentStatus === "paid"
+              order.shipping_method === "Nhận tại cửa hàng"
+                ? order.payment_status === "paid"
                   ? "Đã xử lý"
                   : order.status === 'completed'
                   ? 'Hoàn thành'
@@ -392,8 +431,8 @@ const OrderDetail = () => {
                 ? "bg-red-50 text-red-800"
                 : "bg-gray-50 text-gray-800"
             }</p>
-            <p><strong>Phương thức thanh toán:</strong> ${order.paymentMethod}</p>
-            <p><strong>Phương thức vận chuyển:</strong> ${order.shippingMethod}</p>
+            <p><strong>Phương thức thanh toán:</strong> ${order.payment_method}</p>
+            <p><strong>Phương thức vận chuyển:</strong> ${order.shipping_method}</p>
           </div>
 
           <div class="products">
@@ -409,7 +448,7 @@ const OrderDetail = () => {
               </thead>
               <tbody>
                 ${order.items?.map(item => {
-                  const productDetail = productDetails[item.productId];
+                  const productDetail = productDetails[item.product_id];
                   return `
                     <tr>
                       <td>${productDetail?.name || 'Không tìm thấy thông tin sản phẩm'}</td>
@@ -424,21 +463,21 @@ const OrderDetail = () => {
           </div>
 
           <div class="totals">
-            <p>Tổng tiền hàng: ${formatCurrency(order.totalAmount)}</p>
+            <p>Tổng tiền hàng: ${formatCurrency(order.total_amount)}</p>
             <p>Giảm giá: -${formatCurrency(order.discount)}</p>
-            <p>Phí giao hàng: ${formatCurrency(order.shippingFee)}</p>
-            <h3>Thành tiền: ${formatCurrency(order.finalTotal)}</h3>
+            <p>Phí giao hàng: ${formatCurrency(order.shipping_fee)}</p>
+            <h3>Thành tiền: ${formatCurrency(order.final_total)}</h3>
           </div>
 
           <div class="customer-info">
             <h2>Thông tin khách hàng</h2>
-            <p><strong>Tên khách hàng:</strong> ${order.customerInfo?.name}</p>
-            <p><strong>Số điện thoại:</strong> ${order.customerInfo?.phone}</p>
-            <p><strong>Địa chỉ:</strong> ${order.customerInfo?.address}</p>
+            <p><strong>Tên khách hàng:</strong> ${order.customer_info?.name}</p>
+            <p><strong>Số điện thoại:</strong> ${order.customer_info?.phone}</p>
+            <p><strong>Địa chỉ:</strong> ${order.customer_info?.address}</p>
           </div>
 
           <div class="footer">
-            <p><strong>Nhân viên xử lý:</strong> ${order.staffInfo?.name || 'Admin'}</p>
+            <p><strong>Nhân viên xử lý:</strong> ${order.staff_info?.name || 'Admin'}</p>
             <p><strong>Ghi chú:</strong> ${order.note || 'Không có'}</p>
           </div>
 
@@ -487,31 +526,40 @@ const OrderDetail = () => {
       }
       
       const currentTime = new Date().toISOString();
-      const response = await orderService.updateOrder(orderId, {
-        ...order,
-        paymentStatus: 'paid',
-        status: order.shippingStatus === 'delivered' ? 'completed' : order.status,
-        paymentInfo: {
-          ...order.paymentInfo,
+      const updateData = {
+        payment_status: 'paid',
+        status: order.shipping_status === 'delivered' ? 'completed' : order.status,
+        payment_info: {
+          ...order.payment_info,
           status: 'paid',
-          paidAt: currentTime
+          paid_at: currentTime
         },
-        updatedAt: currentTime
-      });
+        shipping_updated_at: order.shipping_updated_at,
+        confirmed_at: order.confirmed_at,
+        delivered_at: order.delivered_at,
+        cancelled_at: order.cancelled_at
+      };
+
+      console.log('Sending payment confirmation data:', updateData);
+      
+      const response = await orderService.updateOrder(orderId, updateData);
 
       console.log('Update response:', response);
 
       if (response.success) {
         const updatedOrder = {
           ...order,
-          paymentStatus: 'paid',
-          status: order.shippingStatus === 'delivered' ? 'completed' : order.status,
-          paymentInfo: {
-            ...order.paymentInfo,
+          payment_status: 'paid',
+          status: order.shipping_status === 'delivered' ? 'completed' : order.status,
+          payment_info: {
+            ...order.payment_info,
             status: 'paid',
-            paidAt: currentTime
+            paid_at: currentTime
           },
-          updatedAt: currentTime
+          shipping_updated_at: order.shipping_updated_at,
+          confirmed_at: order.confirmed_at,
+          delivered_at: order.delivered_at,
+          cancelled_at: order.cancelled_at
         };
         
         setOrder(updatedOrder);
@@ -609,8 +657,8 @@ const OrderDetail = () => {
                 <Printer size={20} />
                 <span>In đơn hàng</span>
               </button>
-              {order.shippingStatus !== 'shipping' && 
-               order.shippingStatus !== 'delivered' && 
+              {order.shipping_status !== 'shipping' && 
+               order.shipping_status !== 'delivered' && 
                order.status !== 'completed' && 
                order.status !== 'cancelled' && (
                 <button 
@@ -640,8 +688,8 @@ const OrderDetail = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    order.shippingMethod === "Nhận tại cửa hàng"
-                      ? order.paymentStatus === "paid"
+                    order.shipping_method === "Nhận tại cửa hàng"
+                      ? order.payment_status === "paid"
                         ? "bg-green-50 text-green-800"
                         : "bg-yellow-50 text-yellow-800"
                       : order.status === 'pending'
@@ -656,8 +704,8 @@ const OrderDetail = () => {
                       ? "bg-red-50 text-red-800"
                       : "bg-gray-50 text-gray-800"
                   }`}>
-                    {order.shippingMethod === "Nhận tại cửa hàng"
-                      ? order.paymentStatus === "paid"
+                    {order.shipping_method === "Nhận tại cửa hàng"
+                      ? order.payment_status === "paid"
                         ? "Đã xử lý"
                         : "Chờ thanh toán"
                       : order.status === 'pending'
@@ -674,39 +722,46 @@ const OrderDetail = () => {
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  {order.shippingMethod !== "Nhận tại cửa hàng" && order.shippingStatus !== 'delivered' && (
-                    <>
-                      <button 
-                        onClick={handleConfirmDelivery}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-2"
-                      >
-                        <CheckCircle2 size={20} />
-                        <span>Xác nhận giao hàng</span>
-                      </button>
-                      {order.shippingMethod === "Giao cho bên vận chuyển" && order.shippingStatus !== 'shipping' && (
-                        <button 
-                          onClick={handleUpdateShippingStatus}
-                          className="px-4 py-2 border rounded-md hover:bg-gray-50 flex items-center gap-2"
-                        >
-                          <Truck size={20} />
-                          <span>Đẩy vận chuyển</span>
-                        </button>
-                      )}
-                    </>
-                  )}
-                  {order.shippingStatus !== 'shipping' && 
-                   order.shippingStatus !== 'delivered' && 
+                  {/* Nút xác nhận giao hàng chỉ hiển thị khi đang giao */}
+                  {order.shipping_method !== "Nhận tại cửa hàng" && 
+                   order.shipping_status === 'shipping' && 
                    order.status !== 'completed' && 
                    order.status !== 'cancelled' && (
-                    <>
-                      <button 
-                        onClick={() => setShowCancelModal(true)}
-                        className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-2"
-                      >
-                        <XCircle size={20} />
-                        <span>Hủy đơn</span>
-                      </button>
-                    </>
+                    <button 
+                      onClick={handleConfirmDelivery}
+                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center gap-2"
+                    >
+                      <CheckCircle2 size={20} />
+                      <span>Xác nhận đã giao</span>
+                    </button>
+                  )}
+
+                  {/* Nút đẩy vận chuyển chỉ hiển thị khi chưa giao và chưa hủy */}
+                  {order.shipping_method === "Giao cho bên vận chuyển" && 
+                   order.shipping_status !== 'shipping' &&
+                   order.shipping_status !== 'delivered' &&
+                   order.status !== 'cancelled' && (
+                    <button 
+                      onClick={handleUpdateShippingStatus}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-2"
+                    >
+                      <Truck size={20} />
+                      <span>Đẩy vận chuyển</span>
+                    </button>
+                  )}
+
+                  {/* Nút hủy đơn chỉ hiển thị khi chưa giao và chưa hoàn thành */}
+                  {order.status !== 'cancelled' && 
+                   order.status !== 'completed' &&
+                   order.shipping_status !== 'shipping' && 
+                   order.shipping_status !== 'delivered' && (
+                    <button 
+                      onClick={() => setShowCancelModal(true)}
+                      className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-2"
+                    >
+                      <XCircle size={20} />
+                      <span>Hủy đơn</span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -723,7 +778,17 @@ const OrderDetail = () => {
                   </div>
                 ) : (
                   order.items?.map((item, index) => {
-                    const productDetail = productDetails[item.productId];
+                    console.log('Current item:', item);
+                    console.log('Product ID:', item.product_id);
+                    console.log('Product details for ID:', productDetails[item.product_id]);
+                    
+                    // Try different ways to access product details
+                    const productId = typeof item.product_id === 'object' ? item.product_id._id || item.product_id.toString() : item.product_id;
+                    const productDetail = productDetails[productId];
+                    
+                    console.log('Using product ID:', productId);
+                    console.log('Found product detail:', productDetail);
+                    
                     return (
                       <div key={index} className="flex items-center gap-4 py-4 border-b last:border-0">
                         <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
@@ -758,19 +823,19 @@ const OrderDetail = () => {
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Tổng tiền hàng</span>
-                  <span>{formatCurrency(order.totalAmount)}</span>
+                  <span>{formatCurrency(order.total_amount || 0)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Giảm giá</span>
-                  <span>-{formatCurrency(order.discount)}</span>
+                  <span>-{formatCurrency(order.discount || 0)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Phí giao hàng</span>
-                  <span>{formatCurrency(order.shippingFee)}</span>
+                  <span>{formatCurrency(order.shipping_fee || 0)}</span>
                 </div>
                 <div className="flex justify-between font-medium text-lg pt-2 border-t">
                   <span>Thành tiền</span>
-                  <span>{formatCurrency(order.finalTotal)}</span>
+                  <span>{formatCurrency(order.finaltotal || 0)}</span>
                 </div>
               </div>
             </div>
@@ -808,28 +873,28 @@ const OrderDetail = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-gray-600">Phương thức thanh toán:</p>
-                  <p className="font-medium">{order.paymentMethod}</p>
+                  <p className="font-medium">{order.payment_method}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Trạng thái thanh toán:</p>
                   <div className="flex items-center gap-2">
                     <span className={`px-2 py-1 rounded-full text-sm ${
-                      order.paymentStatus === 'paid' 
+                      order.payment_status === 'paid' 
                         ? 'bg-green-100 text-green-800'
-                        : order.paymentStatus === 'pending'
+                        : order.payment_status === 'pending'
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {order.paymentStatus === 'paid' 
+                      {order.payment_status === 'paid' 
                         ? 'Đã thanh toán'
-                        : order.paymentStatus === 'pending'
+                        : order.payment_status === 'pending'
                         ? 'Chờ thanh toán'
                         : 'Chưa thanh toán'}
                     </span>
                     
                     {/* Hiển thị nút thanh toán lại cho PayOS */}
-                    {order.paymentMethod.toLowerCase() === 'payos' && 
-                     order.paymentStatus !== 'paid' && (
+                    {order.payment_method.toLowerCase() === 'payos' && 
+                     order.payment_status !== 'paid' && (
                       <button
                         onClick={handleRepayment}
                         className="ml-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
@@ -839,8 +904,8 @@ const OrderDetail = () => {
                     )}
 
                     {/* Hiển thị nút xác nhận thanh toán cho COD */}
-                    {order.paymentMethod.toLowerCase() === 'cod' && 
-                     order.paymentStatus !== 'paid' && (
+                    {order.payment_method.toLowerCase() === 'cod' && 
+                     order.payment_status !== 'paid' && (
                       <button
                         onClick={handleConfirmPayment}
                         className="ml-2 px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm flex items-center gap-1"
@@ -853,17 +918,17 @@ const OrderDetail = () => {
                 </div>
                 
                 {/* Hiển thị thông tin thanh toán PayOS nếu có */}
-                {order.paymentStatus === 'paid' && (
+                {order.payment_status === 'paid' && (
                   <>
                     <div>
                       <p className="text-gray-600">Mã giao dịch:</p>
-                      <p className="font-medium">{order.transactionId || order.paymentInfo?.transactionId || 'N/A'}</p>
+                      <p className="font-medium">{order.transaction_id || order.payment_info?.transaction_id || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Thời gian thanh toán:</p>
                       <p className="font-medium">
-                        {order.paidAt || order.paymentInfo?.paidAt 
-                          ? formatDate(order.paidAt || order.paymentInfo?.paidAt)
+                        {order.paid_at || order.payment_info?.paid_at 
+                          ? formatDate(order.paid_at || order.payment_info?.paid_at)
                           : 'N/A'}
                       </p>
                     </div>
@@ -880,11 +945,11 @@ const OrderDetail = () => {
               <h2 className="text-lg font-semibold mb-4">Nguồn đơn</h2>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  {order.staffInfo?.name ? order.staffInfo.name.charAt(0) : 'A'}
+                  {order.staff_info?.name ? order.staff_info.name.charAt(0) : 'A'}
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-medium">{order.staffInfo?.name || 'Admin'}</span>
-                  <span className="text-sm text-gray-500">{order.staffInfo?.role || 'Nhân viên'}</span>
+                  <span className="font-medium">{order.staff_info?.name || 'Admin'}</span>
+                  <span className="text-sm text-gray-500">{order.staff_info?.role || 'Nhân viên'}</span>
                 </div>
               </div>
             </div>
@@ -894,9 +959,9 @@ const OrderDetail = () => {
               <h2 className="text-lg font-semibold mb-4">Khách hàng</h2>
               <div className="space-y-4">
                 <div>
-                  <p className="font-medium">{order.customerInfo?.name}</p>
+                  <p className="font-medium">{order.customer_info?.name}</p>
                   <p className="text-sm text-gray-500">
-                    Tổng chi tiêu (1 đơn hàng): {formatCurrency(order.finalTotal)}
+                    Tổng chi tiêu (1 đơn hàng): {formatCurrency(order.finaltotal || 0)}
                   </p>
                 </div>
                 <div>
@@ -905,11 +970,11 @@ const OrderDetail = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Thông tin liên hệ</p>
-                  <p>{order.customerInfo?.phone}</p>
+                  <p>{order.customer_info?.phone}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Địa chỉ giao hàng</p>
-                  <p>{order.customerInfo?.address}</p>
+                  <p>{order.customer_info?.address}</p>
                   <p>Vietnam</p>
                 </div>
               </div>
@@ -921,11 +986,11 @@ const OrderDetail = () => {
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Nhân viên tạo đơn</p>
-                  <p>{order.staffInfo?.name || 'Admin'}</p>
+                  <p>{order.staff_info?.name || 'Admin'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Nhân viên phụ trách</p>
-                  <p>{order.staffInfo?.name || 'Admin'}</p>
+                  <p>{order.staff_info?.name || 'Admin'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Ghi chú</p>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { XCircle } from 'lucide-react';
+import axios from 'axios';
 
 const PaymentCancel = () => {
     const navigate = useNavigate();
@@ -12,6 +13,15 @@ const PaymentCancel = () => {
     const reason = searchParams.get('reason');
 
     useEffect(() => {
+        // Đảm bảo token có sẵn từ localStorage
+        const token = localStorage.getItem('token');
+        
+        // Nếu không có token, thử lấy từ cookie
+        if (!token) {
+            // Đặt lại axios instance với cookie
+            axios.defaults.withCredentials = true;
+        }
+    
         // Đếm ngược và chuyển hướng về trang danh sách đơn hàng
         const timer = setInterval(() => {
             setCountdown((prev) => {
@@ -20,7 +30,7 @@ const PaymentCancel = () => {
                     // Kiểm tra nếu URL chứa returnUrl thì chuyển hướng đến đó
                     const returnUrl = searchParams.get('returnUrl');
                     if (returnUrl) {
-                        navigate(returnUrl);
+                        navigate(decodeURIComponent(returnUrl));
                     } else {
                         navigate('/employee/orders');
                     }
@@ -36,7 +46,7 @@ const PaymentCancel = () => {
     const handleNavigation = (path) => {
         const returnUrl = searchParams.get('returnUrl');
         if (returnUrl && path === '/employee/orders') {
-            navigate(returnUrl);
+            navigate(decodeURIComponent(returnUrl));
         } else {
             navigate(path);
         }

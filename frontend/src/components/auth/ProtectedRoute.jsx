@@ -1,61 +1,36 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../store/authUser";
-import { useEffect, useState } from "react";
 import Loading from "../ui/Loading";
 
+const hasAllowedRole = (user, allowedRoles) => {
+  if (!user?.role?.name) return false;
+  const userRole = user.role.name.toLowerCase();
+  return allowedRoles.includes(userRole);
+};
+
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { user, authCheck } = useAuthStore();
-  const [isChecking, setIsChecking] = useState(false);
-  const token = localStorage.getItem('token');
-  const jwt = document.cookie.includes('jwt-phutung');
+  const { user } = useAuthStore();
+  const location = useLocation();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (!isChecking && (token || jwt) && !user) {
-        setIsChecking(true);
-        await authCheck();
-        setIsChecking(false);
-      }
-    };
-    checkAuth();
-  }, [token, jwt, user, authCheck, isChecking]);
-
-  // Nếu không có token hoặc cookie, redirect về login
-  if (!token && !jwt) {
-    return <Navigate to="/auth/login" replace />;
-  }
-
-  // Nếu đã có user data, kiểm tra role và render
-  if (user) {
-    if (!hasAllowedRole(user, allowedRoles)) {
-      return <Navigate to="/unauthorized" replace />;
-    }
-    return children;
-  }
-
-  // Hiển thị loading trong khi chờ authCheck
-  if (isChecking) {
+  // Nếu đang trong quá trình check auth ở App.jsx, user sẽ là null
+  if (user === null) {
     return <Loading />;
   }
 
-  // Nếu không có user và không đang check, cho phép retry
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <p className="text-gray-600 mb-4">Không thể xác thực. Vui lòng thử lại.</p>
-      <button
-        onClick={() => setIsChecking(false)}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-      >
-        Thử lại
-      </button>
-    </div>
-  );
+  // Nếu không có user (đã check xong nhưng không có user)
+  if (!user) {
+    return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+
+  if (!hasAllowedRole(user, allowedRoles)) {
+    console.log('ProtectedRoute - User does not have required role:', {
+      userRole: user.role?.name,
+      allowedRoles
+    });
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return children;
 };
 
-// Helper function to check role
-const hasAllowedRole = (user, allowedRoles) => {
-  if (!user?.role?.name) return false;
-  return allowedRoles.includes(user.role.name.toLowerCase());
-};
-
-export default ProtectedRoute; 
+export default ProtectedRoute;

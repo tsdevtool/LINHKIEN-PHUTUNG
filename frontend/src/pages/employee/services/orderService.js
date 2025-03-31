@@ -207,20 +207,79 @@ class OrderService {
 
     async updateOrder(id, orderData) {
         try {
-            console.log('Updating order:', id, orderData);
+            if (!id) {
+                throw new Error('ID đơn hàng không hợp lệ');
+            }
+
+            // Kiểm tra xem dữ liệu cập nhật có null không
+            console.log('Updating order:', id);
+            console.log('Update data (raw):', orderData);
+            console.log('Update data JSON:', JSON.stringify(orderData));
+
+            // Test API trực tiếp với Axios (không qua instance)
+            try {
+                console.log(`Direct API URL: ${API_URL}/orders/${id}`);
+                const directResponse = await axios({
+                    method: 'put',
+                    url: `${API_URL}/orders/${id}`,
+                    data: orderData,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                console.log('Direct Axios Response:', directResponse);
+            } catch (directError) {
+                console.error('Direct API call failed:', directError);
+            }
+
+            // Tiếp tục với axiosInstance
             const response = await axiosInstance.put(`/orders/${id}`, orderData);
             console.log('Update Order Response:', response);
+            console.log('Response data:', response.data);
+            
+            // Log HTTP status
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
 
             if (!response.data) {
                 throw new Error('Không nhận được phản hồi khi cập nhật đơn hàng');
             }
 
-            return response.data;
+            // Trả về response data nguyên bản nếu không có cấu trúc chuẩn
+            if (typeof response.data === 'object') {
+                if (response.data.success === false) {
+                    throw new Error(response.data.message || 'Cập nhật không thành công');
+                }
+                
+                if (response.data.order) {
+                    return {
+                        success: true,
+                        message: response.data.message || 'Cập nhật đơn hàng thành công',
+                        order: response.data.order
+                    };
+                }
+                
+                if (response.status === 200 || response.status === 201) {
+                    return {
+                        success: true,
+                        message: 'Cập nhật đơn hàng thành công',
+                        order: response.data
+                    };
+                }
+            }
+
+            return {
+                success: true,
+                message: 'Đã gửi yêu cầu cập nhật',
+                order: response.data
+            };
         } catch (error) {
             console.error('Update Order Error:', {
                 orderId: id,
                 message: error.message,
-                response: error.response
+                response: error.response?.data,
+                status: error.response?.status,
+                stack: error.stack
             });
 
             throw new Error(

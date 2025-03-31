@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
+import axios from 'axios';
 
 const PaymentSuccess = () => {
     const navigate = useNavigate();
@@ -13,6 +14,15 @@ const PaymentSuccess = () => {
     const description = searchParams.get('description');
 
     useEffect(() => {
+        // Đảm bảo token có sẵn từ localStorage
+        const token = localStorage.getItem('token');
+        
+        // Nếu không có token, thử lấy từ cookie
+        if (!token) {
+            // Đặt lại axios instance với cookie
+            axios.defaults.withCredentials = true;
+        }
+        
         // Đếm ngược và chuyển hướng về trang danh sách đơn hàng
         const timer = setInterval(() => {
             setCountdown((prev) => {
@@ -21,7 +31,7 @@ const PaymentSuccess = () => {
                     // Kiểm tra nếu URL chứa returnUrl thì chuyển hướng đến đó
                     const returnUrl = searchParams.get('returnUrl');
                     if (returnUrl) {
-                        navigate(returnUrl);
+                        navigate(decodeURIComponent(returnUrl));
                     } else {
                         navigate('/employee/orders');
                     }
@@ -37,7 +47,7 @@ const PaymentSuccess = () => {
     const handleNavigation = () => {
         const returnUrl = searchParams.get('returnUrl');
         if (returnUrl) {
-            navigate(returnUrl);
+            navigate(decodeURIComponent(returnUrl));
         } else {
             navigate('/employee/orders');
         }
@@ -72,7 +82,7 @@ const PaymentSuccess = () => {
                     onClick={handleNavigation}
                     className="mt-6 w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
                 >
-                    Xem danh sách đơn hàng
+                    Xem đơn hàng
                 </button>
             </div>
         </div>
