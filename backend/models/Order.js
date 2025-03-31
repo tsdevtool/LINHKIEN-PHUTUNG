@@ -9,7 +9,7 @@ const orderSchema = new mongoose.Schema({
     },
     customer_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: 'users',
         required: true
     },
     customer_info: {
@@ -20,7 +20,7 @@ const orderSchema = new mongoose.Schema({
     items: [{
         product_id: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Product',
+            ref: 'products',
             required: true
         },
         quantity: { 

@@ -1,5 +1,5 @@
 // Core React and Third-party imports
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
@@ -46,73 +46,84 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import OutOfStockProducts from "./pages/admin/products/OutOfStockProducts";
 
 function App() {
-  const { user } = useAuthStore();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { user, authCheck } = useAuthStore();
+  const [isInitialAuthCheck, setIsInitialAuthCheck] = useState(true);
 
+  // Check auth chỉ 1 lần khi app khởi động
   useEffect(() => {
-    // Only redirect on initial login
-    if (user && location.pathname === '/auth/login') {
-      const role = user.role?.name?.toLowerCase() || '';
-      if (role === 'admin') {
-        navigate('/admin');
-      } else if (role === 'employee') {
-        navigate('/employee');
-      } else {
-        navigate('/');
+    const initAuth = async () => {
+      try {
+        // Kiểm tra cookie trước khi gọi auth check
+        const hasCookie = document.cookie.includes('jwt-phutung=');
+        if (!hasCookie) {
+          console.log('No auth cookie found, skipping auth check');
+          setIsInitialAuthCheck(false);
+          return;
+        }
+
+        console.log('Auth cookie found, checking auth...');
+        await authCheck();
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      } finally {
+        setIsInitialAuthCheck(false);
       }
-    }
-  }, [user, navigate, location.pathname]);
+    };
+
+    initAuth();
+  }, []); // Run only once on mount
+
+  // Hiển thị loading trong 300ms đầu để tránh flash content
+  if (isInitialAuthCheck) {
+    return <Loading />;
+  }
 
   return (
     <>
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<HomePage />} />
-    
-        <Route
-          path="/auth/login"
-          element={!user ? <AuthPage /> : <Navigate to="/" replace />}
-        />
+        <Route path="/auth/login" element={!user ? <AuthPage /> : <Navigate to="/" replace />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/cart" element={<CartPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        
+        {/* Payment routes - no auth required */}
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/payment/qr" element={<PaymentQRPage />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/payment/cancel" element={<PaymentCancel />} />
         <Route path="/order-success" element={<OrderSuccessPage />} />
         <Route path="/orders" element={<OrderStatusPage />} />
-        <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-        {/* Protected Setting Route */}
-        <Route
-          path="/setting/:id"
-          element={
-            <ProtectedRoute allowedRoles={['admin', 'employee', 'customer']}>
-              <SettingPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Protected routes */}
+        <Route path="/cart" element={
+          <ProtectedRoute allowedRoles={['admin', 'employee', 'customer']}>
+            <CartPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/setting/:id" element={
+          <ProtectedRoute allowedRoles={['admin', 'employee', 'customer']}>
+            <SettingPage />
+          </ProtectedRoute>
+        } />
 
         {/* Employee routes */}
-        <Route
-          path="/employee/*"
-          element={
-            <ProtectedRoute allowedRoles={['admin', 'employee']}>
-              <EmployeeLayout>
-                <Routes>
+        <Route path="/employee/*" element={
+          <ProtectedRoute allowedRoles={['admin', 'employee']}>
+            <EmployeeLayout>
+              <Routes>
+                <Route index element={<OrderList />} />
+                <Route path="orders">
                   <Route index element={<OrderList />} />
-                  <Route path="orders">
-                    <Route index element={<OrderList />} />
-                    <Route path="new" element={<NewOrder />} />
-                    <Route path=":id" element={<OrderDetail />} />
-                    <Route path=":id/edit" element={<EditOrder />} />
-                  </Route>
-                </Routes>
-              </EmployeeLayout>
-            </ProtectedRoute>
-          }
-        />
+                  <Route path="new" element={<NewOrder />} />
+                  <Route path=":id" element={<OrderDetail />} />
+                  <Route path=":id/edit" element={<EditOrder />} />
+                </Route>
+              </Routes>
+            </EmployeeLayout>
+          </ProtectedRoute>
+        } />
 
         {/* Admin routes */}
         <Route
@@ -139,7 +150,7 @@ function App() {
         />
 
         {/* Catch-all route */}
-        <Route path="*" element={<Navigate to="/auth/login" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
       <Toaster />

@@ -338,7 +338,7 @@ export const useOrder = () => {
             };
 
             // Kiểm tra các trường bắt buộc
-            if (!customer_info.name || !customer_info.phone || !customer_info.address) {
+            if (!customer_info.name || !customer_info.phone ) {
                 throw new Error('Thiếu thông tin khách hàng (tên, số điện thoại hoặc địa chỉ)');
             }
 
@@ -374,22 +374,43 @@ export const useOrder = () => {
             if (paymentMethod === "PayOS") {
                 try {
                     console.log('Creating payment link for order:', response.order);
-                    const orderId = response.order?._id || response.order?.id;
+                    const orderId = response.order?._id;
                     if (!orderId) {
                         throw new Error('Không tìm thấy ID đơn hàng');
                     }
                     
-                    const paymentResponse = await axios.post(
-                        `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/${orderId}/payment`
-                    );
-                    console.log('Payment link created:', paymentResponse.data);
+                    // Tạo returnUrl để quay lại khi thanh toán xong
+                    const returnUrl = encodeURIComponent(`/employee/orders/${orderId}`);
                     
+                    console.log('Sending request to create payment with orderId:', orderId);
+                    const paymentResponse = await axios.post(
+                        `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/${orderId}/payment`,
+                        {
+                            // Thêm return URL vào request
+                            return_url: `${window.location.origin}/payment/success?orderCode=${orderId}&returnUrl=${returnUrl}`,
+                            cancel_url: `${window.location.origin}/payment/cancel?orderCode=${orderId}&returnUrl=${returnUrl}`
+                        },
+                        {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+
+                    console.log('Payment response:', paymentResponse);
+                    
+                    if (!paymentResponse.data?.paymentUrl) {
+                        throw new Error('Không nhận được URL thanh toán từ PayOS');
+                    }
+
                     // Chuyển hướng người dùng đến trang thanh toán PayOS
                     window.location.href = paymentResponse.data.paymentUrl;
                     return;
                 } catch (error) {
-                    console.error('Error creating payment link:', error);
-                    toast.error('Không thể tạo link thanh toán PayOS');
+                    console.error('Error creating payment link:', error.response || error);
+                    const errorMessage = error.response?.data?.message || error.message || 'Không thể tạo link thanh toán PayOS';
+                    toast.error(errorMessage);
+                    throw error;
                 }
             }
 

@@ -23,27 +23,34 @@ const productService = {
         }
     },
 
-    async getProductById(id) {
+    async getProductById(productId) {
         try {
-            const response = await axios.get(`${API_URL}/products/${id}`);
-            console.log('Product API response:', response.data);
+            // Convert ObjectId or any object to string safely
+            const id = (typeof productId === 'object' && productId.toString) 
+                ? productId.toString() 
+                : String(productId);
             
-            if (response.status === 200) {
+            console.log('getProductById - ID to be used:', id);
+    
+            const response = await axios.get(`${API_URL}/products/${id}`);
+            console.log('getProductById - API Response:', response);
+    
+            if (response.data && response.data.product) {
                 return {
                     success: true,
                     product: response.data.product
                 };
             }
-            
+    
             return {
                 success: false,
-                message: 'Không thể tải thông tin sản phẩm'
+                message: 'Product not found'
             };
         } catch (error) {
             console.error('Error in getProductById:', error);
             return {
                 success: false,
-                message: error.response?.data?.message || 'Lỗi khi tải thông tin sản phẩm'
+                message: error.message || 'Could not fetch product details'
             };
         }
     }

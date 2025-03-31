@@ -7,7 +7,7 @@ use App\Http\Controllers\Customers\HomeController;
 use App\Http\Controllers\Admins\CategoryController;
 use App\Http\Controllers\Admins\ProductController;
 use App\Http\Controllers\Admins\RoleController;
-use App\Http\Controllers\Admins\CustomerAdminController;
+
 use App\Http\Controllers\Admins\UserControllerAdmin;
 use App\Http\Controllers\Admins\SupplierController;
 use App\Http\Controllers\Admins\EmployeeController;
@@ -21,8 +21,8 @@ use Illuminate\Support\Facades\Route;
 Route::controller(AuthController::class)->group(function () {
     Route::post('v1/auth/signup', 'signup');
     Route::post('v1/auth/login', 'login');
-    Route::post('v1/auth/logout', 'logout')->middleware('auth');
-    Route::get('v1/auth/auth-check', 'authCheck')->middleware('auth');
+    Route::post('v1/auth/logout', 'logout');
+    Route::get('v1/auth/auth-check', 'authCheck');
 });
 
 //Customer

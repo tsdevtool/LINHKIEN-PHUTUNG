@@ -236,8 +236,21 @@ export const updateOrder = async (req, res) => {
     session.startTransaction();
 
     try {
-        const { customer_info, items, total_amount, finaltotal, 
-                status, payment_status, shipping_status, note } = req.body;
+        const { 
+            customer_info, 
+            items, 
+            total_amount, 
+            finaltotal, 
+            status, 
+            payment_status, 
+            shipping_status, 
+            note,
+            confirmed_at,
+            shipping_updated_at,
+            delivered_at,
+            cancelled_at,
+            payment_info
+        } = req.body;
 
         const order = await Order.findById(req.params.id);
         if (!order) {
@@ -245,18 +258,31 @@ export const updateOrder = async (req, res) => {
         }
 
         // Update order with snake_case fields
+        const updateData = {
+            customer_info,
+            items,
+            total_amount,
+            finaltotal,
+            status: status || order.status,
+            payment_status: payment_status || order.payment_status,
+            shipping_status: shipping_status || order.shipping_status,
+            note: note || order.note,
+            confirmed_at: confirmed_at !== undefined ? confirmed_at : order.confirmed_at,
+            shipping_updated_at: shipping_updated_at !== undefined ? shipping_updated_at : order.shipping_updated_at,
+            delivered_at: delivered_at !== undefined ? delivered_at : order.delivered_at,
+            cancelled_at: cancelled_at !== undefined ? cancelled_at : order.cancelled_at
+        };
+
+        // Cập nhật payment_info nếu có
+        if (payment_info) {
+            updateData.payment_info = payment_info;
+        }
+
+        console.log('Updating order with data:', updateData);
+
         const updatedOrder = await Order.findByIdAndUpdate(
             req.params.id,
-            {
-                customer_info,
-                items,
-                total_amount,
-                finaltotal,
-                status: status || order.status,
-                payment_status: payment_status || order.payment_status,
-                shipping_status: shipping_status || order.shipping_status,
-                note: note || order.note
-            },
+            updateData,
             { new: true, session }
         );
 
@@ -353,14 +379,23 @@ export const createPaymentLink = async (req, res) => {
             });
         }
 
+        // Lấy return_url và cancel_url từ request body
+        const { return_url, cancel_url } = req.body;
+        const returnOptions = {};
+        
+        if (return_url) returnOptions.return_url = return_url;
+        if (cancel_url) returnOptions.cancel_url = cancel_url;
+
         console.log('Creating payment for order:', order);
-        const paymentResult = await payosService.createPayment(order);
+        console.log('Return options:', returnOptions);
+        
+        const paymentResult = await payosService.createPayment(order, returnOptions);
         console.log('Payment result:', paymentResult);
         
         // Cập nhật order với thông tin thanh toán
-        order.paymentInfo = {
+        order.payment_info = {
             provider: 'PayOS',
-            paymentId: paymentResult.paymentLinkId,
+            payment_id: paymentResult.paymentLinkId,
             status: 'pending'
         };
         await order.save();
@@ -402,7 +437,7 @@ export const paymentWebhook = async (req, res) => {
         const order = await Order.findOne({ 
             $or: [
                 { order_number: payload.orderReference },
-                { "paymentInfo.paymentId": payload.paymentLinkId }
+                { "payment_info.payment_id": payload.paymentLinkId }
             ]
         });
 
@@ -422,12 +457,12 @@ export const paymentWebhook = async (req, res) => {
                 order.payment_status = 'paid';
                 
                 // Cập nhật thông tin thanh toán
-                order.paymentInfo = {
-                    ...order.paymentInfo,
+                order.payment_info = {
+                    ...order.payment_info,
                     provider: 'PayOS',
                     status: 'paid',
-                    transactionId: payload.transactionId,
-                    paidAt: new Date(payload.orderInfo?.paymentAt || Date.now()),
+                    transaction_id: payload.transactionId,
+                    paid_at: new Date(payload.orderInfo?.paymentAt || Date.now()),
                     amount: payload.amount
                 };
 
@@ -442,10 +477,10 @@ export const paymentWebhook = async (req, res) => {
 
                 await order.save();
                 console.log('Order updated successfully:', {
-                    orderNumber: order.order_number,
+                    order_number: order.order_number,
                     payment_status: order.payment_status,
                     status: order.status,
-                    paymentInfo: order.paymentInfo
+                    payment_info: order.payment_info
                 });
             } catch (saveError) {
                 console.error('Error saving order:', saveError);

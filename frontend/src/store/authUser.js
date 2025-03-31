@@ -7,7 +7,7 @@ const initialState = {
   isSigningUp: false,
   isLoggingIn: false,
   isLoggingOut: false,
-  isCheckingAuth: false,
+  isAuthChecking: false,
 };
 
 const getRedirectPath = (user) => {
@@ -36,17 +36,15 @@ export const useAuthStore = create((set, get) => ({
     try {
       const response = await axiosInstance.post("/v1/auth/signup", credentials);
       
-      if (response.data?.success && response.data?.token) {
-        localStorage.setItem('token', response.data.token);
+      if (response.data?.success && response.data?.user) {
         set({ user: response.data?.user, isSigningUp: false });
         toast.success("Tài khoản đã được đăng ký");
         window.location.href = '/auth/login';
       } else {
-        throw new Error(response.data?.message || 'Token not received during signup');
+        throw new Error(response.data?.message || 'Đăng ký thất bại');
       }
     } catch (error) {
       console.error('Signup error:', error);
-      localStorage.removeItem('token');
       toast.error(error.response?.data?.message || "Lỗi đăng ký");
       set({ isSigningUp: false, user: null });
     }
@@ -57,25 +55,27 @@ export const useAuthStore = create((set, get) => ({
 
     set({ isLoggingIn: true });
     try {
-      localStorage.removeItem('token');
-      set({ user: null });
-      
       const response = await axiosInstance.post("/v1/auth/login", credentials);
+      console.log('Login response:', response.data);
 
-      if (!response.data?.success || !response.data?.token || !response.data?.user) {
+      if (!response.data?.success || !response.data?.user) {
         throw new Error('Invalid login response');
       }
 
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      set({ user, isLoggingIn: false });
+      // Cập nhật user state
+      set({ 
+        user: response.data.user, 
+        isLoggingIn: false 
+      });
+
       toast.success("Đăng nhập thành công!");
+      return response.data.user;
 
     } catch (error) {
       console.error('Login failed:', error);
-      localStorage.removeItem('token');
       set({ isLoggingIn: false, user: null });
       toast.error(error.response?.data?.message || "Lỗi đăng nhập");
+      throw error;
     }
   },
 
@@ -83,56 +83,47 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingOut: true });
     try {
       await axiosInstance.post("/v1/auth/logout");
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('token');
       set({ ...initialState });
       window.location.href = '/auth/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      set({ isLoggingOut: false });
+      toast.error("Lỗi đăng xuất");
     }
   },
 
   authCheck: async () => {
-    // Prevent multiple simultaneous auth checks
-    if (get().isCheckingAuth) return null;
+    const currentState = get();
     
-    const token = localStorage.getItem('token');
-    const jwt = document.cookie.includes('jwt-phutung');
-    
-    // Don't check if no token and no cookie
-    if (!token && !jwt) {
-      set({ user: null });
-      return null;
+    if (currentState.isAuthChecking) {
+      console.log('Auth check in progress, skipping');
+      return currentState.user;
     }
 
-    set({ isCheckingAuth: true });
+    set({ isAuthChecking: true });
+    console.log('Starting auth check...');
+
     try {
       const response = await axiosInstance.get("/v1/auth/auth-check");
-      
-      if (!response.data?.success || !response.data?.user) {
-        throw new Error('Invalid auth check response');
+      console.log('Auth check response:', response.data);
+
+      if (response.data?.success && response.data?.user) {
+        set({ user: response.data.user });
+        return response.data.user;
+      } else {
+        set({ user: null });
+        return null;
       }
-
-      set({ user: response.data.user, isCheckingAuth: false });
-      return response.data.user;
-
     } catch (error) {
       console.error('Auth check failed:', error);
-      // Chỉ xóa token và reset state nếu lỗi 401 Unauthorized
-      if (error.response?.status === 401) {
-        localStorage.removeItem('token');
-        set({ ...initialState });
-        window.location.href = '/auth/login';
-      } else {
-        // Các lỗi khác (network, 500, etc) chỉ reset trạng thái checking
-        set({ isCheckingAuth: false });
-      }
+      set({ user: null });
       return null;
+    } finally {
+      set({ isAuthChecking: false });
     }
   },
 
   resetAuth: () => {
-    localStorage.removeItem('token');
     set({ ...initialState });
   }
 }));
