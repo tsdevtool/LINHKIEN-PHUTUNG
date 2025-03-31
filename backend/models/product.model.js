@@ -55,6 +55,5 @@ const productSchema = new mongoose.Schema(
     timestamps: true  // Tự động tạo created_at và updated_at
   }
 );
-
 // Export mô hình Product
 export const Product = mongoose.model('Product', productSchema);
