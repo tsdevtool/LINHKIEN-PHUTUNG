@@ -16,7 +16,7 @@ export const getProductList = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error", error: error.message });
   }
 };
-// Ham chi tiet san phamm
+// Ham chi tiet san pham
 export const getProductById = async (req, res) => {
   try {
     const productId = req.params.id;  // Lấy ID sản phẩm từ URL
@@ -69,32 +69,27 @@ export const getChildCategories = async (req, res) => {
 export const getProductListByCategoryId = async (req, res) => {
   try {
     const categoryId = req.params.categoryId; // Lấy category_id từ URL
-    console.log("Category ID received:", categoryId);
 
     // Kiểm tra categoryId có hợp lệ không
     if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId)) {
-      return res.status(400).json({ success: false, message: "Invalid category ID" });
+      return res.status(400).json({ success: false, message: "Id danh mục không đúng" });
     }
 
     // Chuyển categoryId thành ObjectId
     const categoryIdObject = new mongoose.Types.ObjectId(categoryId);
-    console.log("Converted ObjectId:", categoryIdObject);
 
     // Lấy tất cả sản phẩm
     const products = await Product.find(); 
-    console.log("All products fetched:", products);
 
     // Lọc các sản phẩm theo category_id
     const filteredProducts = products.filter(product => {
       return product.category_id.toString() === categoryIdObject.toString();
     });
-    console.log("Filtered products:", filteredProducts);
 
     // Nếu không tìm thấy sản phẩm phù hợp
     if (!filteredProducts || filteredProducts.length === 0) {
-      return res.status(404).json({ success: false, message: "No products found for this category" });
+      return res.status(404).json({ success: false, message: "Không tìm thấy sản phẩm ở trong danh mục" });
     }
-
     // Trả về sản phẩm đã lọc
     return res.status(200).json({ success: true, data: filteredProducts });
   } catch (error) {
@@ -102,4 +97,3 @@ export const getProductListByCategoryId = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error", error: error.message });
   }
 };
-
