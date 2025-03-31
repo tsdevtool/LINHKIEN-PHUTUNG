@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { Product } from "../models/product.model.js"; 
-import { Category } from "../models/category.model.js";
+import { Product } from "../../models/product.model.js"; 
+import { Category } from "../../models/category.model.js";
 // Hàm lấy danh sách sản phẩm
 export const getProductList = async (req, res) => {
   try {

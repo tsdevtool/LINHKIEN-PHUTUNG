@@ -6,7 +6,7 @@ import {
     getProductListByCategoryId,
    
    
-} from "../controllers/clientController.js";
+} from "../controllers/client/clientController.js";
 
 const router = express.Router();
 
