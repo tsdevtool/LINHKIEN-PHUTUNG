@@ -44,24 +44,6 @@ const PaymentQRPage = () => {
 
   const getPaymentMethodInfo = () => {
     switch (paymentDetails?.method) {
-      case "momo":
-        return {
-          name: "Ví MoMo",
-          color: "text-[#A50064]",
-          qrImage: "qr-momo.jpg",
-        };
-      case "vnpay":
-        return {
-          name: "VNPay",
-          color: "text-[#1A1F71]",
-          qrImage: "qr-momo.jpg",
-        };
-      case "zalopay":
-        return {
-          name: "ZaloPay",
-          color: "text-[#0068FF]",
-          qrImage: "qr-momo.jpg",
-        };
       case "bank":
         return {
           name: "Chuyển khoản ngân hàng",

@@ -24,53 +24,6 @@ const EmptyCart = () => {
         <FaArrowRight className="text-sm" />
       </Link>
 
-      <div className="mt-12 border-t border-gray-200 dark:border-gray-700 pt-8">
-        <h3 className="font-medium mb-6 text-gray-800 dark:text-white text-lg">
-          Có thể bạn sẽ thích
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            {
-              name: "CPU Intel Core i5-12400F",
-              price: "4.290.000đ",
-              discount: "10%",
-            },
-            {
-              name: "RAM Kingston Fury 16GB",
-              price: "1.290.000đ",
-              discount: "15%",
-            },
-            {
-              name: "SSD Samsung 970 EVO 500GB",
-              price: "1.890.000đ",
-              discount: "8%",
-            },
-            {
-              name: "VGA RTX 3060 Ti 8GB",
-              price: "9.990.000đ",
-              discount: "5%",
-            },
-          ].map((item, index) => (
-            <div key={index} className="group cursor-pointer">
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-200 dark:border-gray-600">
-                <div className="relative">
-                  <div className="bg-gray-200 dark:bg-gray-600 w-full h-32 md:h-40"></div>
-                  <div className="absolute top-2 left-2 bg-cyan-600 text-white text-xs px-2 py-1 rounded">
-                    -{item.discount}
-                  </div>
-                </div>
-
-                <div className="p-3">
-                  <h4 className="font-medium text-gray-800 dark:text-white text-sm mb-2 line-clamp-2 h-10 group-hover:text-cyan-600 transition-colors">
-                    {item.name}
-                  </h4>
-                  <div className="text-cyan-600 font-bold">{item.price}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };

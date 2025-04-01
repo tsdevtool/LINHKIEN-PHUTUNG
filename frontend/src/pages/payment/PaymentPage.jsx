@@ -125,45 +125,6 @@ const PaymentPage = () => {
           },
         });
         break;
-      case "momo":
-        navigate("/payment/qr", {
-          state: {
-            paymentDetails: {
-              orderId,
-              amount: orderSummary.total,
-              method: "momo",
-              items: orderSummary.items,
-              shippingInfo,
-            },
-          },
-        });
-        break;
-      case "vnpay":
-        navigate("/payment/qr", {
-          state: {
-            paymentDetails: {
-              orderId,
-              amount: orderSummary.total,
-              method: "vnpay",
-              items: orderSummary.items,
-              shippingInfo,
-            },
-          },
-        });
-        break;
-      case "zalopay":
-        navigate("/payment/qr", {
-          state: {
-            paymentDetails: {
-              orderId,
-              amount: orderSummary.total,
-              method: "zalopay",
-              items: orderSummary.items,
-              shippingInfo,
-            },
-          },
-        });
-        break;
       default:
         break;
     }
