@@ -7,18 +7,7 @@ use App\Actions\Customer\Order\CancelOrder;
 use App\Actions\Customer\Order\GetAllOrder;
 use App\Actions\Customer\Order\GetOrderDetail;
 use App\Http\Controllers\Controller;
-use App\Models\Order;
-use App\Models\Cart;
-use App\Models\CartItem;
-use App\Enums\OrderMethod;
-use App\Enums\OrderType;
-use App\Enums\PaymentStatus;
-use App\Enums\PaymentType;
-use App\Enums\OrderStatus;
 use App\Http\Requests\Order\CreateOrderFromCartRequest;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use Exception;
 use Illuminate\Http\JsonResponse;
 
 class OrderController extends Controller

@@ -18,42 +18,30 @@ class Order extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'order_number',
         'customer_id',
-        'customer_info',
         'items',
         'total_amount',
+        'recipient_name',
+        'recipient_phone',
+        'recipient_address',
+        'payment_type',
+        'order_method',
+        'status',
+        'payment_status',
+        'shipping_status',
         'discount',
         'shipping_fee',
-        'finaltotal',
-        'payment_method',
-        'payment_status',
-        'shipping_method',
-        'shipping_status',
-        'status',
         'note',
-        'staff_id',
-        'staff_info',
-        'payment_info',
-        'created_at',
-        'updated_at',
         'confirmed_at',
         'shipping_updated_at',
         'delivered_at',
-        'cancelled_at',
+        'cancelled_at'
     ];
 
     protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
         'total_amount' => 'float',
-        'discount' => 'float',
-        'shipping_fee' => 'float',
-        'finaltotal' => 'float',
-        'items' => 'array',
-        'customer_info' => 'array',
-        'staff_info' => 'array',
-        'payment_info' => 'array',
+        'discount' => 'int',
+        'shipping_fee' => 'int',
         'confirmed_at' => 'datetime',
         'shipping_updated_at' => 'datetime',
         'delivered_at' => 'datetime',
@@ -62,10 +50,11 @@ class Order extends Model
 
     protected $attributes = [
         'status' => 'pending',
-        'payment_status' => 'pending',
+        'payment_status' => 'unpaid',
         'shipping_status' => 'pending',
         'discount' => 0,
         'shipping_fee' => 0,
+        'items' => [],
         'confirmed_at' => null,
         'shipping_updated_at' => null,
         'delivered_at' => null,
@@ -114,42 +103,40 @@ class Order extends Model
         parent::boot();
         
         static::creating(function ($order) {
-            $order->created_at = Carbon::now();
-            $order->updated_at = Carbon::now();
+            $order->created_at = now();
+            $order->updated_at = now();
             
-            if (!$order->order_number) {
+            if (!isset($order->order_number)) {
                 $order->order_number = $order->generateOrderNumber();
-            }
-
-            // Convert payment method to standardized format
-            if ($order->payment_method) {
-                $order->payment_method = self::standardizePaymentMethod($order->payment_method);
             }
         });
 
         static::updating(function ($order) {
-            $order->updated_at = Carbon::now();
-            
-            if ($order->isDirty('payment_method')) {
-                $order->payment_method = self::standardizePaymentMethod($order->payment_method);
-            }
+            $order->updated_at = now();
         });
     }
 
-    public static function standardizePaymentMethod($value)
+    public function setItemsAttribute($value)
     {
-        $mapping = [
-            'Tiền mặt' => 'cash',
-            'PayOS' => 'payos',
-            'COD' => 'cod'
-        ];
-        return $mapping[$value] ?? strtolower($value);
+        if (is_array($value)) {
+            $this->attributes['items'] = $value;
+        } else {
+            $this->attributes['items'] = json_decode($value, true) ?? [];
+        }
+    }
+
+    public function getItemsAttribute($value)
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        return json_decode($value, true) ?? [];
     }
 
     public function generateOrderNumber()
     {
         $prefix = 'DH';
-        $date = Carbon::now()->format('ymd');
+        $date = now()->format('ymd');
         
         $lastOrder = self::where('order_number', 'like', $prefix . $date . '%')
             ->orderBy('order_number', 'desc')

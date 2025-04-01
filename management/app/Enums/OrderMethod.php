@@ -11,7 +11,7 @@ enum OrderMethod: string
     {
         return match($this) {
             self::STORE_PICKUP => 'Nhận tại cửa hàng',
-            self::DELIVERY => 'Giao hàng',
+            self::DELIVERY => 'Giao cho bên vận chuyển',
         };
     }
 } 
