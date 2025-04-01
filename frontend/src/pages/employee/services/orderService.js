@@ -29,6 +29,14 @@ class OrderService {
             // Format data before sending
             const { orderNumber, ...orderDataWithoutNumber } = orderData;
             
+            // Ensure staff_id is proper MongoDB ID
+            const staffId = orderData.staff_id ? orderData.staff_id.toString() : null;
+            if (!staffId) {
+                console.warn('Missing staff_id in order data');
+            } else {
+                console.log('Using staff_id:', staffId);
+            }
+            
             // Ensure all required fields are present and properly formatted
             const formattedData = {
                 ...orderDataWithoutNumber,
@@ -53,9 +61,9 @@ class OrderService {
                 payment_status: orderData.payment_status,
                 shipping_method: orderData.shipping_method,
                 shipping_status: orderData.shipping_status,
-                staff_id: orderData.staff_id,
+                staff_id: staffId,  // Use the extracted staff ID
                 staff_info: {
-                    name: orderData.staff_info.name,
+                    name: orderData.staff_info?.name || orderData.staff_name || 'Nhân viên',
                     role: 'employee'
                 },
                 status: orderData.status,

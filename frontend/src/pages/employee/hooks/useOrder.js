@@ -3,6 +3,7 @@ import orderService from '../services/orderService';
 import productService from '../services/productService';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useAuthStore } from '../../../store/authUser';
 
 // Constants
 const INITIAL_STATE = {
@@ -140,6 +141,9 @@ const normalizeProductData = (product, quantity = 1) => ({
 });
 
 export const useOrder = () => {
+    // Get logged in user
+    const { user } = useAuthStore();
+    
     // State initialization
     const [state, setState] = useState(INITIAL_STATE);
     const {
@@ -264,14 +268,26 @@ export const useOrder = () => {
             // Validate order data
             validateOrderData(orderData);
 
+            // Log user info and staff ID before transformation
+            console.log('User info from auth store:', user);
+            console.log('Staff ID before transform:', orderData.staff_id);
+
+            // Get staff ID from user if available
+            const staffId = user?._id || user?.id || orderData.staff_id;
+            const staffName = orderData.staff_name || staff || (user ? `${user.firstname} ${user.lastname || ''}`.trim() : '');
+
+            console.log('Final staff ID to use:', staffId);
+            console.log('Final staff name to use:', staffName);
+
             // Transform data to snake_case format
             const transformedData = {
                 ...orderData,
                 payment_status: determinePaymentStatus(orderData.payment_method),
                 shipping_status: determineShippingStatus(orderData.shipping_method),
                 status: determineOrderStatus(orderData.shipping_method, orderData.payment_method),
+                staff_id: staffId, // Use the MongoDB ObjectId
                 staff_info: {
-                    name: orderData.staff_id,
+                    name: staffName, // Use the staff name
                     role: 'employee'
                 }
             };
@@ -298,7 +314,7 @@ export const useOrder = () => {
         } finally {
             updateState({ loading: false });
         }
-    }, [updateState, handleError]);
+    }, [updateState, handleError, user, staff]);
 
     // Field setters
     const setters = {
@@ -313,7 +329,7 @@ export const useOrder = () => {
     };
 
     // Xử lý submit đơn hàng
-    const handleSubmitOrder = async (selectedCustomer, navigate) => {
+    const handleSubmitOrder = async (selectedCustomer, navigate, staffData = null) => {
         try {
             if (!selectedCustomer?._id) {
                 console.error('Missing customer ID:', selectedCustomer);
@@ -328,6 +344,8 @@ export const useOrder = () => {
             // Log thông tin trước khi tạo đơn hàng
             console.log('Selected customer:', selectedCustomer);
             console.log('Selected products:', selectedProducts);
+            console.log('Current user:', user);
+            console.log('Staff data received from component:', staffData);
 
             // Đảm bảo các trường của customer_info có giá trị mặc định
             const customer_info = {
@@ -341,6 +359,24 @@ export const useOrder = () => {
             if (!customer_info.name || !customer_info.phone ) {
                 throw new Error('Thiếu thông tin khách hàng (tên, số điện thoại hoặc địa chỉ)');
             }
+
+            // Get staff ID - ưu tiên từ staffData nếu có
+            let staffId = '';
+            let staffName = '';
+            
+            if (staffData && staffData.id) {
+                staffId = staffData.id;
+                staffName = staffData.name;
+                console.log('Using staffData from parameter:', { staffId, staffName });
+            } else {
+                // Fallback to user object or hardcoded ID
+                staffId = user?._id || user?.id || '67e66508d68e37a9a301b0f2';
+                staffName = staff || (user ? `${user.firstname} ${user.lastname || ''}`.trim() : 'Nhân viên');
+                console.log('Using fallback staff data:', { staffId, staffName });
+            }
+            
+            console.log('Staff ID:', staffId);
+            console.log('Staff Name:', staffName);
 
             const orderData = {
                 customer_id: selectedCustomer._id,
@@ -362,7 +398,8 @@ export const useOrder = () => {
                 payment_method: paymentMethod,
                 shipping_method: shippingMethod,
                 note: note || '',
-                staff_id: staff
+                staff_id: staffId,
+                staff_name: staffName
             };
 
             // Log dữ liệu đơn hàng trước khi gửi

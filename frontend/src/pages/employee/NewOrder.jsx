@@ -65,14 +65,27 @@ const NewOrder = () => {
 
   useEffect(() => {
     if (user) {
+      console.log('Current logged in user:', user);
       setStaff(user.firstname + ' ' + (user.lastname || ''));
     }
-  }, [user]);
+  }, [user, setStaff]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await handleSubmitOrder(selectedCustomer, navigate);
+      // Debugging logs
+      console.log('User auth data before submit:', user);
+      console.log('Staff name before submit:', staff);
+      
+      // Modified code to ensure staffId is passed correctly
+      const staffData = {
+        id: user?._id,     // Pass the ID explicitly
+        name: staff || (user ? `${user.firstname} ${user.lastname || ''}`.trim() : '')
+      };
+      
+      console.log('Staff data being passed:', staffData);
+      
+      await handleSubmitOrder(selectedCustomer, navigate, staffData);
       clearSelectedCustomer();
     } catch (error) {
       console.error('Error in handleSubmit:', error);

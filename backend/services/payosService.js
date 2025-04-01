@@ -9,7 +9,8 @@ const {
     PAYOS_API_KEY,
     PAYOS_CHECKSUM_KEY,
     PAYOS_RETURN_URL,
-    PAYOS_CANCEL_URL
+    PAYOS_CANCEL_URL,
+    PAYOS_WEBHOOK_URL
 } = process.env;
 
 const API_URL = 'https://api-merchant.payos.vn/v2';
@@ -68,9 +69,13 @@ class PayOSService {
                 throw new Error('Số tiền thanh toán không hợp lệ');
             }
 
-            // Sử dụng return URLs từ request hoặc từ biến môi trường nếu không có
-            const returnUrl = returnOptions.return_url || PAYOS_RETURN_URL;
-            const cancelUrl = returnOptions.cancel_url || PAYOS_CANCEL_URL;
+            // Thêm order_number vào URL parameters
+            const baseReturnUrl = returnOptions.return_url || PAYOS_RETURN_URL;
+            const baseCancelUrl = returnOptions.cancel_url || PAYOS_CANCEL_URL;
+
+            // Thêm order_number vào URL
+            const returnUrl = `${baseReturnUrl}${baseReturnUrl.includes('?') ? '&' : '?'}order_number=${order.order_number}`;
+            const cancelUrl = `${baseCancelUrl}${baseCancelUrl.includes('?') ? '&' : '?'}order_number=${order.order_number}`;
 
             // Tạo dữ liệu cơ bản
             const baseData = {
@@ -88,7 +93,7 @@ class PayOSService {
             const paymentData = {
                 ...baseData,
                 signature,
-                webHookUrl: `${process.env.BACKEND_URL}/api/v1/orders/webhook`,
+                webHookUrl: PAYOS_WEBHOOK_URL || 'https://localhost:3000/api/v1/orders/payment/webhook',
                 customerEmail: order.customer_info?.email || '',
                 customerPhone: order.customer_info?.phone || '',
                 customerName: order.customer_info?.name || '',

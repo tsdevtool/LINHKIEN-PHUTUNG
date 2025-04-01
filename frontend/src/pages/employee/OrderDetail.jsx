@@ -53,7 +53,6 @@ const OrderDetail = () => {
     try {
       setLoading(true);
       const response = await orderService.getOrderById(id);
-      console.log('Order detail response:', response);
       
       if (response.success && response.order) {
         setOrder(response.order);
@@ -72,11 +71,9 @@ const OrderDetail = () => {
   const fetchProductDetails = async () => {
     try {
       if (!order || !order.items || !Array.isArray(order.items)) {
-        console.log('No items to fetch details for');
         return;
       }
 
-      console.log('Starting to fetch product details');
       const product_ids = order.items.map(item => {
         let id;
       
@@ -86,24 +83,17 @@ const OrderDetail = () => {
           id = item.product_id;
         }
       
-        console.log('Processed ID:', id);
         return id;
       });
       
-      
-      console.log('Product IDs to fetch:', product_ids);
-      
-      // Fetch all products in parallel instead of sequential
       const productPromises = product_ids.map(product_id => {
         if (!product_id) {
           console.error('Invalid product ID:', product_id);
           return Promise.resolve(null);
         }
         
-        console.log('Sending request for product_id:', product_id);
         return productService.getProductById(product_id)
           .then(response => {
-            console.log('Response for product', product_id, ':', response);
             if (response.success && response.product) {
               return [product_id, response.product];
             }
@@ -117,7 +107,6 @@ const OrderDetail = () => {
       });
 
       const results = await Promise.all(productPromises);
-      console.log('All product fetch results:', results);
       
       const details = {};
       results.forEach(result => {
@@ -127,7 +116,6 @@ const OrderDetail = () => {
         }
       });
 
-      console.log('Final product details object:', details);
       setProductDetails(details);
     } catch (error) {
       console.error('Error in fetchProductDetails:', error);
@@ -138,13 +126,14 @@ const OrderDetail = () => {
   const generateOrderHistory = (orderData) => {
     const history = [];
     const isInStorePickup = orderData.shipping_method === "Nhận tại cửa hàng";
+    const defaultTimestamp = orderData.createdAt || orderData.created_at;
 
     // Thêm sự kiện tạo đơn
     history.push({
       type: 'created',
       title: 'Tạo đơn hàng',
       description: `Đơn hàng được tạo bởi ${orderData.staff_info?.name || 'Admin'}`,
-      timestamp: orderData.createdAt,
+      timestamp: defaultTimestamp,
       icon: CheckCircle2,
       color: 'blue'
     });
@@ -155,7 +144,7 @@ const OrderDetail = () => {
         type: 'confirmed',
         title: 'Đã xác nhận đơn',
         description: 'Đơn hàng đã được xác nhận',
-        timestamp: orderData.confirmed_at || orderData.createdAt,
+        timestamp: orderData.confirmed_at || defaultTimestamp,
         icon: CheckCircle2,
         color: 'blue'
       });
@@ -167,7 +156,7 @@ const OrderDetail = () => {
         type: 'payment',
         title: 'Thanh toán thành công',
         description: `Thanh toán qua ${orderData.payment_method}`,
-        timestamp: orderData.payment_info?.paid_at || orderData.updated_at,
+        timestamp: orderData.payment_info?.paid_at || orderData.updated_at || orderData.updatedAt || defaultTimestamp,
         icon: CreditCard,
         color: 'green'
       });
@@ -181,7 +170,7 @@ const OrderDetail = () => {
           type: 'shipping',
           title: 'Đang vận chuyển',
           description: 'Đơn hàng đã được giao cho đơn vị vận chuyển',
-          timestamp: orderData.shipping_updated_at || orderData.updated_at,
+          timestamp: orderData.shipping_updated_at || orderData.updated_at || orderData.updatedAt || defaultTimestamp,
           icon: Truck,
           color: 'orange'
         });
@@ -193,19 +182,19 @@ const OrderDetail = () => {
           type: 'delivered',
           title: 'Đã giao hàng',
           description: 'Đơn hàng đã được giao thành công',
-          timestamp: orderData.delivered_at || orderData.updated_at,
+          timestamp: orderData.delivered_at || orderData.updated_at || orderData.updatedAt || defaultTimestamp,
           icon: CheckCircle2,
           color: 'green'
         });
       }
     } else {
-      // Nếu là nhận tại cửa hàng và đã thanh toán, thêm sự kiện hoàn thành
-      if (orderData.status === 'completed') {
+      // Nếu là nhận tại cửa hàng và đã hoàn thành hoặc đã thanh toán
+      if (orderData.status === 'completed' || orderData.payment_status === 'paid') {
         history.push({
           type: 'completed',
           title: 'Đã nhận hàng',
           description: 'Khách hàng đã nhận hàng tại cửa hàng',
-          timestamp: orderData.updated_at,
+          timestamp: orderData.updated_at || orderData.updatedAt || defaultTimestamp,
           icon: CheckCircle2,
           color: 'green'
         });
@@ -218,7 +207,7 @@ const OrderDetail = () => {
         type: 'cancelled',
         title: 'Đã hủy đơn',
         description: orderData.cancel_reason || 'Đơn hàng đã bị hủy',
-        timestamp: orderData.cancelled_at || orderData.updated_at,
+        timestamp: orderData.cancelled_at || orderData.updated_at || orderData.updatedAt || defaultTimestamp,
         icon: XCircle,
         color: 'red'
       });
@@ -251,7 +240,6 @@ const OrderDetail = () => {
 
   const handleUpdateShippingStatus = async () => {
     try {
-      console.log('Updating shipping status for order:', order);
       const orderId = order?._id || order?.id;
       
       if (!orderId) {
@@ -265,24 +253,16 @@ const OrderDetail = () => {
         shipping_status: 'shipping',
         status: 'shipping',
         shipping_updated_at: currentTime,
-        confirmed_at: currentTime
+        confirmed_at: order.confirmed_at || currentTime
       };
 
-      console.log('Sending update data (original):', updateData);
-      
-      // Kiểm tra response từ server
-      console.log('Order ID for update:', orderId);
-      console.log('updateData stringify:', JSON.stringify(updateData));
-      
       const response = await orderService.updateOrder(orderId, updateData);
-      console.log('Update response complete:', response);
       
       if (response.success) {
         toast.success('Cập nhật trạng thái vận chuyển thành công');
         // Cập nhật lại dữ liệu đơn hàng từ response
         if (response.order) {
           setOrder(response.order);
-          console.log('New order data after update:', response.order);
         } else {
           // Tải lại dữ liệu nếu response không có order
           await fetchOrderDetails();
@@ -296,9 +276,41 @@ const OrderDetail = () => {
     }
   };
 
+  const handleConfirmOrder = async () => {
+    try {
+      const orderId = order?._id || order?.id;
+      
+      if (!orderId) {
+        throw new Error('Không tìm thấy ID đơn hàng');
+      }
+      
+      const currentTime = new Date().toISOString();
+      
+      const updateData = {
+        status: 'confirmed',
+        confirmed_at: currentTime
+      };
+
+      const response = await orderService.updateOrder(orderId, updateData);
+      
+      if (response.success) {
+        toast.success('Xác nhận đơn hàng thành công');
+        if (response.order) {
+          setOrder(response.order);
+        } else {
+          await fetchOrderDetails();
+        }
+      } else {
+        throw new Error(response.message || 'Xác nhận đơn hàng thất bại');
+      }
+    } catch (error) {
+      console.error('Error confirming order:', error);
+      toast.error(error.message || 'Có lỗi xảy ra khi xác nhận đơn hàng');
+    }
+  };
+
   const handleConfirmDelivery = async () => {
     try {
-      console.log('Confirming delivery for order:', order);
       const orderId = order?._id || order?.id;
       
       if (!orderId) {
@@ -315,11 +327,7 @@ const OrderDetail = () => {
         cancelled_at: order.cancelled_at
       };
 
-      console.log('Sending delivery confirmation data:', updateData);
-      
       const response = await orderService.updateOrder(orderId, updateData);
-
-      console.log('Update response:', response);
 
       if (response.success) {
         const updatedOrder = {
@@ -327,7 +335,6 @@ const OrderDetail = () => {
           ...updateData
         };
         
-        console.log('Updated order:', updatedOrder);
         setOrder(updatedOrder);
         generateOrderHistory(updatedOrder);
         toast.success('Đã cập nhật trạng thái giao hàng thành công');
@@ -405,7 +412,7 @@ const OrderDetail = () => {
             <img src="/logo.png" alt="Logo" class="logo">
             <div>
               <h1>ĐƠN HÀNG #${order.order_number || order.orderNumber}</h1>
-              <p>Ngày tạo: ${formatDate(order.createdAt)}</p>
+              <p>Ngày tạo: ${formatDate(order.createdAt || order.created_at)}</p>
             </div>
           </div>
 
@@ -420,16 +427,16 @@ const OrderDetail = () => {
                   ? 'Đã hủy'
                   : 'Chưa xử lý'
                 : order.status === 'pending'
-                ? "bg-yellow-50 text-yellow-800"
+                ? "Chờ xử lý"
                 : order.status === 'confirmed'
-                ? "bg-blue-50 text-blue-800"
+                ? "Đã xác nhận"
                 : order.status === 'shipping'
-                ? "bg-orange-50 text-orange-800"
+                ? "Đang giao"
                 : order.status === 'completed'
-                ? "bg-green-50 text-green-800"
+                ? "Hoàn thành"
                 : order.status === 'cancelled'
-                ? "bg-red-50 text-red-800"
-                : "bg-gray-50 text-gray-800"
+                ? "Đã hủy"
+                : order.status
             }</p>
             <p><strong>Phương thức thanh toán:</strong> ${order.payment_method}</p>
             <p><strong>Phương thức vận chuyển:</strong> ${order.shipping_method}</p>
@@ -448,10 +455,20 @@ const OrderDetail = () => {
               </thead>
               <tbody>
                 ${order.items?.map(item => {
-                  const productDetail = productDetails[item.product_id];
+                  // Xử lý product_id linh hoạt
+                  let productId = typeof item.product_id === 'object' ? item.product_id._id || item.product_id.toString() : item.product_id;
+                  
+                  // Ép kiểu qua string
+                  productId = String(productId);
+                  
+                  const productDetail = productDetails[productId];
+                  
+                  // Sử dụng tên từ item nếu có
+                  const productName = productDetail?.name || item.name || item.product_name || 'Không tìm thấy thông tin sản phẩm';
+                  
                   return `
                     <tr>
-                      <td>${productDetail?.name || 'Không tìm thấy thông tin sản phẩm'}</td>
+                      <td>${productName}</td>
                       <td>${item.quantity}</td>
                       <td>${formatCurrency(item.price)}</td>
                       <td>${formatCurrency(item.price * item.quantity)}</td>
@@ -466,7 +483,7 @@ const OrderDetail = () => {
             <p>Tổng tiền hàng: ${formatCurrency(order.total_amount)}</p>
             <p>Giảm giá: -${formatCurrency(order.discount)}</p>
             <p>Phí giao hàng: ${formatCurrency(order.shipping_fee)}</p>
-            <h3>Thành tiền: ${formatCurrency(order.final_total)}</h3>
+            <h3>Thành tiền: ${formatCurrency(order.finaltotal)}</h3>
           </div>
 
           <div class="customer-info">
@@ -499,7 +516,6 @@ const OrderDetail = () => {
 
   const handleRepayment = async () => {
     try {
-      console.log('Creating payment link for order:', order);
       const orderId = order?._id || order?.id;
       if (!orderId) {
         throw new Error('Không tìm thấy ID đơn hàng');
@@ -508,7 +524,6 @@ const OrderDetail = () => {
       const paymentResponse = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/${orderId}/payment`
       );
-      console.log('Payment link created:', paymentResponse.data);
       window.location.href = paymentResponse.data.paymentUrl;
     } catch (error) {
       console.error('Error creating payment link:', error);
@@ -518,7 +533,6 @@ const OrderDetail = () => {
 
   const handleConfirmPayment = async () => {
     try {
-      console.log('Confirming payment for order:', order);
       const orderId = order?._id || order?.id;
       
       if (!orderId) {
@@ -540,11 +554,7 @@ const OrderDetail = () => {
         cancelled_at: order.cancelled_at
       };
 
-      console.log('Sending payment confirmation data:', updateData);
-      
       const response = await orderService.updateOrder(orderId, updateData);
-
-      console.log('Update response:', response);
 
       if (response.success) {
         const updatedOrder = {
@@ -590,7 +600,6 @@ const OrderDetail = () => {
       const routePrefix = isAdminRoute ? '/admin' : '/employee';
       navigate(`${routePrefix}/orders`);
     } catch (error) {
-      console.error('Error cancelling order:', error);
       // Toast error đã được xử lý trong handleCancelOrder
     }
   };
@@ -645,7 +654,7 @@ const OrderDetail = () => {
                   Đơn hàng #{order.order_number || order.orderNumber || 'Không có mã đơn hàng'}
                 </h1>
                 <p className="text-sm text-gray-500">
-                  Tạo lúc: {formatDate(order.createdAt)}
+                Tạo lúc: {formatDate(order.createdAt || order.created_at)}
                 </p>
               </div>
             </div>
@@ -722,6 +731,18 @@ const OrderDetail = () => {
                   </span>
                 </div>
                 <div className="flex gap-2">
+                  {/* Nút xác nhận đơn hàng chỉ hiển thị khi chưa được xác nhận */}
+                  {order.status === 'pending' && 
+                   order.status !== 'cancelled' && (
+                    <button 
+                      onClick={handleConfirmOrder}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-2"
+                    >
+                      <CheckCircle2 size={20} />
+                      <span>Xác nhận đơn</span>
+                    </button>
+                  )}
+
                   {/* Nút xác nhận giao hàng chỉ hiển thị khi đang giao */}
                   {order.shipping_method !== "Nhận tại cửa hàng" && 
                    order.shipping_status === 'shipping' && 
@@ -736,14 +757,15 @@ const OrderDetail = () => {
                     </button>
                   )}
 
-                  {/* Nút đẩy vận chuyển chỉ hiển thị khi chưa giao và chưa hủy */}
+                  {/* Nút đẩy vận chuyển chỉ hiển thị khi đã xác nhận, chưa giao và chưa hủy */}
                   {order.shipping_method === "Giao cho bên vận chuyển" && 
+                   order.status === 'confirmed' &&
                    order.shipping_status !== 'shipping' &&
                    order.shipping_status !== 'delivered' &&
                    order.status !== 'cancelled' && (
                     <button 
                       onClick={handleUpdateShippingStatus}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-2"
+                      className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 flex items-center gap-2"
                     >
                       <Truck size={20} />
                       <span>Đẩy vận chuyển</span>
@@ -778,16 +800,9 @@ const OrderDetail = () => {
                   </div>
                 ) : (
                   order.items?.map((item, index) => {
-                    console.log('Current item:', item);
-                    console.log('Product ID:', item.product_id);
-                    console.log('Product details for ID:', productDetails[item.product_id]);
-                    
                     // Try different ways to access product details
                     const productId = typeof item.product_id === 'object' ? item.product_id._id || item.product_id.toString() : item.product_id;
                     const productDetail = productDetails[productId];
-                    
-                    console.log('Using product ID:', productId);
-                    console.log('Found product detail:', productDetail);
                     
                     return (
                       <div key={index} className="flex items-center gap-4 py-4 border-b last:border-0">
@@ -888,13 +903,14 @@ const OrderDetail = () => {
                       {order.payment_status === 'paid' 
                         ? 'Đã thanh toán'
                         : order.payment_status === 'pending'
-                        ? 'Chờ thanh toán'
+                        ? 'Đang chờ thanh toán'
                         : 'Chưa thanh toán'}
                     </span>
                     
                     {/* Hiển thị nút thanh toán lại cho PayOS */}
                     {order.payment_method.toLowerCase() === 'payos' && 
-                     order.payment_status !== 'paid' && (
+                     order.payment_status !== 'paid' && 
+                     order.status !== 'cancelled' && (
                       <button
                         onClick={handleRepayment}
                         className="ml-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
@@ -903,9 +919,11 @@ const OrderDetail = () => {
                       </button>
                     )}
 
-                    {/* Hiển thị nút xác nhận thanh toán cho COD */}
-                    {order.payment_method.toLowerCase() === 'cod' && 
-                     order.payment_status !== 'paid' && (
+                    {/* Hiển thị nút xác nhận thanh toán cho COD hoặc Cash */}
+                    {(order.payment_method.toLowerCase() === 'cod' || 
+                      (order.payment_method.toLowerCase() === 'cash' && !order.staff_info?.name)) && 
+                     order.payment_status !== 'paid' && 
+                     order.status !== 'cancelled' && (
                       <button
                         onClick={handleConfirmPayment}
                         className="ml-2 px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm flex items-center gap-1"

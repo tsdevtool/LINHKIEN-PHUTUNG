@@ -21,7 +21,7 @@ const validateCustomerId = (customer) => {
 };
 
 const validateCustomerData = (customer) => {
-    const requiredFields = ['name', 'phone', 'address'];
+    const requiredFields = ['name', 'phone'];
     const missingFields = requiredFields.filter(field => !customer[field]);
     
     if (missingFields.length > 0) {
