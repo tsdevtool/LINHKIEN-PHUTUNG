@@ -24,7 +24,9 @@ class Product extends MongoModel
         'image_public_id',
         'images',          // Mảng chứa các hình ảnh phụ và video
         'is_active',
-        'deleted_at'
+        'deleted_at',
+        'pending_actual_quantity', // Số lượng Nhân viên kiểm kho đang chờ xử lý
+        'is_checked_stock'  // Trạng thái kiểm tra hàng tồn kho
     ];
 
     protected $casts = [
@@ -33,7 +35,9 @@ class Product extends MongoModel
         'manufactured_at' => 'datetime',
         'expires_at' => 'datetime',
         'is_active' => 'boolean',
-        'deleted_at' => 'datetime'
+        'deleted_at' => 'datetime',
+        'pending_actual_quantity' => 'integer',
+        'is_checked_stock' => 'string'
     ];
 
     protected $hidden = [
@@ -51,7 +55,12 @@ class Product extends MongoModel
     {
         $this->attributes['quantity'] = (int)$value;  // Ép kiểu quantity về integer
     }
-    
+
+    public function setPendingActualQuantityAttribute($value)
+    {
+        $this->attributes['pending_actual_quantity'] = (int)$value;  // Ép kiểu quantity về integer
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class)->where('level', 1);
@@ -61,6 +70,24 @@ class Product extends MongoModel
     {
         return $query->where('is_active', true);
     }
+
+    public function scopeForConfirmation($query)
+    {
+        return $query->where('is_checked_stock', 'Đã xác nhận');
+    }
+
+    public function scopeWaitingForConfirmation($query)
+    {
+        return $query->where('is_checked_stock', 'Chờ xác nhận');
+    }
+
+    public function scopeWaitingForStockCheck($query)
+    {
+        return $query->where('is_checked_stock', 'Chờ kiểm kho');
+    }
+
+
+
 
     /**
      * Set the images attribute

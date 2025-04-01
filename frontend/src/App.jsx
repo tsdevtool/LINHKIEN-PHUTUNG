@@ -27,6 +27,8 @@ import SettingPage from "./pages/setting/SettingPage";
 import DashBoardSection from "./pages/admin/dashboard/DashBoardSection";
 import ProductsSection from "./pages/admin/products/ProductsSection";
 import CategoriesSection from "./pages/admin/categories/CategoriesSection";
+import AdminStockCheck from "./pages/admin/inventory/inventory";
+import AdminConfirmationStockList from "./pages/admin/inventory/confirmationInventory";
 //Admin Employees
 import EmployeesSection from "./pages/admin/employees/EmployeesSection";
 // Employee Components
@@ -37,6 +39,7 @@ import EditOrder from './pages/employee/EditOrder';
 import OrderDetail from "./pages/employee/OrderDetail";
 import PaymentSuccess from "./pages/employee/payment/PaymentSuccess";
 import PaymentCancel from "./pages/employee/payment/PaymentCancel";
+import EmployeeStockCheck from './pages/employee/inventory/inventory';
 
 // UI Components
 import Loading from "./components/ui/Loading";
@@ -120,6 +123,7 @@ function App() {
                   <Route path=":id" element={<OrderDetail />} />
                   <Route path=":id/edit" element={<EditOrder />} />
                 </Route>
+                <Route path="inventory" element={<EmployeeStockCheck />} />
               </Routes>
             </EmployeeLayout>
           </ProtectedRoute>
@@ -143,6 +147,8 @@ function App() {
                   <Route path="orders/:id/edit" element={<EditOrder />} />
                   <Route path="orders/new" element={<NewOrder />} />
                   <Route path="employees/info" element={<EmployeesSection />} />
+                  <Route path="inventory" element={<AdminStockCheck />} />
+                  <Route path="confirmation-inventory" element={<AdminConfirmationStockList />} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>
