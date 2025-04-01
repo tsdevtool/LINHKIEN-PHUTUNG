@@ -33,6 +33,17 @@ const menuItems = [
       { name: "Hết hàng", link: "/admin/products/out-of-stock" },
     ],
   },
+
+  {
+    name: "Kiểm Kho", // Mục mới
+    icon: <Package />, // Sử dụng icon từ `lucide-react`
+    link: "/admin/inventory", // Đường dẫn đến trang kiểm kho
+    subItems: [
+      { name: "Chờ xác nhận", link: "/admin/inventory" },
+      { name: "Đã xác nhận", link: "/admin/confirmation-inventory" },
+    ],
+  },
+
   {
     name: "Danh mục",
     icon: <List />,

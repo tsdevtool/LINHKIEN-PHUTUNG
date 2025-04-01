@@ -26,6 +26,12 @@ const menuItems = [
       { name: "Danh sách đơn hàng", link: "/employee/orders" },
       { name: "", link: "/admin/orders/completed" },
     ],
+    
+  },
+  {
+    name: "Kiểm kho", // Mục mới
+    icon: <Package />, // Sử dụng icon từ `lucide-react`
+    link: "/employee/inventory", // Đường dẫn đến trang kiểm kho
   },
   
   
