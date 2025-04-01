@@ -1,27 +1,42 @@
-import { CirclePlus } from "lucide-react";
+import { CirclePlus, Check } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useCartStore } from "../../store/Cart/useCartStore";
+import PropTypes from "prop-types";
 
-const AddToCart = () => {
+const AddToCart = ({ product }) => {
   const [clicked, setClicked] = useState(false);
+  const { addToCart, isLoading } = useCartStore();
 
-  const handleCartClick = () => {
-    setClicked(true);
-    setTimeout(() => {
+  const handleCartClick = async () => {
+    if (isLoading) return;
+    
+    try {
+      await addToCart({
+        product_id: product.id,
+        quantity: 1
+      });
+      setClicked(true);
+      setTimeout(() => {
+        setClicked(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
       setClicked(false);
-    }, 3000);
+    }
   };
 
   return (
     <>
       <button
         onClick={handleCartClick}
+        disabled={isLoading}
         className={`cart-button relative px-2 py-5 w-12 h-7 border-0 rounded-md bg-cyan-400 outline-none cursor-pointer text-white transition ease-in-out duration-300 overflow-hidden font-bold hover:bg-cyan-500 active:scale-90 ${
-          clicked ? "clicked" : ""
-        }`}
+          clicked ? "clicked bg-green-500" : ""
+        } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         <span className="absolute z-30 left-1/2 top-1/2 text-lg text-white transform -translate-x-1/2 -translate-y-1/2 add-to-cart opacity-100">
-          {clicked ? "" : <CirclePlus />}
+          {clicked ? <Check className="text-white" /> : <CirclePlus />}
         </span>
         {/* Shopping cart */}
         <motion.svg
@@ -55,6 +70,13 @@ const AddToCart = () => {
       </button>
     </>
   );
+};
+
+AddToCart.propTypes = {
+  product: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    // Add other product properties if needed
+  }).isRequired,
 };
 
 export default AddToCart;
