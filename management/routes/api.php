@@ -39,7 +39,7 @@ Route::prefix('client')->group(function () {
 });
 
 Route::prefix('cart')->middleware(AuthMiddleware::class)->group(function () {
-    Route::post('/', [CartController::class,'index']);
+    Route::post('/get', [CartController::class,'index']);
     Route::post('/', [CartController::class,'store'] );
     Route::put('/', [CartController::class,'update']);
     Route::delete('/', [CartController::class,'destroy']);
@@ -157,4 +157,13 @@ Route::prefix('users/employees')->group(function () {
     Route::post('/search', [UserControllerAdmin::class, 'getEmployee']);
     Route::put('/{id}', [UserControllerAdmin::class, 'UpdateEmployee']);
     Route::delete('/{id}', [UserControllerAdmin::class, 'DeleteEmployee']);
+});
+
+
+// Customer Order Routes
+Route::prefix('customer/orders')->middleware(AuthMiddleware::class)->group(function () {
+    Route::get('/', [App\Http\Controllers\Customers\OrderController::class, 'index']);
+    Route::get('/{id}', [App\Http\Controllers\Customers\OrderController::class, 'show']);
+    Route::post('/create-from-cart', [App\Http\Controllers\Customers\OrderController::class, 'createFromCart']);
+    Route::delete('/{id}/cancel', [App\Http\Controllers\Customers\OrderController::class, 'cancel']);
 });
