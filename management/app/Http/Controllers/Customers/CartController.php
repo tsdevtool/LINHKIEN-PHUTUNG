@@ -20,9 +20,9 @@ class CartController extends Controller
     private $removeFromCart;
 
     public function __construct(
-        GetCart $getCart, 
-        AddToCart $addToCart, 
-        UpdateCartItemQuantity $updateCartItemQuantity, 
+        GetCart $getCart,
+        AddToCart $addToCart,
+        UpdateCartItemQuantity $updateCartItemQuantity,
         RemoveFromCart $removeFromCart
     ){
         $this->getCart = $getCart;

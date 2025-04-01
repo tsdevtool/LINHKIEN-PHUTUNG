@@ -4,6 +4,7 @@ import RoleService from './../../../store/adminRoleStore.js';
 import AddEmployee from './component/AddEmployee.jsx';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Password from 'antd/es/input/Password.js';
 
 const EmployeeList = () => {
   const [employees, setEmployees] = useState([]);
@@ -291,7 +292,30 @@ const EmployeeList = () => {
                value={editEmployee.phone}
                onChange={(e) => setEditEmployee({ ...editEmployee, phone: e.target.value })}
              />
+           </div><div className="mb-6">
+             <label htmlFor="password" className="block text-sm font-medium text-gray-700">Mật khẩu</label>
+             <input
+               type="text"
+               id="password"
+               className="w-full px-4 py-2 border border-gray-300 rounded-md"
+               onChange={(e) => setEditEmployee({ ...editEmployee, password: e.target.value })}
+             />
            </div>
+           <div className="mb-6">
+            <label htmlFor="idrole" className="block text-sm font-medium text-gray-700">Quyền hạn</label>
+              <select
+                 name="role"
+                 value={String(editEmployee.idrole)}
+                 onChange={(e) => setEditEmployee({ ...editEmployee, idrole: e.target.value })}
+                 className="mt-2 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+               >
+                 {roleData.map((role) => (
+                   <option key={role.id} value={String(role.name)}> {/* Ép kiểu thành chuỗi */}
+                     {role.name}
+                   </option>
+                 ))}
+               </select>
+            </div>
            <div className="flex justify-between">
              <button
                type="submit"
