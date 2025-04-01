@@ -12,10 +12,7 @@ const AddToCart = ({ product }) => {
     if (isLoading) return;
     
     try {
-      await addToCart({
-        product_id: product.id,
-        quantity: 1
-      });
+      await addToCart(product.id, 1);
       setClicked(true);
       setTimeout(() => {
         setClicked(false);

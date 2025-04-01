@@ -14,9 +14,10 @@ class RemoveFromCart
     /**
      * Execute the action
      *
+     * @param string $product_id
      * @return JsonResponse
      */
-    public function execute(): JsonResponse
+    public function execute(string $product_id): JsonResponse
     {
         try {
             $cart = Cart::where('user_id', Auth::id())
@@ -27,12 +28,21 @@ class RemoveFromCart
                 return $this->errorResponse('Không tìm thấy giỏ hàng');
             }
 
-            $cart->items()->delete();
-            $cart->delete();
+            // Xóa sản phẩm cụ thể khỏi giỏ hàng
+            $deleted = $cart->items()->where('product_id', $product_id)->delete();
 
-            return $this->successResponse('Xóa giỏ hàng thành công');
+            if (!$deleted) {
+                return $this->errorResponse('Không tìm thấy sản phẩm trong giỏ hàng');
+            }
+
+            // Nếu giỏ hàng không còn sản phẩm nào, xóa luôn giỏ hàng
+            if ($cart->items()->count() === 0) {
+                $cart->delete();
+            }
+
+            return $this->successResponse('Đã xóa sản phẩm khỏi giỏ hàng');
         } catch (\Exception $e) {
-            return $this->errorResponse('Có lỗi xảy ra khi xóa giỏ hàng', $e);
+            return $this->errorResponse('Có lỗi xảy ra khi xóa sản phẩm khỏi giỏ hàng', $e);
         }
     }
 } 

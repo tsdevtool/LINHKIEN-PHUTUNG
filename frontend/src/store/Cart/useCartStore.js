@@ -65,6 +65,30 @@ export const useCartStore = create((set, get) => ({
     }
   },
 
+  removeFromCart: async (product_id) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.delete("/api/cart", {
+        data: {
+          product_id: product_id
+        }
+      });
+      
+      if (response.data.success) {
+        await get().getCart();
+        toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
+        return response.data;
+      } else {
+        throw new Error(response.data.message || "Có lỗi xảy ra");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Xóa sản phẩm thất bại");
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
   getCartTotal: () => {
     const state = get();
     return state.cartItems.reduce((total, item) => {
