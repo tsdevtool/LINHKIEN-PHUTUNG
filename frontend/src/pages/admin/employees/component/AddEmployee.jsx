@@ -17,7 +17,7 @@ const AddEmployee = ({ onClose ,onAddEmployee }) => {
     numberOfOrders: null,
     totalSpent: null,
     status: true,
-    idrole: '',
+    idrole: 'Nhân viên',
   });
   const [roleData, setRoleData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -140,21 +140,6 @@ const AddEmployee = ({ onClose ,onAddEmployee }) => {
                   onChange={handleChange}
                   className="mt-2 p-3 w-full max-w-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
                 />
-              </div>
-              <div className="mb-6">
-                <label htmlFor="idrole" className="block text-sm font-medium text-gray-700">Quyền hạn</label>
-                <select
-                  name="idrole"
-                  value={employee.idrole}
-                  onChange={handleChange}
-                  className="mt-2 p-3 w-full max-w-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-                >
-                  {roleData.map((role) => (
-                    <option key={role.id} value={role.name}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
             <div className="flex justify-end gap-4">
