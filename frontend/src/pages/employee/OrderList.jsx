@@ -63,7 +63,7 @@ const OrderList = () => {
         shipping_status: order.shipping_status || 'pending',
         note: order.note || '',
         status: order.status || 'pending',
-        staff_info: order.staff_info || { name: 'Admin' },
+        staff_info: order.staff_info || { name: 'client' },
         created_at: order.created_at || new Date().toISOString()
       }));
 
@@ -187,6 +187,23 @@ const OrderList = () => {
       case 'unpaid': return 'text-red-600 bg-red-50';
       default: return 'text-gray-600 bg-gray-50';
     }
+  };
+
+  // Determine order source (employee or client)
+  const getOrderSource = (order) => {
+    // Check if staff_id exists and is not empty
+    if (order.staff_id && 
+        typeof order.staff_id === 'string' && order.staff_id.length > 0) {
+      return 'Employee';
+    }
+    
+    // If staff_info exists with a name that is not a default value
+    if (order.staff_info && order.staff_info.name && 
+        order.staff_info.name !== 'client') {
+      return 'Employee';
+    }
+    
+    return 'Client';
   };
 
   const formatDate = (dateString) => {
@@ -404,7 +421,7 @@ const OrderList = () => {
                       {order.order_number}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.staff_info?.name || 'Admin'}
+                      {getOrderSource(order)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-500">
@@ -422,7 +439,11 @@ const OrderList = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full ${getPaymentStatusColor(order.payment_status)}`}>
-                        {order.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                        {order.payment_status === 'paid' 
+                          ? 'Đã thanh toán' 
+                          : order.payment_status === 'pending'
+                          ? 'Đang chờ thanh toán'
+                          : 'Chưa thanh toán'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
