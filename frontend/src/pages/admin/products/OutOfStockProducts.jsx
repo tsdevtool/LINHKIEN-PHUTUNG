@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
 import { 
   Table, 
   TableBody, 
@@ -7,52 +6,69 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, AlertCircle } from 'lucide-react';
-import { useProductStore } from '@/store/useProductStore';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Search, AlertCircle } from "lucide-react";
+import { useProductStore } from "@/store/useProductStore";
+import toast from "react-hot-toast";
 
+// Hàm định dạng tiền tệ
 const formatPrice = (price) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
   }).format(price);
 };
 
 const OutOfStockProducts = () => {
-  const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const { products = [], isLoading, getAllProducts } = useProductStore();
+  const {
+    products,
+    getAllProducts,
+    restockProduct,
+    isLoading,
+  } = useProductStore();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [restockQuantity, setRestockQuantity] = useState("");
 
   useEffect(() => {
     getAllProducts();
   }, [getAllProducts]);
 
-  // Lọc sản phẩm có số lượng = 0 và theo từ khóa tìm kiếm
-  const outOfStockProducts = products?.filter(product => {
-    if (!product) return false;
-    
-    const isOutOfStock = product.quantity === 0;
-    const matchesSearch = searchTerm.trim() === '' || 
-      (product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku?.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    return isOutOfStock && matchesSearch;
-  }) || [];
-
-  const handleProductClick = (productId) => {
-    navigate(`/admin/products/${productId}`);
+  const handleRestockClick = (product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
+  const handleRestockSubmit = async () => {
+    if (!restockQuantity || restockQuantity <= 0) {
+      toast.error("Vui lòng nhập số lượng hợp lệ");
+      return;
+    }
+
+    try {
+      await restockProduct(selectedProduct.id, restockQuantity);
+      toast.success("Nhập hàng thành công");
+      setIsModalOpen(false);
+      setRestockQuantity("");
+      getAllProducts(); // Refresh product list
+    } catch (error) {
+      toast.error("Lỗi khi nhập hàng");
+    }
+  };
+
+  const filteredProducts = products.filter((product) => {
+    const isOutOfStock = product.quantity === 0; // Chỉ lấy sản phẩm hết hàng
+    const matchesSearch =
+      searchTerm.trim() === "" ||
+      product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return isOutOfStock && matchesSearch;
+  });
 
   return (
     <div className="space-y-6">
@@ -61,7 +77,7 @@ const OutOfStockProducts = () => {
           <AlertCircle className="h-5 w-5 text-red-500" />
           <h1 className="text-xl font-semibold">Sản phẩm hết hàng</h1>
           <Badge variant="destructive" className="ml-2">
-            {outOfStockProducts.length}
+            {filteredProducts.length}
           </Badge>
         </div>
         <div className="relative w-64">
@@ -79,7 +95,7 @@ const OutOfStockProducts = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Mã SKU</TableHead>
+              <TableHead>STT</TableHead>
               <TableHead>Tên sản phẩm</TableHead>
               <TableHead>Danh mục</TableHead>
               <TableHead className="text-right">Giá bán</TableHead>
@@ -88,29 +104,29 @@ const OutOfStockProducts = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {outOfStockProducts.length === 0 ? (
+            {filteredProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-gray-500">
                   Không có sản phẩm hết hàng
                 </TableCell>
               </TableRow>
             ) : (
-              outOfStockProducts.map((product) => (
-                <TableRow key={product._id}>
-                  <TableCell className="font-medium">{product.sku}</TableCell>
+              filteredProducts.map((product, index) => (
+                <TableRow key={product.id}>
+                  <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.category?.name || 'Chưa phân loại'}</TableCell>
+                  <TableCell>{product.category?.name || "Không có danh mục"}</TableCell>
                   <TableCell className="text-right">{formatPrice(product.price)}</TableCell>
                   <TableCell className="text-center">
-                    <Badge variant="destructive">0</Badge>
+                    <Badge variant="destructive">{product.quantity}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
-                      variant="ghost"
+                      className="bg-green-500 text-white hover:bg-green-600" // Màu xanh lá cây
                       size="sm"
-                      onClick={() => handleProductClick(product._id)}
+                      onClick={() => handleRestockClick(product)}
                     >
-                      Chi tiết
+                      Nhập hàng
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -119,8 +135,36 @@ const OutOfStockProducts = () => {
           </TableBody>
         </Table>
       </div>
+
+      {isModalOpen && (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nhập hàng cho sản phẩm</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>Sản phẩm: {selectedProduct?.name}</p>
+              <Input
+                type="number"
+                min="1"
+                value={restockQuantity}
+                onChange={(e) => setRestockQuantity(Number(e.target.value))}
+                placeholder="Nhập số lượng"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                Hủy
+              </Button>
+              <Button variant="primary" onClick={handleRestockSubmit}>
+                Xác nhận
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
 
-export default OutOfStockProducts; 
+export default OutOfStockProducts;
