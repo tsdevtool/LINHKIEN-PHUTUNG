@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class GetAllOrder
 {
@@ -25,7 +26,7 @@ class GetAllOrder
                 return $this->errorResponse('Người dùng chưa đăng nhập', 401);
             }
 
-            $orders = Order::where('user_id', $userId)
+            $orders = Order::where('customer_id', $userId)
                 ->orderBy('created_at', 'desc')
                 ->get();
 
@@ -39,11 +40,11 @@ class GetAllOrder
                     'id' => $order->_id,
                     'order_number' => $order->order_number,
                     'created_at' => $order->created_at->format('d/m/Y H:i'),
-                    'status' => $order->status->label(),
-                    'payment_status' => $order->payment_status->label(),
-                    'payment_type' => $order->payment_type->label(),
-                    'total' => $order->total,
-                    'final_total' => $order->final_total,
+                    'status' => $order->status,
+                    'payment_status' => $order->payment_status,
+                    'payment_type' => $order->payment_method,
+                    'total' => $order->total_amount,
+                    'final_total' => $order->finaltotal,
                     'items_count' => count($order->items)
                 ];
             });

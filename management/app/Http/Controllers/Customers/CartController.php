@@ -11,6 +11,7 @@ use App\Http\Requests\Cart\AddToCartRequest;
 use App\Http\Requests\Cart\UpdateCartItemQuantityRequest;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
@@ -67,10 +68,15 @@ class CartController extends Controller
     /**
      * Xóa sản phẩm khỏi giỏ hàng
      *
+     * @param Request $request
      * @return JsonResponse
      */
-    public function destroy(): JsonResponse
+    public function destroy(Request $request): JsonResponse
     {
-        return $this->removeFromCart->execute();
+        $validated = $request->validate([
+            'product_id' => 'required|string'
+        ]);
+
+        return $this->removeFromCart->execute($validated['product_id']);
     }
 }

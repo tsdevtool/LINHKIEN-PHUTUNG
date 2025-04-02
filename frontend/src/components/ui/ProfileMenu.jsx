@@ -1,4 +1,4 @@
-import { LayoutDashboard, LogOut, Settings, User } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, User, Package } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useAuthStore } from "../../store/authUser";
 import { Link, useNavigate } from "react-router-dom";
@@ -93,6 +93,13 @@ export const ProfileMenu = () => {
                 <span>Nhân viên</span>
               </Link>
             )}
+            <Link 
+              to="/orders" 
+              className="flex gap-2 items-center text-sm"
+            >
+              <Package size={20} />
+              <span>Đơn hàng của tôi</span>
+            </Link>
             <Link 
               to={`/setting/${user._id}`} 
               className="flex gap-2 items-center text-sm"
