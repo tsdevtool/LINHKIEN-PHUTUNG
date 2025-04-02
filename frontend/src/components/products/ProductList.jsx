@@ -39,7 +39,7 @@ const ProductList = () => {
             <h1 className="text-2xl md:text-4xl font-extrabold text-gray-800 dark:text-white">
               {category.name}
             </h1>
-            <Button onClick={() => navigate("/products")}>Xem thêm</Button>
+            <Button onClick={() => navigate(`/category/${category.id}`)}>Xem thêm</Button>
           </div>
 
           {category.products && category.products.length > 0 ? (
@@ -47,6 +47,7 @@ const ProductList = () => {
               {category.products.map((product) => (
                 <div
                   key={product.id}
+                  onClick={() => navigate(`/product-info/${product.id}`)}
                   className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 flex flex-col transition-transform duration-300 ease-in-out transform hover:-translate-y-2.5 hover:shadow-xl justify-between"
                 >
                   <div>

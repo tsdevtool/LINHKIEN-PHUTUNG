@@ -29,7 +29,7 @@ const NavMenuItem = ({
               {menu.items.map((item) => (
                 <Link
                   key={item.id}
-                  to={`/category/${item.id}`}
+                  to={`/categories_products/${item.id}`}
                   className="block py-2 text-sm hover:text-cyan-500"
                 >
                   {item.name}
@@ -65,7 +65,7 @@ const NavMenuItem = ({
             {menu.items.map((item) => (
               <Link
                 key={item.id}
-                to={`/category/${item.id}`}
+                to={`/categories_products/${item.id}`}
                 className="block px-4 py-2 text-sm hover:bg-cyan-50 dark:hover:bg-gray-700 text-left transition-colors"
               >
                 {item.name}

@@ -1,6 +1,6 @@
 // Core React and Third-party imports
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes} from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 // Store/State Management
@@ -27,10 +27,11 @@ import SettingPage from "./pages/setting/SettingPage";
 import DashBoardSection from "./pages/admin/dashboard/DashBoardSection";
 import ProductsSection from "./pages/admin/products/ProductsSection";
 import CategoriesSection from "./pages/admin/categories/CategoriesSection";
+import AdminStockCheck from "./pages/admin/inventory/inventory";
+import AdminConfirmationStockList from "./pages/admin/inventory/confirmationInventory";
 //Admin Employees
 import EmployeesSection from "./pages/admin/employees/EmployeesSection";
 // Employee Components
-import OrderPage from "./pages/employee/OrderPage";
 import NewOrder from "./pages/employee/NewOrder";
 import OrderList from "./pages/employee/OrderList";
 import EditOrder from './pages/employee/EditOrder';
@@ -38,12 +39,19 @@ import OrderDetail from "./pages/employee/OrderDetail";
 import PaymentSuccess from "./pages/employee/payment/PaymentSuccess";
 import PaymentCancel from "./pages/employee/payment/PaymentCancel";
 
+//Detail Product
+import ProductDetail from "./pages/products/ProductDetail";
+
+import EmployeeStockCheck from './pages/employee/inventory/inventory';
+
 // UI Components
 import Loading from "./components/ui/Loading";
 import Footer from "./components/Footer";
 import CategoriesTreeSection from "./pages/admin/categories/CategoriesTreeSection";
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import OutOfStockProducts from "./pages/admin/products/OutOfStockProducts";
+import CategoryChildProductsPage from "./pages/products/CategoryChildProductsPage";
+import CategoryParentProductsPage from "./pages/products/CategoryParentProductsPage";
 
 function App() {
   const { user, authCheck } = useAuthStore();
@@ -86,6 +94,10 @@ function App() {
         <Route path="/auth/login" element={!user ? <AuthPage /> : <Navigate to="/" replace />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+        <Route path="/categories_products/:id" element={<CategoryChildProductsPage />} />
+        <Route path="/category/:id" element={<CategoryParentProductsPage />} />
+        <Route path="/product-info/:id" element={<ProductDetail />} />
         
         {/* Payment routes - no auth required */}
         <Route path="/payment" element={<PaymentPage />} />
@@ -120,6 +132,7 @@ function App() {
                   <Route path=":id" element={<OrderDetail />} />
                   <Route path=":id/edit" element={<EditOrder />} />
                 </Route>
+                <Route path="inventory" element={<EmployeeStockCheck />} />
               </Routes>
             </EmployeeLayout>
           </ProtectedRoute>
@@ -143,6 +156,8 @@ function App() {
                   <Route path="orders/:id/edit" element={<EditOrder />} />
                   <Route path="orders/new" element={<NewOrder />} />
                   <Route path="employees/info" element={<EmployeesSection />} />
+                  <Route path="inventory" element={<AdminStockCheck />} />
+                  <Route path="confirmation-inventory" element={<AdminConfirmationStockList />} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>

@@ -11,7 +11,7 @@ class AddToCartRequest extends BaseCartRequest
     {
         return [
             'product_id' => 'required|string|exists:products,_id',
-            'quantity' => 'required|integer|min:1'
+            'quantity' => 'required|integer'
         ];
     }
 } 

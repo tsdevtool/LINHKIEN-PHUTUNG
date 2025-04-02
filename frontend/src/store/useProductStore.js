@@ -6,6 +6,9 @@ export const useProductStore = create((set, get) => ({
   products: [],
   product: null,
   trashedProducts: [],
+  inventoryProductsForAdminWaiting: [],  // Mảng sản phẩm Chờ xác nhận
+  inventoryProductsForAdminConfirmed: [], // Mảng sản phẩm Đã xác nhận
+  inventoryProductsForEmployee: [],
   isLoading: false,
   totalPages: 1,
   currentPage: 1,
@@ -21,6 +24,30 @@ export const useProductStore = create((set, get) => ({
       toast.error("Không thể tải danh sách sản phẩm");
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  getProductByCategoryChild:async(categoryId, page = 1, perPage = 5)=>{
+    set({isLoading:true})
+    try{
+      const response = await axios.get(`/api/client/${categoryId}/category?page=${page}&per_page=${perPage}`)
+      set({products:response.data.data || []})
+    }catch(error){
+      toast.error("Không thể tải sản phẩm theo danh mục");
+    }finally{
+      set({isLoading:false})
+    }
+  },
+
+  getProductByCategoryParent:async(categoryId, page = 1, perPage = 5)=>{
+    set({isLoading:true})
+    try{
+      const response = await axios.get(`/api/client/${categoryId}/get-all?page=${page}&per_page=${perPage}`)
+      set({products:response.data.data || []})
+    }catch(error){
+      toast.error("Không thể tải sản phẩm theo danh mục");
+    }finally{
+      set({isLoading:false})
     }
   },
 
@@ -199,4 +226,103 @@ export const useProductStore = create((set, get) => ({
       set({ trashedProducts: [] });
     }
   },
+
+
+  // Lấy danh sách sản phẩm cho nhân viên
+  getProductsForEmployee: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get("/api/products/list/for-employee");
+      set({ inventoryProductsForEmployee: response.data.products || [] });
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách sản phẩm:", error);
+      toast.error("Không thể tải danh sách sản phẩm");
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Nhập số lượng kiểm kho
+  confirmStockCheck: async (id, pendingQuantity) => {
+    try {
+      await axios.post(`/api/products/employee-confirm-stock-check/${id}`, {
+        pending_actual_quantity: pendingQuantity,
+      });
+      toast.success("Số lượng kiểm kho đã được nhập");
+      // Reload danh sách sản phẩm sau khi cập nhật
+      await get().getProductsForEmployee();
+    } catch (error) {
+      console.error("Lỗi khi nhập số lượng kiểm kho:", error);
+      toast.error("Lỗi khi nhập số lượng kiểm kho");
+    }
+  },
+
+  // Lấy sản phẩm đã xác nhận cho admin
+  getProductsForAdminConfirmed: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get("/api/products/list/for-admin-confirmation");
+      set({ inventoryProductsForAdminConfirmed: response.data.products || [] });
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách sản phẩm đã xác nhận cho admin:", error);
+      toast.error("Không thể tải danh sách sản phẩm đã xác nhận");
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Lấy danh sách sản phẩm cho admin (Chờ xác nhận)
+  getProductsForAdminWaitingConfirmation: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get("/api/products/list/for-admin-waitingconfirmation");
+      set({ inventoryProductsForAdminWaiting: response.data.products || [] });
+    } catch (error) {
+      console.error("Lỗi khi lấy sản phẩm:", error);
+      toast.error("Không thể tải danh sách sản phẩm cho admin");
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+ // Xác nhận kiểm kho (admin)
+  confirmStockCheckByAdmin: async (id) => {
+    try {
+      await axios.post(`/api/products/admin-confirm-stock-check/${id}`);
+      toast.success("Xác nhận kiểm kho thành công");
+      await get().getProductsForAdminWaitingConfirmation();
+    } catch (error) {
+      toast.error("Lỗi khi xác nhận kiểm kho");
+      console.error("Lỗi xác nhận kiểm kho:", error);
+    }
+  },
+
+  // Yêu cầu kiểm kho lại (admin)
+  requestRecheckByAdmin: async (id) => {
+    try {
+      await axios.post(`/api/products/recheck-product/${id}`);
+      toast.success("Yêu cầu kiểm kho lại thành công");
+      await get().getProductsForAdminConfirmed();
+    } catch (error) {
+      toast.error("Lỗi khi yêu cầu kiểm kho lại");
+      console.error("Lỗi yêu cầu kiểm kho lại:", error);
+    }
+  },
+
+  // Yêu cầu kiểm kho cho tất cả sản phẩm (admin)
+  requestStockCheck: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.post("/api/products/request-stock-check");
+      toast.success(response.data.message || "Yêu cầu kiểm kho đã được gửi thành công");
+      // Sau khi gửi yêu cầu kiểm kho, bạn có thể cập nhật lại danh sách sản phẩm nếu cần.
+      await get().getProductsForAdminConfirmed(); 
+    } catch (error) {
+      console.error("Lỗi khi yêu cầu kiểm kho:", error);
+      toast.error("Lỗi khi yêu cầu kiểm kho");
+    } finally {
+      set({ isLoading: false });
+    }
+  }
+
 }));

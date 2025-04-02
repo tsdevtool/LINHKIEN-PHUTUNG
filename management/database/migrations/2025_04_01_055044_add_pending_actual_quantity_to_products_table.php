@@ -12,10 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->integer('pending_actual_quantity')->nullable();
+            $table->integer('pending_actual_quantity');
+            $table->string('is_checked_stock')->default('Chờ kiểm kho');
         });
-          // Cập nhật các bản ghi cũ, gán giá trị mặc định cho trường `pending_actual_quantity`
-          DB::table('products')->update(['pending_actual_quantity' => 0]);
     }
 
     /**
@@ -25,6 +24,7 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             $table->dropColumn('pending_actual_quantity'); 
+            $table->dropColumn('is_checked_stock'); 
         });
     }
 };

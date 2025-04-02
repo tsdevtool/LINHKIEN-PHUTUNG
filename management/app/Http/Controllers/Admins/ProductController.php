@@ -32,6 +32,9 @@ class ProductController extends Controller
         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:' . self::MAIN_IMAGE_SIZE,
         'images' => 'nullable',
         'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:' . self::ADDITIONAL_IMAGE_SIZE,
+        'pending_actual_quantity' => 'nullable|integer|min:0',
+        'is_checked_stock' => 'nullable|boolean'  
+
     ];
 
     /**
@@ -409,7 +412,10 @@ class ProductController extends Controller
             'image_url' => $mainImageData['url'] ?? null,
             'image_public_id' => $mainImageData['public_id'] ?? null,
             'images' => $additionalImages,
-            'is_active' => true
+            'is_active' => true,
+            'pending_actual_quantity' => 0, // Giá trị mặc định là null
+            'is_checked_stock' => "Chờ kiểm kho" // Giá trị mặc định là "Chờ kiểm kho"
+
         ];
     }
 
@@ -465,4 +471,140 @@ class ProductController extends Controller
             'message' => $message
         ], $status);
     }
+
+
+    /**
+     * Get products for admin
+     * Phương thức: GET 
+     * Endpoint: /api/products/list/for-admin-waitingconfirmation
+     */
+    // Hàm này sẽ lấy danh sách tất cả các sản phẩm có trạng thái "Chờ xác nhận"
+    public function getProductsForAdminWattingConfirmation(): JsonResponse
+    {
+        Log::info('API getProductsForAdmin called');
+        
+        $products = Product::where('is_checked_stock', 'Chờ xác nhận')
+            ->get(['name', 'quantity', 'pending_actual_quantity', 'is_checked_stock']);
+    
+        Log::info('Products found:', $products->toArray());
+    
+        if ($products->isEmpty()) {
+            return $this->successResponse(200, 'No products found with status "Chờ xác nhận"', ['products' => []]);
+        }
+    
+        return $this->successResponse(200, null, ['products' => $products]);
+    }
+    /**
+     * Get products for admin confirmation
+     * Phương thức: GET 
+     * Endpoint: /api/products/list/for-admin-confirmation
+     */
+    public function getProductsForAdminConfirmation(): JsonResponse
+    {
+        Log::info('API getProductsForAdmin called');
+        
+        $products = Product::where('is_checked_stock', 'Đã xác nhận')
+            ->get(['name', 'quantity', 'pending_actual_quantity', 'is_checked_stock']);
+    
+        Log::info('Products found:', $products->toArray());
+    
+        if ($products->isEmpty()) {
+            return $this->successResponse(200, 'No products found with status "Chờ xác nhận"', ['products' => []]);
+        }
+    
+        return $this->successResponse(200, null, ['products' => $products]);
+    }
+
+    /**
+     * Get products for employee
+     * Phương thức: GET 
+     * Endpoint: /api/products/list/for-employee
+     */
+    // Hàm này sẽ lấy danh sách tất cả các sản phẩm có trạng thái "Chờ kiểm kho"
+    public function getProductsForEmployee(): JsonResponse
+    {
+        $products = Product::where('is_checked_stock', 'Chờ kiểm kho')
+            ->get(['name', 'quantity', 'pending_actual_quantity', 'is_checked_stock']);
+
+        // Kiểm tra nếu không có sản phẩm, trả về 200 với mảng trống
+        if ($products->isEmpty()) {
+            return $this->successResponse(200, 'No products found with status "Chờ kiểm kho"', ['products' => []]);
+        }
+
+        return $this->successResponse(200, null, ['products' => $products]);
+    }
+    /**
+     * Request stock check
+     * Phương thức: POST 
+     * Endpoint: /api/products/request-stock-check
+     */
+    // Hàm này sẽ cập nhật tất cả các sản phẩm trong kho với trạng thái "Chờ kiểm kho"
+    public function requestStockCheck(): JsonResponse
+    {
+        Product::query()->update(['is_checked_stock' => 'Chờ kiểm kho']);
+        return $this->successResponse(200, 'Stock check requested successfully');
+    }
+
+    /**
+     * Recheck product
+     * Phương thức: POST 
+     * Endpoint: /api/products/recheck-product/{id}
+     */
+    // Hàm này sẽ cập nhật trạng thái của một sản phẩm cụ thể về "Chờ kiểm kho"
+    public function recheckProduct(string $id): JsonResponse
+    {
+        $product = Product::find($id);
+    
+        if (!$product) {
+            return $this->errorResponse('Product not found', 404);
+        }
+    
+        $product->is_checked_stock = 'Chờ kiểm kho';
+        $product->save();
+    
+        return $this->successResponse(200, 'Product set to "Chờ kiểm kho"');
+    }
+
+    /**
+     * Confirm stock check
+     * Phương thức: POST 
+     * Endpoint: /api/products/admin-confirm-stock-check/{id}
+     */
+    // Hàm này sẽ cập nhật trạng thái của một sản phẩm cụ thể về "Đã xác nhận" và cập nhật số lượng
+    public function confirmStockCheck(string $id): JsonResponse
+    {
+        $product = Product::find($id);
+
+        if (!$product) {
+            return $this->errorResponse('Product not found', 404);
+        }
+
+        $product->quantity = $product->pending_actual_quantity;
+        $product->is_checked_stock = 'Đã xác nhận';
+        $product->save();
+
+        return $this->successResponse(200, 'Stock check confirmed successfully');
+    }
+
+    /**
+     * Employee confirm stock check
+     * Phương thức: POST 
+     * Endpoint: /api/products/employee-confirm-stock-check/{id}
+     */
+    // Hàm này sẽ cập nhật trạng thái của một sản phẩm cụ thể về "Chờ xác nhận" và cập nhật số lượng
+    public function employeeConfirmStockCheck(Request $request, string $id): JsonResponse
+    {
+        $product = Product::find($id);
+
+        if (!$product) {
+            return $this->errorResponse('Product not found', 404);
+        }
+
+        $product->pending_actual_quantity = $request->input('pending_actual_quantity');
+        $product->is_checked_stock = 'Chờ xác nhận';
+        $product->save();
+
+        return $this->successResponse(200, 'Stock check updated successfully');
+    }
+
 }
