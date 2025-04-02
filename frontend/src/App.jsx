@@ -37,7 +37,8 @@ import EditOrder from './pages/employee/EditOrder';
 import OrderDetail from "./pages/employee/OrderDetail";
 import PaymentSuccess from "./pages/employee/payment/PaymentSuccess";
 import PaymentCancel from "./pages/employee/payment/PaymentCancel";
-
+//Detail Product
+import ProductDetail from "./pages/products/ProductDetail";
 // UI Components
 import Loading from "./components/ui/Loading";
 import Footer from "./components/Footer";
@@ -86,6 +87,7 @@ function App() {
         <Route path="/auth/login" element={!user ? <AuthPage /> : <Navigate to="/" replace />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        <Route path="/product-info/:id" element={<ProductDetail />} />
         
         {/* Payment routes - no auth required */}
         <Route path="/payment" element={<PaymentPage />} />
