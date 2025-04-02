@@ -60,7 +60,9 @@ Route::prefix('products')->group(function () {
     Route::delete('/{id}', [ProductController::class, 'destroy']);
     Route::delete('/trash/empty', [ProductController::class, 'emptyTrash']);
     Route::post('/restore/{id}', [ProductController::class, 'restore']);
-  
+ 
+    Route::post('/restock/{id}', [ProductController::class, 'restockProduct']);
+
     Route::post('/request-stock-check', [ProductController::class, 'requestStockCheck']);
     Route::post('/recheck-product/{id}', [ProductController::class, 'recheckProduct']);
     Route::post('/admin-confirm-stock-check/{id}', [ProductController::class, 'confirmStockCheck']);

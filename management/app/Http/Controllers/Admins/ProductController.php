@@ -595,16 +595,47 @@ class ProductController extends Controller
     public function employeeConfirmStockCheck(Request $request, string $id): JsonResponse
     {
         $product = Product::find($id);
+    
+        if (!$product) {
+            return $this->errorResponse('Product not found', 404);
+        }
+    
+        // Kiểm tra giá trị pending_actual_quantity
+        $pendingActualQuantity = $request->input('pending_actual_quantity');
+        if (!is_numeric($pendingActualQuantity) || $pendingActualQuantity < 0) {
+            return $this->errorResponse('Invalid pending_actual_quantity. It must be a number greater than or equal to 0.', 422);
+        }
+    
+        $product->pending_actual_quantity = $pendingActualQuantity;
+        $product->is_checked_stock = 'Chờ xác nhận';
+        $product->save();
+    
+        return $this->successResponse(200, 'Stock check updated successfully');
+    }
+        /**
+     * Restock product
+     * Phương thức: POST
+     * Endpoint: /api/products/restock/{id}
+     */
+    public function restockProduct(Request $request, string $id): JsonResponse
+    {
+        $product = Product::find($id);
 
         if (!$product) {
             return $this->errorResponse('Product not found', 404);
         }
 
-        $product->pending_actual_quantity = $request->input('pending_actual_quantity');
-        $product->is_checked_stock = 'Chờ xác nhận';
+        // Kiểm tra giá trị restock_quantity
+        $restockQuantity = $request->input('restock_quantity');
+        if (!is_numeric($restockQuantity) || $restockQuantity <= 0) {
+            return $this->errorResponse('Invalid restock_quantity. It must be a number greater than 0.', 422);
+        }
+
+        // Cập nhật số lượng sản phẩm
+        $product->quantity += $restockQuantity;
         $product->save();
 
-        return $this->successResponse(200, 'Stock check updated successfully');
+        return $this->successResponse(200, 'Product restocked successfully', ['product' => $product]);
     }
 
 }

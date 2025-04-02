@@ -323,6 +323,18 @@ export const useProductStore = create((set, get) => ({
     } finally {
       set({ isLoading: false });
     }
-  }
+  },
+  
+  restockProduct: async (id, restockQuantity) => {
+    try {
+      const response = await axios.post(`/api/products/restock/${id}`, {
+        restock_quantity: restockQuantity,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi khi nhập hàng:", error);
+      throw error;
+    }
+  },
 
 }));
