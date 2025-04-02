@@ -38,6 +38,10 @@ import EditOrder from './pages/employee/EditOrder';
 import OrderDetail from "./pages/employee/OrderDetail";
 import PaymentSuccess from "./pages/employee/payment/PaymentSuccess";
 import PaymentCancel from "./pages/employee/payment/PaymentCancel";
+
+//Detail Product
+import ProductDetail from "./pages/products/ProductDetail";
+
 import EmployeeStockCheck from './pages/employee/inventory/inventory';
 
 // UI Components
@@ -90,6 +94,7 @@ function App() {
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         <Route path="/categories_products/:id" element={<CategoryChildProductsPage />} />
+        <Route path="/product-info/:id" element={<ProductDetail />} />
         
         {/* Payment routes - no auth required */}
         <Route path="/payment" element={<PaymentPage />} />
