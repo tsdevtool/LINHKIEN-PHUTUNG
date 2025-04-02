@@ -5,7 +5,7 @@ import Navbar from "../../components/Navbar";
 import SidebarLeft from "../../components/SidebarLeft";
 import ScrollToTop from "../../components/ui/ScrollToTop";
 import SidebarRight from "@/components/SidebarRight";
-
+import Footer from "@/components/Footer";
 const HomePage = () => {
   return (
     <div className="min-h-screen">
@@ -18,6 +18,7 @@ const HomePage = () => {
         <SidebarRight />
       </div>
       <ScrollToTop />
+      <Footer />
     </div>
   );
 };

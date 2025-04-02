@@ -268,16 +268,13 @@ export const useOrder = () => {
             // Validate order data
             validateOrderData(orderData);
 
-            // Log user info and staff ID before transformation
-            console.log('User info from auth store:', user);
-            console.log('Staff ID before transform:', orderData.staff_id);
+           
 
             // Get staff ID from user if available
             const staffId = user?._id || user?.id || orderData.staff_id;
             const staffName = orderData.staff_name || staff || (user ? `${user.firstname} ${user.lastname || ''}`.trim() : '');
 
-            console.log('Final staff ID to use:', staffId);
-            console.log('Final staff name to use:', staffName);
+           
 
             // Transform data to snake_case format
             const transformedData = {
@@ -292,7 +289,7 @@ export const useOrder = () => {
                 }
             };
 
-            console.log('Transformed order data:', transformedData);
+          
             const response = await orderService.createOrder(transformedData);
 
             // Reset form
@@ -332,21 +329,16 @@ export const useOrder = () => {
     const handleSubmitOrder = async (selectedCustomer, navigate, staffData = null) => {
         try {
             if (!selectedCustomer?._id) {
-                console.error('Missing customer ID:', selectedCustomer);
+              
                 throw new Error('Vui lòng chọn khách hàng');
             }
 
             if (!selectedProducts || selectedProducts.length === 0) {
-                console.error('No products selected');
+             
                 throw new Error('Vui lòng chọn ít nhất một sản phẩm');
             }
 
-            // Log thông tin trước khi tạo đơn hàng
-            console.log('Selected customer:', selectedCustomer);
-            console.log('Selected products:', selectedProducts);
-            console.log('Current user:', user);
-            console.log('Staff data received from component:', staffData);
-
+         
             // Đảm bảo các trường của customer_info có giá trị mặc định
             const customer_info = {
                 name: selectedCustomer?.name || '',
@@ -375,9 +367,7 @@ export const useOrder = () => {
                 console.log('Using fallback staff data:', { staffId, staffName });
             }
             
-            console.log('Staff ID:', staffId);
-            console.log('Staff Name:', staffName);
-
+        
             const orderData = {
                 customer_id: selectedCustomer._id,
                 customer_info,
@@ -402,16 +392,15 @@ export const useOrder = () => {
                 staff_name: staffName
             };
 
-            // Log dữ liệu đơn hàng trước khi gửi
-            console.log('Order data before sending:', orderData);
-
+        
             const response = await createOrder(orderData);
 
             // Nếu phương thức thanh toán là PayOS, tạo payment link
             if (paymentMethod === "PayOS") {
                 try {
-                    console.log('Creating payment link for order:', response.order);
+                 
                     const orderId = response.order?._id;
+                    const orderNumber = response.order?.order_number;
                     if (!orderId) {
                         throw new Error('Không tìm thấy ID đơn hàng');
                     }
@@ -419,12 +408,11 @@ export const useOrder = () => {
                     // Tạo returnUrl để quay lại khi thanh toán xong
                     const returnUrl = encodeURIComponent(`/employee/orders/${orderId}`);
                     
-                    console.log('Sending request to create payment with orderId:', orderId);
                     const paymentResponse = await axios.post(
-                        `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/${orderId}/payment`,
+                        `${import.meta.env.VITE_PHP_URL}/orders/${orderId}/payment`,
                         {
-                            // Thêm return URL vào request
-                            return_url: `${window.location.origin}/payment/success?orderCode=${orderId}&returnUrl=${returnUrl}`,
+                            // Thêm return URL vào request và order_number
+                            return_url: `${window.location.origin}/payment/success?orderCode=${orderId}&order_number=${orderNumber}&returnUrl=${returnUrl}`,
                             cancel_url: `${window.location.origin}/payment/cancel?orderCode=${orderId}&returnUrl=${returnUrl}`
                         },
                         {
@@ -434,7 +422,7 @@ export const useOrder = () => {
                         }
                     );
 
-                    console.log('Payment response:', paymentResponse);
+                   
                     
                     if (!paymentResponse.data?.paymentUrl) {
                         throw new Error('Không nhận được URL thanh toán từ PayOS');
@@ -444,7 +432,7 @@ export const useOrder = () => {
                     window.location.href = paymentResponse.data.paymentUrl;
                     return;
                 } catch (error) {
-                    console.error('Error creating payment link:', error.response || error);
+               
                     const errorMessage = error.response?.data?.message || error.message || 'Không thể tạo link thanh toán PayOS';
                     toast.error(errorMessage);
                     throw error;

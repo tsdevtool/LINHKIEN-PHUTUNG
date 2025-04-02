@@ -49,6 +49,41 @@ const OrderDetail = () => {
     }
   }, [order]);
 
+  const extractProductId = (raw) => {
+    if (!raw) return null;
+    
+    if (typeof raw === 'string') return raw;
+    
+    if (typeof raw === 'object') {
+      if (raw.$oid) return raw.$oid;
+      
+      if (raw.product_id && typeof raw.product_id === 'object' && raw.product_id.$oid) {
+        return raw.product_id.$oid;
+      }
+      
+      if (raw._id) {
+        return typeof raw._id === 'object' ? 
+          (raw._id.$oid ? raw._id.$oid : raw._id.toString()) : 
+          raw._id;
+      }
+      
+      if (raw.id) {
+        return typeof raw.id === 'object' ? 
+          (raw.id.$oid ? raw.id.$oid : raw.id.toString()) : 
+          raw.id;
+      }
+      
+      if (raw.toString && typeof raw.toString === 'function') {
+        const str = raw.toString();
+        if (str !== '[object Object]') {
+          return str;
+        }
+      }
+    }
+    
+    return null;
+  };
+
   const fetchOrderDetail = async () => {
     try {
       setLoading(true);
@@ -60,7 +95,6 @@ const OrderDetail = () => {
         throw new Error('Không tìm thấy thông tin đơn hàng');
       }
     } catch (error) {
-      console.error('Error fetching order:', error);
       setError(error.message || 'Không thể tải thông tin đơn hàng');
       toast.error('Không thể tải thông tin đơn hàng');
     } finally {
@@ -74,21 +108,15 @@ const OrderDetail = () => {
         return;
       }
 
-      const product_ids = order.items.map(item => {
-        let id;
-      
-        if (typeof item.product_id === 'object' && item.product_id !== null) {
-          id = item.product_id._id || item.product_id.toString(); // Sửa ở đây
-        } else {
-          id = item.product_id;
-        }
-      
-        return id;
-      });
+      const product_ids = order.items
+        .map(item => {
+          const extractedId = extractProductId(item.product_id);
+          return extractedId;
+        })
+        .filter(Boolean);
       
       const productPromises = product_ids.map(product_id => {
         if (!product_id) {
-          console.error('Invalid product ID:', product_id);
           return Promise.resolve(null);
         }
         
@@ -97,13 +125,9 @@ const OrderDetail = () => {
             if (response.success && response.product) {
               return [product_id, response.product];
             }
-            console.error('Failed to get product details for:', product_id, response);
             return null;
           })
-          .catch(error => {
-            console.error('Error fetching product', product_id, ':', error);
-            return null;
-          });
+          .catch(() => null);
       });
 
       const results = await Promise.all(productPromises);
@@ -115,10 +139,9 @@ const OrderDetail = () => {
           details[product_id] = product;
         }
       });
-
+      
       setProductDetails(details);
     } catch (error) {
-      console.error('Error in fetchProductDetails:', error);
       toast.error('Không thể tải thông tin chi tiết sản phẩm');
     }
   };
@@ -229,7 +252,6 @@ const OrderDetail = () => {
         minute: '2-digit'
       });
     } catch (error) {
-      console.error('Error formatting date:', error);
       return 'Invalid Date';
     }
   };
@@ -248,7 +270,6 @@ const OrderDetail = () => {
       
       const currentTime = new Date().toISOString();
       
-      // Tạo updateData đơn giản với format rõ ràng
       const updateData = {
         shipping_status: 'shipping',
         status: 'shipping',
@@ -260,18 +281,15 @@ const OrderDetail = () => {
       
       if (response.success) {
         toast.success('Cập nhật trạng thái vận chuyển thành công');
-        // Cập nhật lại dữ liệu đơn hàng từ response
         if (response.order) {
           setOrder(response.order);
         } else {
-          // Tải lại dữ liệu nếu response không có order
           await fetchOrderDetails();
         }
       } else {
         throw new Error(response.message || 'Cập nhật thất bại');
       }
     } catch (error) {
-      console.error('Error updating shipping status:', error);
       toast.error(error.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
     }
   };
@@ -455,20 +473,37 @@ const OrderDetail = () => {
               </thead>
               <tbody>
                 ${order.items?.map(item => {
-                  // Xử lý product_id linh hoạt
-                  let productId = typeof item.product_id === 'object' ? item.product_id._id || item.product_id.toString() : item.product_id;
-                  
-                  // Ép kiểu qua string
-                  productId = String(productId);
+                  // Xử lý product_id
+                  let productId;
+                  if (typeof item.product_id === 'object') {
+                    if (item.product_id.$oid) {
+                      productId = item.product_id.$oid;
+                    } else if (item.product_id._id) {
+                      productId = item.product_id._id;
+                    } else if (item.product_id.id) {
+                      productId = item.product_id.id;
+                    } else {
+                      productId = item.product_id.toString();
+                    }
+                  } else {
+                    productId = item.product_id;
+                  }
+
+                  // Log để debug
+                  console.log('Rendering item:', item);
+                  console.log('Using Product ID:', productId);
+                  console.log('ProductDetails keys:', Object.keys(productDetails));
+                  console.log('Product Details for ID:', productDetails[productId]);
                   
                   const productDetail = productDetails[productId];
                   
-                  // Sử dụng tên từ item nếu có
-                  const productName = productDetail?.name || item.name || item.product_name || 'Không tìm thấy thông tin sản phẩm';
+                  // Log thông tin hình ảnh
+                  const imageUrl = productDetail?.image_url || 'https://placehold.co/64x64?text=No+Image';
+                  console.log('Image URL being used:', imageUrl);
                   
                   return `
                     <tr>
-                      <td>${productName}</td>
+                      <td>${productDetail?.name || item.name || 'Không tìm thấy thông tin sản phẩm'}</td>
                       <td>${item.quantity}</td>
                       <td>${formatCurrency(item.price)}</td>
                       <td>${formatCurrency(item.price * item.quantity)}</td>
@@ -522,11 +557,10 @@ const OrderDetail = () => {
       }
 
       const paymentResponse = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/${orderId}/payment`
+        `${import.meta.env.VITE_PHP_URL}/orders/${orderId}/payment`
       );
       window.location.href = paymentResponse.data.paymentUrl;
     } catch (error) {
-      console.error('Error creating payment link:', error);
       toast.error('Không thể tạo link thanh toán PayOS');
     }
   };
@@ -800,25 +834,41 @@ const OrderDetail = () => {
                   </div>
                 ) : (
                   order.items?.map((item, index) => {
-                    // Try different ways to access product details
-                    const productId = typeof item.product_id === 'object' ? item.product_id._id || item.product_id.toString() : item.product_id;
+                    // Xử lý product_id
+                    let productId;
+                    if (typeof item.product_id === 'object') {
+                      if (item.product_id.$oid) {
+                        productId = item.product_id.$oid;
+                      } else if (item.product_id._id) {
+                        productId = item.product_id._id;
+                      } else if (item.product_id.id) {
+                        productId = item.product_id.id;
+                      } else {
+                        productId = item.product_id.toString();
+                      }
+                    } else {
+                      productId = item.product_id;
+                    }
+                    
                     const productDetail = productDetails[productId];
+                    const imageUrl = productDetail?.image_url || 'https://placehold.co/64x64?text=No+Image';
                     
                     return (
                       <div key={index} className="flex items-center gap-4 py-4 border-b last:border-0">
                         <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
                           <img
-                            src={productDetail?.image_url || 'https://placehold.co/64x64?text=No+Image'}
-                            alt={productDetail?.name || 'Sản phẩm'}
+                            src={imageUrl}
+                            alt={productDetail?.name || item.name || 'Sản phẩm'}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               e.target.src = 'https://placehold.co/64x64?text=No+Image';
+                              e.target.onerror = null;
                             }}
                           />
                         </div>
                         <div className="flex-1">
                           <h3 className="font-medium">
-                            {productDetail?.name || 'Không tìm thấy thông tin sản phẩm'}
+                            {productDetail?.name || item.name || 'Không tìm thấy thông tin sản phẩm'}
                           </h3>
                           <p className="text-sm text-gray-500">
                             {productDetail?.category?.name && (

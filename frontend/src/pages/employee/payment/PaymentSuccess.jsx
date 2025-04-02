@@ -42,7 +42,6 @@ const PaymentSuccess = () => {
             const urlObj = new URL(fullUrl);
             return urlObj.searchParams.get('order_number');
         } catch (err) {
-            console.error('Error parsing URL:', err);
             return null;
         }
     };
@@ -50,13 +49,7 @@ const PaymentSuccess = () => {
     useEffect(() => {
         const updatePaymentStatus = async () => {
             try {
-                // Log tất cả URL parameters và decoded values
-                const params = Object.fromEntries(searchParams.entries());
-                console.log('Raw URL Parameters:', params);
-                
                 const actualOrderNumber = getOrderNumberFromUrl();
-                console.log('Extracted order number:', actualOrderNumber);
-                console.log('VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL);
 
                 // Đảm bảo token có sẵn từ localStorage
                 const token = localStorage.getItem('token');
@@ -66,67 +59,50 @@ const PaymentSuccess = () => {
 
                 // Tìm và cập nhật trạng thái thanh toán theo order_number
                 if (actualOrderNumber) {
-                    console.log('Finding order with number:', actualOrderNumber);
-                    const apiUrl = `${import.meta.env.VITE_BACKEND_URL}/api/orders/find-by-number/${actualOrderNumber}`;
-                    console.log('Making request to:', apiUrl);
+                    const apiUrl = `${import.meta.env.VITE_PHP_URL}/orders/find-by-number/${actualOrderNumber}`;
 
                     try {
                         // Đầu tiên tìm đơn hàng theo order_number
                         const findOrderResponse = await axios.get(apiUrl);
-                        console.log('Find order response:', findOrderResponse.data);
                         
                         if (findOrderResponse.data && findOrderResponse.data.order) {
                             const orderId = findOrderResponse.data.order._id;
-                            console.log('Found order with ID:', orderId);
                             
-                            // Sau đó cập nhật trạng thái - sử dụng cùng VITE_BACKEND_URL
-                            const updateUrl = `${import.meta.env.VITE_BACKEND_URL}/api/orders/${orderId}`;
-                            console.log('Updating order at:', updateUrl);
+                            // Sau đó cập nhật trạng thái
+                            const updateUrl = `${import.meta.env.VITE_PHP_URL}/orders/update-by-number/${actualOrderNumber}`;
                             
-                            const updateResponse = await axios.put(updateUrl, {
+                            // Chuẩn bị dữ liệu một cách cẩn thận để tránh undefined
+                            const updateData = {
                                 payment_status: 'paid',
                                 status: 'confirmed',
                                 payment_info: {
                                     provider: 'PayOS',
-                                    payment_id: orderCode,
+                                    payment_id: orderCode || '',
                                     status: 'paid',
-                                    paid_at: new Date(),
-                                    amount: amount
+                                    paid_at: new Date().toISOString(),
+                                    amount: amount ? parseInt(amount) : 0
                                 }
-                            });
-                            console.log('Update response:', updateResponse.data);
+                            };
+                            
+                            await axios.put(updateUrl, updateData);
                         } else {
                             throw new Error('Không tìm thấy đơn hàng');
                         }
                     } catch (apiError) {
-                        console.error('API Error:', {
-                            message: apiError.message,
-                            response: apiError.response?.data,
-                            status: apiError.response?.status,
-                            url: apiError.config?.url
-                        });
                         throw apiError;
                     }
                 } else {
-                    // Thử decode URL một lần nữa
-                    const fullUrl = decodeURIComponent(window.location.href);
-                    console.log('Decoded full URL:', fullUrl);
-                    const urlObj = new URL(fullUrl);
-                    const orderNumberFromUrl = urlObj.searchParams.get('order_number');
-                    console.log('Order number from decoded URL:', orderNumberFromUrl);
+                    // Thử lấy từ URL trực tiếp một lần nữa
+                    const orderNumberFromQueryString = new URLSearchParams(window.location.search).get('order_number');
                     
-                    if (!orderNumberFromUrl) {
-                        console.error('No order_number found in any URL parameter');
+                    if (orderNumberFromQueryString) {
+                        const apiUrl = `${import.meta.env.VITE_PHP_URL}/orders/find-by-number/${orderNumberFromQueryString}`;
+                        // ...tiếp tục xử lý như trên
+                    } else {
                         throw new Error('Không có mã đơn hàng');
                     }
                 }
             } catch (err) {
-                console.error('Error updating payment status:', {
-                    message: err.message,
-                    response: err.response?.data,
-                    status: err.response?.status,
-                    url: err.config?.url
-                });
                 setError('Không thể cập nhật trạng thái thanh toán: ' + (err.response?.data?.message || err.message));
             } finally {
                 setIsUpdating(false);
@@ -135,7 +111,7 @@ const PaymentSuccess = () => {
 
         // Gọi hàm cập nhật trạng thái
         updatePaymentStatus();
-    }, [searchParams, orderCode, amount]);
+    }, [searchParams, orderCode, order_number, amount, returnUrl]);
 
     // Xử lý đếm ngược và chuyển hướng trong useEffect riêng
     useEffect(() => {

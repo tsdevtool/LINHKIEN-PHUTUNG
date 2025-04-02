@@ -119,21 +119,18 @@ Route::prefix('users')->group(function () {
 
 });
 
-// Route::post('employee',[EmployeeController::class,'upload']);
 
-// Route::controller(RoleController::class)->group(function () {
-//     Route::get('v1/roles', 'index');
-//     Route::post('v1/roles', 'store');
-//     Route::put('v1/roles/edit/{_id}', 'update');
-//     Route::delete('v1/roles/delete/{_id}', 'destroy');
-//     Route::post('v1/roles', 'store');
-// });
 
 Route::prefix('orders')->group(function () {
-    Route::get('/', [OrderController::class, 'index']);
-    Route::post('/', [OrderController::class, 'store']);
-    Route::get('/{id}', [OrderController::class, 'show']);
-    Route::put('/{id}', [OrderController::class, 'update']);
+        Route::get('/', [OrderController::class, 'index']);
+        Route::post('/', [OrderController::class, 'store']);
+        Route::get('/find-by-number/{orderNumber}', [OrderController::class, 'findByOrderNumber']);
+        Route::put('/update-by-number/{orderNumber}', [OrderController::class, 'updateByOrderNumber']);
+        Route::get('/{id}', [OrderController::class, 'show']);
+        Route::put('/{id}', [OrderController::class, 'update']);
+        Route::post('/{id}/payment', [OrderController::class, 'createPayment']);
+        Route::post('/payment/webhook', [OrderController::class, 'handleWebhook']);
+   
 });
 
 // Customer Management
@@ -166,4 +163,18 @@ Route::prefix('customer/orders')->middleware(AuthMiddleware::class)->group(funct
     Route::get('/{id}', [App\Http\Controllers\Customers\OrderController::class, 'show']);
     Route::post('/create-from-cart', [App\Http\Controllers\Customers\OrderController::class, 'createFromCart']);
     Route::delete('/{id}/cancel', [App\Http\Controllers\Customers\OrderController::class, 'cancel']);
+});
+
+// PayOS Webhook route
+Route::post('/v1/orders/payment/webhook', [OrderController::class, 'handleWebhook']);
+
+// Debug route - REMOVE IN PRODUCTION
+Route::get('/debug/payos', function () {
+    return [
+        'PAYOS_CLIENT_ID' => env('PAYOS_CLIENT_ID') ? 'set' : 'not set',
+        'PAYOS_API_KEY' => env('PAYOS_API_KEY') ? 'set' : 'not set',
+        'PAYOS_CHECKSUM_KEY' => env('PAYOS_CHECKSUM_KEY') ? 'set' : 'not set',
+        'PAYOS_WEBHOOK_URL' => env('PAYOS_WEBHOOK_URL') ?: 'not set',
+        'BACKEND_URL' => env('BACKEND_URL') ?: 'not set'
+    ];
 });

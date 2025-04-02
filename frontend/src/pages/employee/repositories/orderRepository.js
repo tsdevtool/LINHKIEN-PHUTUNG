@@ -33,7 +33,7 @@ class OrderRepository {
 
             console.log('Sending order data:', formattedOrderData);
             
-            const response = await axios.post(`${NODE_API_URL}/orders`, formattedOrderData);
+            const response = await axios.post(`${PHP_API_URL}/orders`, formattedOrderData);
             return response.data;
         } catch (error) {
             console.error('Error creating order:', error.response?.data || error.message);
@@ -68,7 +68,7 @@ class OrderRepository {
 
     async getOrders() {
         try {
-            const response = await axios.get(`${NODE_API_URL}/orders`);
+            const response = await axios.get(`${PHP_API_URL}/orders`);
             return response.data.orders || [];
         } catch (error) {
             console.error('Error fetching orders:', error);
@@ -78,7 +78,7 @@ class OrderRepository {
 
     async getOrderById(id) {
         try {
-            const response = await axios.get(`${NODE_API_URL}/orders/${id}`);
+            const response = await axios.get(`${PHP_API_URL}/orders/${id}`);
             return response.data.order;
         } catch (error) {
             console.error(`Error fetching order with id ${id}:`, error);
@@ -88,7 +88,7 @@ class OrderRepository {
 
     async updateOrder(id, orderData) {
         try {
-            const response = await axios.put(`${NODE_API_URL}/orders/${id}`, orderData);
+            const response = await axios.put(`${PHP_API_URL}/orders/${id}`, orderData);
             return response.data;
         } catch (error) {
             console.error(`Error updating order with id ${id}:`, error);
@@ -98,7 +98,7 @@ class OrderRepository {
 
     async cancelOrder(id) {
         try {
-            const response = await axios.put(`${NODE_API_URL}/orders/${id}/cancel`);
+            const response = await axios.put(`${PHP_API_URL}/orders/${id}/cancel`);
             return response.data;
         } catch (error) {
             console.error(`Error cancelling order with id ${id}:`, error);

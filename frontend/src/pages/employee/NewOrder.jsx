@@ -65,7 +65,7 @@ const NewOrder = () => {
 
   useEffect(() => {
     if (user) {
-      console.log('Current logged in user:', user);
+      
       setStaff(user.firstname + ' ' + (user.lastname || ''));
     }
   }, [user, setStaff]);
@@ -73,22 +73,19 @@ const NewOrder = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Debugging logs
-      console.log('User auth data before submit:', user);
-      console.log('Staff name before submit:', staff);
-      
+     
       // Modified code to ensure staffId is passed correctly
       const staffData = {
         id: user?._id,     // Pass the ID explicitly
         name: staff || (user ? `${user.firstname} ${user.lastname || ''}`.trim() : '')
       };
       
-      console.log('Staff data being passed:', staffData);
+    
       
       await handleSubmitOrder(selectedCustomer, navigate, staffData);
       clearSelectedCustomer();
     } catch (error) {
-      console.error('Error in handleSubmit:', error);
+     
     }
   };
 
@@ -109,7 +106,7 @@ const NewOrder = () => {
             </div>
           )}
 
-          <div className="bg-white p-4 sm:p-6 shadow-lg rounded-lg w-full max-w-5xl mx-auto flex-grow">
+          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow-lg rounded-lg w-full max-w-5xl mx-auto flex-grow">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Left Section - Sản phẩm */}
               <div className="lg:col-span-2 flex flex-col space-y-6">
@@ -135,7 +132,7 @@ const NewOrder = () => {
 
                     {isProductSearchActive && (
                       <div 
-                        className="absolute w-full bg-white shadow-lg border rounded-md mt-1 max-h-48 overflow-auto z-10"
+                        className="absolute w-full bg-white dark:bg-gray-800 shadow-lg border rounded-md mt-1 max-h-48 overflow-auto z-10"
                         onMouseDown={(e) => e.preventDefault()}
                       >
                         {orderLoading ? (
@@ -153,7 +150,7 @@ const NewOrder = () => {
                                   setIsProductSearchActive(false);
                                   setProductSearchTerm('');
                                 }}
-                                className="w-full flex items-center gap-4 p-2 border-b hover:bg-gray-100 cursor-pointer"
+                                className="w-full flex items-center gap-4 p-2 border-b hover:bg-gray-100 cursor-pointer dark:bg-gray-800"
                               >
                                 <img
                                   src={product.image_url}
@@ -162,7 +159,7 @@ const NewOrder = () => {
                                 />
                                 <div className="flex-1 text-left">
                                   <p className="text-sm font-semibold">{product.name}</p>
-                                  <p className="text-gray-600 text-xs">
+                                  <p className="text-gray-600 dark:bg-gray-800 text-xs">
                                     {product.price.toLocaleString()} đ
                                   </p>
                                 </div>
