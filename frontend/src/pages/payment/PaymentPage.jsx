@@ -11,7 +11,9 @@ import {
   FaChevronRight,
   FaShoppingCart,
 } from "react-icons/fa";
-import { SiZalo } from "react-icons/si";
+import { useCartStore } from "../../store/Cart/useCartStore";
+import useOrderStore from "../../store/Cart/useOrderStore";
+import { toast } from "react-hot-toast";
 
 import Header from "../../components/Header";
 import Navbar from "../../components/Navbar";
@@ -19,53 +21,30 @@ import Navbar from "../../components/Navbar";
 const PaymentPage = () => {
   const navigate = useNavigate();
   const [deliveryMethod, setDeliveryMethod] = useState("delivery");
-  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [selectedAddress, setSelectedAddress] = useState("new");
   const [message, setMessage] = useState("");
+  const { cartItems, selectedItems } = useCartStore();
+  const { createOrderFromCart } = useOrderStore();
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
     address: "",
   });
 
-  // Dữ liệu mẫu cho địa chỉ đã lưu
-  const savedAddresses = [
-    {
-      id: "saved-1",
-      name: "Nguyễn Văn A",
-      phone: "0123456789",
-      address: "123 Đường ABC, Phường XYZ, Quận 1, TP.HCM",
-    },
-    {
-      id: "saved-2",
-      name: "Nguyễn Văn B",
-      phone: "0987654321",
-      address: "456 Đường DEF, Phường UVW, Quận 2, TP.HCM",
-    },
-  ];
+  // Lọc các sản phẩm đã chọn từ giỏ hàng
+  const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
+  console.log('Selected cart items:', selectedCartItems);
 
-  // Dữ liệu mẫu đơn hàng
+  // Tính toán tổng tiền
   const orderSummary = {
-    items: [
-      {
-        id: 1,
-        name: "CPU Intel Core i5-12400F",
-        image: "https://picsum.photos/900/900",
-        price: 4290000,
-        quantity: 1,
-      },
-      {
-        id: 2,
-        name: "RAM Kingston Fury Beast 16GB DDR4 3200MHz",
-        image: "https://picsum.photos/900/900",
-        price: 1290000,
-        quantity: 2,
-      },
-    ],
-    subtotal: 6870000,
+    items: selectedCartItems,
+    subtotal: selectedCartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0),
     shipping: 50000,
-    discount: 150000,
-    total: 6770000,
+    discount: 0,
+    get total() {
+      return this.subtotal + this.shipping - this.discount;
+    }
   };
 
   // Xử lý thay đổi form
@@ -78,55 +57,53 @@ const PaymentPage = () => {
   };
 
   // Xử lý đặt hàng
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
+    if (selectedCartItems.length === 0) {
+      toast.error("Vui lòng chọn sản phẩm để thanh toán!");
+      return;
+    }
+
     // Validate form nếu chọn địa chỉ mới
     if (deliveryMethod === "delivery" && selectedAddress === "new") {
       if (!formData.fullName || !formData.phone || !formData.address) {
-        alert("Vui lòng điền đầy đủ thông tin giao hàng!");
+        toast.error("Vui lòng điền đầy đủ thông tin giao hàng!");
         return;
       }
     }
 
-    // Tạo mã đơn hàng ngẫu nhiên
-    const orderId = Math.random().toString(36).substring(2, 10).toUpperCase();
+    try {
+      // Chuẩn bị dữ liệu đơn hàng
+      const orderData = {
+        cart_item_ids: selectedCartItems.map(item => item.id),
+        recipient_name: formData.fullName,
+        recipient_phone: formData.phone,
+        recipient_address: formData.address,
+        payment_type: paymentMethod,      // "cash" hoặc "payos"
+        order_method: deliveryMethod,     // "delivery" hoặc "store_pickup"
+        discount: orderSummary.discount,
+        message: message
+      };
 
-    // Thông tin giao hàng
-    const shippingInfo =
-      selectedAddress === "new"
-        ? formData
-        : savedAddresses.find((addr) => addr.id === selectedAddress);
+      console.log('Sending order data:', orderData);
+      const response = await createOrderFromCart(orderData);
 
-    // Xử lý đặt hàng dựa trên phương thức thanh toán
-    switch (paymentMethod) {
-      case "cod":
+      if (response.success) {
+        toast.success('Đặt hàng thành công!');
         navigate("/order-success", {
           state: {
             orderDetails: {
-              orderId,
+              orderId: response.data.id,
               total: orderSummary.total,
-              paymentMethod: "cod",
-              items: orderSummary.items,
-              shippingInfo,
+              paymentMethod,
+              items: selectedCartItems,
+              shippingInfo: formData
             },
           },
         });
-        break;
-      case "bank":
-        navigate("/payment/qr", {
-          state: {
-            paymentDetails: {
-              orderId,
-              amount: orderSummary.total,
-              method: "bank",
-              transferCode: "TECH" + orderId,
-              items: orderSummary.items,
-              shippingInfo,
-            },
-          },
-        });
-        break;
-      default:
-        break;
+      }
+    } catch (error) {
+      console.error('Order creation error:', error);
+      toast.error(error.message || 'Có lỗi xảy ra khi đặt hàng');
     }
   };
 
@@ -202,18 +179,6 @@ const PaymentPage = () => {
                   Thông tin giao hàng
                 </h2>
                 <div className="space-y-4">
-                  <select
-                    value={selectedAddress}
-                    onChange={(e) => setSelectedAddress(e.target.value)}
-                    className="w-full p-3 border dark:border-gray-700 rounded-lg bg-transparent text-gray-800 dark:text-white outline-none focus:border-cyan-600"
-                  >
-                    <option value="new">+ Thêm địa chỉ mới</option>
-                    {savedAddresses.map((addr) => (
-                      <option key={addr.id} value={addr.id}>
-                        {addr.name} - {addr.phone} - {addr.address}
-                      </option>
-                    ))}
-                  </select>
 
                   {selectedAddress === "new" && (
                     <div className="space-y-4">
@@ -293,8 +258,8 @@ const PaymentPage = () => {
                   <input
                     type="radio"
                     name="payment"
-                    value="cod"
-                    checked={paymentMethod === "cod"}
+                    value="cash"
+                    checked={paymentMethod === "cash"}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="accent-cyan-600"
                   />
@@ -313,79 +278,18 @@ const PaymentPage = () => {
                   <input
                     type="radio"
                     name="payment"
-                    value="bank"
-                    checked={paymentMethod === "bank"}
+                    value="payos"
+                    checked={paymentMethod === "payos"}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="accent-cyan-600"
                   />
                   <FaCreditCard className="text-cyan-600 text-xl" />
                   <div>
                     <div className="text-gray-800 dark:text-white font-medium">
-                      Chuyển khoản ngân hàng
+                      Thanh toán qua PayOS
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Hỗ trợ tất cả ngân hàng nội địa
-                    </div>
-                  </div>
-                </label>
-
-                <label className="flex items-center gap-3 p-4 border dark:border-gray-700 rounded-lg cursor-pointer hover:border-cyan-600 transition-colors">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="momo"
-                    checked={paymentMethod === "momo"}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="accent-cyan-600"
-                  />
-                  {/* <SiMomo className="text-[#A50064] text-2xl" /> */}
-                  <img src="/ico-MoMo.svg" alt="VNPay" className="w-8 h-8" />
-                  <div>
-                    <div className="text-gray-800 dark:text-white font-medium">
-                      Ví MoMo
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Thanh toán qua ví điện tử MoMo
-                    </div>
-                  </div>
-                </label>
-
-                <label className="flex items-center gap-3 p-4 border dark:border-gray-700 rounded-lg cursor-pointer hover:border-cyan-600 transition-colors">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="vnpay"
-                    checked={paymentMethod === "vnpay"}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="accent-cyan-600"
-                  />
-                  <img src="/ico-vnpage.svg" alt="VNPay" className="w-8 h-8" />
-                  <div>
-                    <div className="text-gray-800 dark:text-white font-medium">
-                      VNPay
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Thanh toán qua cổng VNPay
-                    </div>
-                  </div>
-                </label>
-
-                <label className="flex items-center gap-3 p-4 border dark:border-gray-700 rounded-lg cursor-pointer hover:border-cyan-600 transition-colors">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="zalopay"
-                    checked={paymentMethod === "zalopay"}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="accent-cyan-600"
-                  />
-                  <SiZalo className="text-cyan-600 text-2xl" />
-                  <div>
-                    <div className="text-gray-800 dark:text-white font-medium">
-                      ZaloPay
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Thanh toán qua ví điện tử ZaloPay
+                      Thanh toán trực tuyến qua PayOS
                     </div>
                   </div>
                 </label>
@@ -416,29 +320,39 @@ const PaymentPage = () => {
 
               {/* Danh sách sản phẩm */}
               <div className="space-y-4 mb-6">
-                {orderSummary.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex gap-4 pb-4 border-b dark:border-gray-700 last:border-0"
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-20 h-20 object-cover rounded-lg"
-                    />
-                    <div className="flex-1">
-                      <h3 className="text-gray-800 dark:text-white font-medium">
-                        {item.name}
-                      </h3>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Số lượng: {item.quantity}
-                      </div>
-                      <div className="text-cyan-600 font-medium">
-                        {(item.price * item.quantity).toLocaleString()}đ
+                {selectedCartItems.length === 0 ? (
+                  <div className="text-center text-gray-500 dark:text-gray-400 py-4">
+                    Chưa có sản phẩm nào được chọn
+                  </div>
+                ) : (
+                  selectedCartItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex gap-4 pb-4 border-b dark:border-gray-700 last:border-0"
+                    >
+                      <img
+                        src={item.product?.image_url || '/placeholder.jpg'}
+                        alt={item.product?.name}
+                        className="w-20 h-20 object-cover rounded-lg"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = '/placeholder.jpg';
+                        }}
+                      />
+                      <div className="flex-1">
+                        <h3 className="text-gray-800 dark:text-white font-medium">
+                          {item.product?.name}
+                        </h3>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          Số lượng: {item.quantity}
+                        </div>
+                        <div className="text-cyan-600 font-medium">
+                          {(item.product?.price * item.quantity).toLocaleString()}đ
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
 
               {/* Tổng tiền */}
@@ -468,7 +382,12 @@ const PaymentPage = () => {
               {/* Nút đặt hàng */}
               <button
                 onClick={handlePlaceOrder}
-                className="w-full bg-cyan-600 text-white py-3 rounded-lg font-medium hover:bg-cyan-700 transition-colors flex items-center justify-center gap-2"
+                disabled={selectedCartItems.length === 0}
+                className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 ${
+                  selectedCartItems.length === 0
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-cyan-600 hover:bg-cyan-700"
+                } text-white transition-colors`}
               >
                 Đặt hàng ngay
                 <FaChevronRight size={12} />
