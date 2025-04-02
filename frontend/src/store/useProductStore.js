@@ -39,6 +39,18 @@ export const useProductStore = create((set, get) => ({
     }
   },
 
+  getProductByCategoryParent:async(categoryId, page = 1, perPage = 5)=>{
+    set({isLoading:true})
+    try{
+      const response = await axios.get(`/api/client/${categoryId}/get-all?page=${page}&per_page=${perPage}`)
+      set({products:response.data.data || []})
+    }catch(error){
+      toast.error("Không thể tải sản phẩm theo danh mục");
+    }finally{
+      set({isLoading:false})
+    }
+  },
+
   // Lấy chi tiết sản phẩm
   getProductById: async (id) => {
     set({ isLoading: true });

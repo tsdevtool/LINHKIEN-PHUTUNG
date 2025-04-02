@@ -51,6 +51,8 @@ import CategoriesTreeSection from "./pages/admin/categories/CategoriesTreeSectio
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import OutOfStockProducts from "./pages/admin/products/OutOfStockProducts";
 import CategoryChildProductsPage from "./pages/products/CategoryChildProductsPage";
+import CategoryParentProductsPage from "./pages/products/CategoryParentProductsPage";
+
 function App() {
   const { user, authCheck } = useAuthStore();
   const [isInitialAuthCheck, setIsInitialAuthCheck] = useState(true);
@@ -94,6 +96,7 @@ function App() {
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         <Route path="/categories_products/:id" element={<CategoryChildProductsPage />} />
+        <Route path="/category/:id" element={<CategoryParentProductsPage />} />
         <Route path="/product-info/:id" element={<ProductDetail />} />
         
         {/* Payment routes - no auth required */}

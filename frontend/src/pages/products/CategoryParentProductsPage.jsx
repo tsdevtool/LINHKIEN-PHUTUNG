@@ -7,17 +7,17 @@ import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 
-const CategoryChildProductsPage = () => {
+const CategoryParentProductsPage = () => {
     const {id} = useParams()
     const navigate = useNavigate()
-    const {getProductByCategoryChild, products, isLoading} = useProductStore()
+    const {getProductByCategoryParent, products, isLoading} = useProductStore()
     const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
     const perPage = 5
 
     useEffect(()=>{
         const fetchProducts = async () => {
-            await getProductByCategoryChild(id, currentPage, perPage)
+            await getProductByCategoryParent(id, currentPage, perPage)
             if (products?.total) {
                 setTotalPages(Math.ceil(products.total / perPage))
             }
@@ -105,4 +105,4 @@ const CategoryChildProductsPage = () => {
     )
 }
 
-export default CategoryChildProductsPage
+export default CategoryParentProductsPage
