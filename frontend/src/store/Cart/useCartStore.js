@@ -6,6 +6,17 @@ export const useCartStore = create((set, get) => ({
   cartItems: [],
   cartStatus: "pending",
   isLoading: false,
+  selectedItems: [],
+
+  setSelectedItems: (items) => {
+    if (typeof items === 'function') {
+      set((state) => ({
+        selectedItems: items(state.selectedItems)
+      }));
+    } else {
+      set({ selectedItems: Array.isArray(items) ? items : [] });
+    }
+  },
 
   addToCart: async (product_id, quantity = 1) => {
     set({ isLoading: true });
@@ -44,7 +55,8 @@ export const useCartStore = create((set, get) => ({
         if (!cartData || !cartData.items) {
           set({ 
             cartItems: [],
-            cartStatus: "pending"
+            cartStatus: "pending",
+            selectedItems: []
           });
           return response.data;
         }
@@ -75,6 +87,9 @@ export const useCartStore = create((set, get) => ({
       });
       
       if (response.data.success) {
+        set(state => ({
+          selectedItems: state.selectedItems.filter(id => id !== product_id)
+        }));
         await get().getCart();
         toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
         return response.data;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaTrash,
@@ -20,11 +20,10 @@ const CartPage = () => {
     isLoading, 
     increaseQuantity, 
     decreaseQuantity,
-    removeFromCart 
+    removeFromCart,
+    selectedItems,
+    setSelectedItems
   } = useCartStore();
-
-  // State để lưu trữ các sản phẩm được chọn
-  const [selectedItems, setSelectedItems] = useState([]);
 
   // Lấy dữ liệu giỏ hàng khi component mount
   useEffect(() => {
@@ -32,29 +31,28 @@ const CartPage = () => {
   }, []);
 
   // Xử lý chọn/bỏ chọn một sản phẩm
-  const handleSelectItem = (productId) => {
+  const handleSelectItem = (cartItem) => {
     setSelectedItems(prev => {
-      if (prev.includes(productId)) {
-        return prev.filter(id => id !== productId);
-      } else {
-        return [...prev, productId];
+      if (prev.includes(cartItem.id)) {
+        return prev.filter(id => id !== cartItem.id);
       }
+      return [...prev, cartItem.id];
     });
   };
 
   // Xử lý chọn/bỏ chọn tất cả
   const handleSelectAll = () => {
-    if (selectedItems.length === cartItems.length) {
+    if (selectedItems.length > 0) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(cartItems.map(item => item.product_id));
+      setSelectedItems(cartItems.map(item => item.id));
     }
   };
 
   // Tính tổng tiền các sản phẩm được chọn
   const calculateSelectedTotal = () => {
     return cartItems
-      .filter(item => selectedItems.includes(item.product_id))
+      .filter(item => selectedItems.includes(item.id))
       .reduce((total, item) => total + (item.product.price * item.quantity), 0);
   };
 
@@ -68,8 +66,6 @@ const CartPage = () => {
     try {
       if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
         await removeFromCart(item.product_id);
-        // Xóa khỏi danh sách đã chọn
-        setSelectedItems(prev => prev.filter(id => id !== item.product_id));
       }
     } catch (error) {
       console.error("Lỗi khi xóa sản phẩm:", error);
@@ -161,15 +157,15 @@ const CartPage = () => {
               {/* Danh sách sản phẩm */}
               {cartItems.map((item) => (
                 <div
-                  key={item.product_id}
+                  key={item.id}
                   className="flex flex-col sm:flex-row items-center py-6 border-b dark:border-gray-700"
                 >
                   <div className="flex items-center gap-4">
                     <input
                       type="checkbox"
                       className="w-5 h-5 accent-cyan-600 cursor-pointer"
-                      checked={selectedItems.includes(item.product_id)}
-                      onChange={() => handleSelectItem(item.product_id)}
+                      checked={selectedItems.includes(item.id)}
+                      onChange={() => handleSelectItem(item)}
                     />
                     <img
                       src={item.product?.image_url}
