@@ -12,45 +12,53 @@ class Order extends Model
 
     protected $connection = 'mongodb';
     protected $collection = 'orders';
-    protected $dates = ['created_at', 'updated_at'];
+    protected $dates = ['created_at', 'updated_at', 'confirmed_at', 'shipping_updated_at', 'delivered_at', 'cancelled_at'];
 
     // Disable Laravel's timestamps
     public $timestamps = false;
 
     protected $fillable = [
+        'order_number',
         'customer_id',
+        'customer_info',
         'items',
         'total_amount',
-        'recipient_name',
-        'recipient_phone',
-        'recipient_address',
-        'payment_type',
-        'order_method',
-        'status',
-        'payment_status',
-        'shipping_status',
         'discount',
         'shipping_fee',
+        'finaltotal',
+        'payment_method',
+        'payment_status',
+        'shipping_method',
+        'shipping_status',
+        'status',
         'note',
+        'staff_id',
+        'staff_info',
+        'payment_info',
         'confirmed_at',
         'shipping_updated_at',
         'delivered_at',
-        'cancelled_at'
+        'cancelled_at',
+        'created_at',
+        'updated_at'
     ];
 
     protected $casts = [
         'total_amount' => 'float',
-        'discount' => 'int',
-        'shipping_fee' => 'int',
+        'discount' => 'float',
+        'shipping_fee' => 'float',
+        'finaltotal' => 'float',
         'confirmed_at' => 'datetime',
         'shipping_updated_at' => 'datetime',
         'delivered_at' => 'datetime',
-        'cancelled_at' => 'datetime'
+        'cancelled_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
     protected $attributes = [
         'status' => 'pending',
-        'payment_status' => 'unpaid',
+        'payment_status' => 'pending',
         'shipping_status' => 'pending',
         'discount' => 0,
         'shipping_fee' => 0,

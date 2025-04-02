@@ -1,16 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { XCircle } from 'lucide-react';
 import axios from 'axios';
 
 const PaymentCancel = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchParams] = useSearchParams();
     const [countdown, setCountdown] = useState(5);
 
     // Lấy thông tin từ URL parameters
     const orderCode = searchParams.get('orderCode');
     const reason = searchParams.get('reason');
+
+    // Hàm kiểm tra và lấy route prefix
+    const getRoutePrefix = () => {
+        const isAdminRoute = location.pathname.startsWith('/admin');
+        return isAdminRoute ? '/admin' : '/employee';
+    };
 
     useEffect(() => {
         // Đảm bảo token có sẵn từ localStorage
@@ -32,7 +39,8 @@ const PaymentCancel = () => {
                     if (returnUrl) {
                         navigate(decodeURIComponent(returnUrl));
                     } else {
-                        navigate('/employee/orders');
+                        const routePrefix = getRoutePrefix();
+                        navigate(`${routePrefix}/orders`);
                     }
                 }
                 return prev - 1;
@@ -40,15 +48,17 @@ const PaymentCancel = () => {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [navigate, searchParams]);
+    }, [navigate, searchParams, location]);
 
     // Hàm xử lý chuyển hướng
     const handleNavigation = (path) => {
         const returnUrl = searchParams.get('returnUrl');
-        if (returnUrl && path === '/employee/orders') {
+        if (returnUrl) {
             navigate(decodeURIComponent(returnUrl));
         } else {
-            navigate(path);
+            const routePrefix = getRoutePrefix();
+            const finalPath = path === '/employee/orders' ? `${routePrefix}/orders` : `${routePrefix}/orders/${orderCode}`;
+            navigate(finalPath);
         }
     };
 

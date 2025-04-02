@@ -10,6 +10,9 @@ const router = express.Router();
 // Get all orders
 router.get('/', orderController.getOrders);
 
+// Find order by order number - Đặt trước route có param :id
+router.get('/find-by-number/:orderNumber', orderController.findByOrderNumber);
+
 // Create new order
 router.post('/', orderController.createOrder);
 

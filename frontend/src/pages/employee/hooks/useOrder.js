@@ -3,6 +3,7 @@ import orderService from '../services/orderService';
 import productService from '../services/productService';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useAuthStore } from '../../../store/authUser';
 
 // Constants
 const INITIAL_STATE = {
@@ -140,6 +141,9 @@ const normalizeProductData = (product, quantity = 1) => ({
 });
 
 export const useOrder = () => {
+    // Get logged in user
+    const { user } = useAuthStore();
+    
     // State initialization
     const [state, setState] = useState(INITIAL_STATE);
     const {
@@ -264,19 +268,28 @@ export const useOrder = () => {
             // Validate order data
             validateOrderData(orderData);
 
+           
+
+            // Get staff ID from user if available
+            const staffId = user?._id || user?.id || orderData.staff_id;
+            const staffName = orderData.staff_name || staff || (user ? `${user.firstname} ${user.lastname || ''}`.trim() : '');
+
+           
+
             // Transform data to snake_case format
             const transformedData = {
                 ...orderData,
                 payment_status: determinePaymentStatus(orderData.payment_method),
                 shipping_status: determineShippingStatus(orderData.shipping_method),
                 status: determineOrderStatus(orderData.shipping_method, orderData.payment_method),
+                staff_id: staffId, // Use the MongoDB ObjectId
                 staff_info: {
-                    name: orderData.staff_id,
+                    name: staffName, // Use the staff name
                     role: 'employee'
                 }
             };
 
-            console.log('Transformed order data:', transformedData);
+          
             const response = await orderService.createOrder(transformedData);
 
             // Reset form
@@ -298,7 +311,7 @@ export const useOrder = () => {
         } finally {
             updateState({ loading: false });
         }
-    }, [updateState, handleError]);
+    }, [updateState, handleError, user, staff]);
 
     // Field setters
     const setters = {
@@ -313,22 +326,19 @@ export const useOrder = () => {
     };
 
     // Xử lý submit đơn hàng
-    const handleSubmitOrder = async (selectedCustomer, navigate) => {
+    const handleSubmitOrder = async (selectedCustomer, navigate, staffData = null) => {
         try {
             if (!selectedCustomer?._id) {
-                console.error('Missing customer ID:', selectedCustomer);
+              
                 throw new Error('Vui lòng chọn khách hàng');
             }
 
             if (!selectedProducts || selectedProducts.length === 0) {
-                console.error('No products selected');
+             
                 throw new Error('Vui lòng chọn ít nhất một sản phẩm');
             }
 
-            // Log thông tin trước khi tạo đơn hàng
-            console.log('Selected customer:', selectedCustomer);
-            console.log('Selected products:', selectedProducts);
-
+         
             // Đảm bảo các trường của customer_info có giá trị mặc định
             const customer_info = {
                 name: selectedCustomer?.name || '',
@@ -342,6 +352,22 @@ export const useOrder = () => {
                 throw new Error('Thiếu thông tin khách hàng (tên, số điện thoại hoặc địa chỉ)');
             }
 
+            // Get staff ID - ưu tiên từ staffData nếu có
+            let staffId = '';
+            let staffName = '';
+            
+            if (staffData && staffData.id) {
+                staffId = staffData.id;
+                staffName = staffData.name;
+                console.log('Using staffData from parameter:', { staffId, staffName });
+            } else {
+                // Fallback to user object or hardcoded ID
+                staffId = user?._id || user?.id || '67e66508d68e37a9a301b0f2';
+                staffName = staff || (user ? `${user.firstname} ${user.lastname || ''}`.trim() : 'Nhân viên');
+                console.log('Using fallback staff data:', { staffId, staffName });
+            }
+            
+        
             const orderData = {
                 customer_id: selectedCustomer._id,
                 customer_info,
@@ -362,19 +388,19 @@ export const useOrder = () => {
                 payment_method: paymentMethod,
                 shipping_method: shippingMethod,
                 note: note || '',
-                staff_id: staff
+                staff_id: staffId,
+                staff_name: staffName
             };
 
-            // Log dữ liệu đơn hàng trước khi gửi
-            console.log('Order data before sending:', orderData);
-
+        
             const response = await createOrder(orderData);
 
             // Nếu phương thức thanh toán là PayOS, tạo payment link
             if (paymentMethod === "PayOS") {
                 try {
-                    console.log('Creating payment link for order:', response.order);
+                 
                     const orderId = response.order?._id;
+                    const orderNumber = response.order?.order_number;
                     if (!orderId) {
                         throw new Error('Không tìm thấy ID đơn hàng');
                     }
@@ -382,12 +408,11 @@ export const useOrder = () => {
                     // Tạo returnUrl để quay lại khi thanh toán xong
                     const returnUrl = encodeURIComponent(`/employee/orders/${orderId}`);
                     
-                    console.log('Sending request to create payment with orderId:', orderId);
                     const paymentResponse = await axios.post(
-                        `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/${orderId}/payment`,
+                        `${import.meta.env.VITE_PHP_URL}/orders/${orderId}/payment`,
                         {
-                            // Thêm return URL vào request
-                            return_url: `${window.location.origin}/payment/success?orderCode=${orderId}&returnUrl=${returnUrl}`,
+                            // Thêm return URL vào request và order_number
+                            return_url: `${window.location.origin}/payment/success?orderCode=${orderId}&order_number=${orderNumber}&returnUrl=${returnUrl}`,
                             cancel_url: `${window.location.origin}/payment/cancel?orderCode=${orderId}&returnUrl=${returnUrl}`
                         },
                         {
@@ -397,7 +422,7 @@ export const useOrder = () => {
                         }
                     );
 
-                    console.log('Payment response:', paymentResponse);
+                   
                     
                     if (!paymentResponse.data?.paymentUrl) {
                         throw new Error('Không nhận được URL thanh toán từ PayOS');
@@ -407,7 +432,7 @@ export const useOrder = () => {
                     window.location.href = paymentResponse.data.paymentUrl;
                     return;
                 } catch (error) {
-                    console.error('Error creating payment link:', error.response || error);
+               
                     const errorMessage = error.response?.data?.message || error.message || 'Không thể tạo link thanh toán PayOS';
                     toast.error(errorMessage);
                     throw error;

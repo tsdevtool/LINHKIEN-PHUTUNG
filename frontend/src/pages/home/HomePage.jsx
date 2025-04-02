@@ -5,7 +5,7 @@ import { useCartStore } from "../../store/Cart/useCartStore";
 import SidebarLeft from "../../components/SidebarLeft";
 import ScrollToTop from "../../components/ui/ScrollToTop";
 import SidebarRight from "@/components/SidebarRight";
-
+import Footer from "@/components/Footer";
 const HomePage = () => {
 
   return (
@@ -19,6 +19,7 @@ const HomePage = () => {
         <SidebarRight />
       </div>
       <ScrollToTop />
+      <Footer />
     </div>
   );
 };

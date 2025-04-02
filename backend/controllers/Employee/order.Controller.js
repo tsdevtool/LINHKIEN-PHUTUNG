@@ -230,6 +230,45 @@ export const getOrder = async (req, res) => {
     }
 };
 
+// Find order by order number
+export const findByOrderNumber = async (req, res) => {
+    try {
+        console.log('Finding order with number:', req.params.orderNumber);
+        
+        const order = await Order.findOne({ order_number: req.params.orderNumber })
+            .populate('customer_id')
+            .populate('items.product_id');
+
+        console.log('Search result:', order ? 'Order found' : 'Order not found');
+
+        if (!order) {
+            console.log('Order not found for number:', req.params.orderNumber);
+            return res.status(404).json({
+                success: false,
+                message: `Không tìm thấy đơn hàng với mã ${req.params.orderNumber}`
+            });
+        }
+
+        console.log('Found order:', {
+            id: order._id,
+            order_number: order.order_number,
+            status: order.status,
+            payment_status: order.payment_status
+        });
+
+        res.status(200).json({
+            success: true,
+            order
+        });
+    } catch (error) {
+        console.error('Error finding order:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi hệ thống: ' + error.message
+        });
+    }
+};
+
 // Update order
 export const updateOrder = async (req, res) => {
     const session = await mongoose.startSession();
@@ -421,19 +460,27 @@ export const paymentWebhook = async (req, res) => {
         const signature = req.headers['x-payos-signature'];
         const payload = req.body;
 
-        console.log('Received webhook data:', payload);
-        console.log('Received signature:', signature);
+        console.log('[PayOS Webhook] Received webhook data:', {
+            signature,
+            payload,
+            headers: req.headers
+        });
 
         // Verify signature
         const isValid = payosService.verifyWebhookSignature(payload, signature);
+        console.log('[PayOS Webhook] Signature verification:', isValid);
+        
         if (!isValid) {
-            console.error('Invalid webhook signature');
+            console.error('[PayOS Webhook] Invalid signature');
             return res.status(400).json({ success: false, message: 'Invalid signature' });
         }
 
-        console.log('Signature verified successfully');
-
         // Tìm đơn hàng theo orderReference
+        console.log('[PayOS Webhook] Searching for order with:', {
+            orderReference: payload.orderReference,
+            paymentLinkId: payload.paymentLinkId
+        });
+
         const order = await Order.findOne({ 
             $or: [
                 { order_number: payload.orderReference },
@@ -442,17 +489,25 @@ export const paymentWebhook = async (req, res) => {
         });
 
         if (!order) {
-            console.error('Order not found:', payload.orderReference);
+            console.error('[PayOS Webhook] Order not found:', {
+                orderReference: payload.orderReference,
+                paymentLinkId: payload.paymentLinkId
+            });
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
-        console.log('Found order:', order);
+        console.log('[PayOS Webhook] Found order:', {
+            order_number: order.order_number,
+            current_status: order.status,
+            current_payment_status: order.payment_status
+        });
 
         // Cập nhật trạng thái thanh toán nếu status là PAID
         if (payload.status === 'PAID') {
-            console.log('Processing PAID status for order:', order.order_number);
+            console.log('[PayOS Webhook] Processing PAID status');
             
             try {
+                const previousStatus = order.payment_status;
                 // Cập nhật trạng thái thanh toán
                 order.payment_status = 'paid';
                 
@@ -467,32 +522,33 @@ export const paymentWebhook = async (req, res) => {
                 };
 
                 // Cập nhật trạng thái đơn hàng
+                const previousOrderStatus = order.status;
                 if (order.shipping_method === 'Nhận tại cửa hàng') {
-                    // Nếu nhận tại cửa hàng và đã thanh toán -> hoàn thành
                     order.status = 'completed';
                 } else if (order.status === 'pending') {
-                    // Nếu đang chờ xử lý -> chuyển sang đã xác nhận
                     order.status = 'confirmed';
                 }
 
                 await order.save();
-                console.log('Order updated successfully:', {
+                console.log('[PayOS Webhook] Order updated successfully:', {
                     order_number: order.order_number,
-                    payment_status: order.payment_status,
-                    status: order.status,
+                    previous_payment_status: previousStatus,
+                    new_payment_status: order.payment_status,
+                    previous_order_status: previousOrderStatus,
+                    new_order_status: order.status,
                     payment_info: order.payment_info
                 });
             } catch (saveError) {
-                console.error('Error saving order:', saveError);
+                console.error('[PayOS Webhook] Error saving order:', saveError);
                 throw saveError;
             }
         } else {
-            console.log('Payment status is not PAID:', payload.status);
+            console.log('[PayOS Webhook] Payment status is not PAID:', payload.status);
         }
 
         res.status(200).json({ success: true });
     } catch (error) {
-        console.error('Webhook processing error:', error);
+        console.error('[PayOS Webhook] Error processing webhook:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };  

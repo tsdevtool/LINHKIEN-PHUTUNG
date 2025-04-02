@@ -63,13 +63,13 @@ const OrderList = () => {
         shipping_status: order.shipping_status || 'pending',
         note: order.note || '',
         status: order.status || 'pending',
-        staff_info: order.staff_info || { name: 'Admin' },
+        staff_info: order.staff_info || { name: 'client' },
         created_at: order.created_at || new Date().toISOString()
       }));
 
       setOrders(ordersData);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+     
       setError(error.message || 'Có lỗi xảy ra khi tải danh sách đơn hàng');
       toast.error('Không thể tải danh sách đơn hàng');
     } finally {
@@ -123,9 +123,9 @@ const OrderList = () => {
   }
 
   const handleOrderClick = (orderId) => {
-    console.log('Clicking order with ID:', orderId);
+ 
     if (!orderId) {
-      console.error('Order ID is undefined');
+     
       toast.error('Không thể xem chi tiết đơn hàng do thiếu ID');
       return;
     }
@@ -134,7 +134,7 @@ const OrderList = () => {
     const isAdminRoute = location.pathname.startsWith('/admin');
     const routePrefix = isAdminRoute ? '/admin' : '/employee';
     
-    navigate(`${routePrefix}/orders/${orderId}`);
+    navigate(`${routePrefix}/orders/${String(orderId)}`);
   };
 
   const handleCreateOrder = () => {
@@ -187,6 +187,23 @@ const OrderList = () => {
       case 'unpaid': return 'text-red-600 bg-red-50';
       default: return 'text-gray-600 bg-gray-50';
     }
+  };
+
+  // Determine order source (employee or client)
+  const getOrderSource = (order) => {
+    // Check if staff_id exists and is not empty
+    if (order.staff_id && 
+        typeof order.staff_id === 'string' && order.staff_id.length > 0) {
+      return 'Employee';
+    }
+    
+    // If staff_info exists with a name that is not a default value
+    if (order.staff_info && order.staff_info.name && 
+        order.staff_info.name !== 'client') {
+      return 'Employee';
+    }
+    
+    return 'Client';
   };
 
   const formatDate = (dateString) => {
@@ -384,54 +401,62 @@ const OrderList = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredOrders.map((order) => (
-                  <tr
-                    key={order._id}
-                    onClick={() => {
-                      console.log('Order data:', order);
-                      handleOrderClick(order._id);
-                    }}
-                    className="hover:bg-gray-50 cursor-pointer"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input 
-                        type="checkbox" 
-                        className="rounded border-gray-300" 
-                        onClick={e => e.stopPropagation()}
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.order_number}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.staff_info?.name || 'Admin'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-500">
-                        {formatDate(order.created_at)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{order.customer_info.name}</div>
-                      <div className="text-sm text-gray-500">{order.customer_info.phone}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-900">
-                        {order.finaltotal?.toLocaleString()} đ
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getPaymentStatusColor(order.payment_status)}`}>
-                        {order.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(order.status, order.shipping_method, order.payment_status)}`}>
-                        {getOrderStatus(order)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {filteredOrders.map((order) => {
+                  // Đảm bảo key luôn là string
+                  const orderId = typeof order._id === 'object' 
+                    ? (order._id.$oid || order._id.toString()) 
+                    : String(order._id);
+                    
+                  return (
+                    <tr
+                      key={orderId}
+                      onClick={() => handleOrderClick(orderId)}
+                      className="hover:bg-gray-50 cursor-pointer"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input 
+                          type="checkbox" 
+                          className="rounded border-gray-300" 
+                          onClick={e => e.stopPropagation()}
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {order.order_number}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {getOrderSource(order)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-500">
+                          {formatDate(order.created_at)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{order.customer_info.name}</div>
+                        <div className="text-sm text-gray-500">{order.customer_info.phone}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-900">
+                          {order.finaltotal?.toLocaleString()} đ
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs rounded-full ${getPaymentStatusColor(order.payment_status)}`}>
+                          {order.payment_status === 'paid' 
+                            ? 'Đã thanh toán' 
+                            : order.payment_status === 'pending'
+                            ? 'Đang chờ thanh toán'
+                            : 'Chưa thanh toán'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(order.status, order.shipping_method, order.payment_status)}`}>
+                          {getOrderStatus(order)}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             <div className="px-6 py-4 flex items-center justify-between border-t">

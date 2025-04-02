@@ -25,32 +25,58 @@ const productService = {
 
     async getProductById(productId) {
         try {
-            // Convert ObjectId or any object to string safely
-            const id = (typeof productId === 'object' && productId.toString) 
-                ? productId.toString() 
-                : String(productId);
-            
-            console.log('getProductById - ID to be used:', id);
-    
-            const response = await axios.get(`${API_URL}/products/${id}`);
-            console.log('getProductById - API Response:', response);
-    
-            if (response.data && response.data.product) {
-                return {
-                    success: true,
-                    product: response.data.product
-                };
+           
+
+            if (!productId) {
+                throw new Error('Product ID is required');
             }
-    
+
+            // Xử lý MongoDB ObjectId
+            let id = '';
+            
+            // Nếu là object MongoDB
+            if (productId && typeof productId === 'object') {
+                // Thử lấy giá trị _id
+                if (productId._id) {
+                    id = typeof productId._id === 'object' ? productId._id.toString() : productId._id;
+                } 
+                // Nếu không có _id, thử lấy giá trị id
+                else if (productId.id) {
+                    id = typeof productId.id === 'object' ? productId.id.toString() : productId.id;
+                }
+                // Nếu là ObjectId trực tiếp
+                else {
+                    id = productId.toString();
+                }
+            } else {
+                // Nếu là string hoặc kiểu dữ liệu khác
+                id = String(productId);
+            }
+
+           
+
+            // Kiểm tra ID hợp lệ
+            if (!id || id === '[object Object]' || id === 'undefined') {
+                console.error('Invalid ID after processing:', id);
+                throw new Error('Invalid product ID');
+            }
+
+            const response = await axios.get(`${API_URL}/products/${id}`);
+            
+            if (!response.data || !response.data.product) {
+                throw new Error('Product not found');
+            }
+
             return {
-                success: false,
-                message: 'Product not found'
+                success: true,
+                product: response.data.product
             };
         } catch (error) {
-            console.error('Error in getProductById:', error);
+           
+            
             return {
                 success: false,
-                message: error.message || 'Could not fetch product details'
+                message: error.response?.data?.message || 'Could not fetch product details'
             };
         }
     }

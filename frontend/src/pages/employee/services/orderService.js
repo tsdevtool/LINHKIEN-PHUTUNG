@@ -1,10 +1,11 @@
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL + '/api/v1';
+const PHP_API_URL = 'http://localhost:8000/api';
 
 // Tạo instance của axios với cấu hình mặc định
 const axiosInstance = axios.create({
-    baseURL: API_URL,
+    baseURL: PHP_API_URL,
     timeout: 10000, // timeout sau 10 giây
     headers: {
         'Content-Type': 'application/json'
@@ -28,6 +29,14 @@ class OrderService {
             
             // Format data before sending
             const { orderNumber, ...orderDataWithoutNumber } = orderData;
+            
+            // Ensure staff_id is proper MongoDB ID
+            const staffId = orderData.staff_id ? orderData.staff_id.toString() : null;
+            if (!staffId) {
+                console.warn('Missing staff_id in order data');
+            } else {
+                console.log('Using staff_id:', staffId);
+            }
             
             // Ensure all required fields are present and properly formatted
             const formattedData = {
@@ -53,9 +62,9 @@ class OrderService {
                 payment_status: orderData.payment_status,
                 shipping_method: orderData.shipping_method,
                 shipping_status: orderData.shipping_status,
-                staff_id: orderData.staff_id,
+                staff_id: staffId,  // Use the extracted staff ID
                 staff_info: {
-                    name: orderData.staff_info.name,
+                    name: orderData.staff_info?.name || orderData.staff_name || 'Nhân viên',
                     role: 'employee'
                 },
                 status: orderData.status,
@@ -110,9 +119,9 @@ class OrderService {
 
     async getOrders() {
         try {
-            console.log('Fetching orders from:', `${API_URL}/orders`);
+         
             const response = await axiosInstance.get('/orders');
-            console.log('Get Orders Response:', response);
+         
 
             if (!response || !response.data) {
                 console.warn('Empty response from API:', response);
@@ -131,11 +140,7 @@ class OrderService {
 
             return orders;
         } catch (error) {
-            console.error('Get Orders Error:', {
-                message: error.message,
-                response: error.response,
-                status: error.response?.status
-            });
+           
 
             if (error.code === 'ECONNREFUSED') {
                 throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra server đã chạy chưa.');
@@ -159,9 +164,8 @@ class OrderService {
                 throw new Error('ID đơn hàng không hợp lệ');
             }
 
-            console.log('Fetching order details for ID:', id);
             const response = await axiosInstance.get(`/orders/${id}`);
-            console.log('Raw API Response:', response);
+           
 
             // Kiểm tra và xử lý response
             let orderData = null;
@@ -176,22 +180,17 @@ class OrderService {
             }
 
             if (!orderData) {
-                console.error('Invalid order data structure:', response.data);
+                
                 throw new Error('Cấu trúc dữ liệu đơn hàng không hợp lệ');
             }
 
-            console.log('Processed order data:', orderData);
+           
             return {
                 success: true,
                 order: orderData
             };
         } catch (error) {
-            console.error('Get Order Details Error:', {
-                orderId: id,
-                message: error.message,
-                response: error.response,
-                stack: error.stack
-            });
+          
 
             if (error.response?.status === 404) {
                 throw new Error('Không tìm thấy đơn hàng');
@@ -212,9 +211,7 @@ class OrderService {
             }
 
             // Kiểm tra xem dữ liệu cập nhật có null không
-            console.log('Updating order:', id);
-            console.log('Update data (raw):', orderData);
-            console.log('Update data JSON:', JSON.stringify(orderData));
+          
 
             // Test API trực tiếp với Axios (không qua instance)
             try {
@@ -234,12 +231,7 @@ class OrderService {
 
             // Tiếp tục với axiosInstance
             const response = await axiosInstance.put(`/orders/${id}`, orderData);
-            console.log('Update Order Response:', response);
-            console.log('Response data:', response.data);
-            
-            // Log HTTP status
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
+          
 
             if (!response.data) {
                 throw new Error('Không nhận được phản hồi khi cập nhật đơn hàng');
@@ -292,18 +284,12 @@ class OrderService {
 
     async deleteOrder(id) {
         try {
-            console.log('Deleting order:', id);
+           
             const response = await axiosInstance.delete(`/orders/${id}`);
-            console.log('Delete Order Response:', response);
+           
 
             return response.data;
         } catch (error) {
-            console.error('Delete Order Error:', {
-                orderId: id,
-                message: error.message,
-                response: error.response
-            });
-
             throw new Error(
                 error.response?.data?.message || 
                 error.message || 
@@ -333,7 +319,7 @@ class OrderService {
                 message: response.data.message || 'Không thể hủy đơn hàng'
             };
         } catch (error) {
-            console.error('Error cancelling order:', error);
+          
             throw error;
         }
     }

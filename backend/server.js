@@ -19,7 +19,14 @@ dotenv.config();
 const PORT = ENV_VARS.PORT;
 
 // CORS configuration
-app.use(cors());
+const corsOptions = {
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173'],
+  credentials: true,
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+};
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());

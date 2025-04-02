@@ -167,7 +167,7 @@ function App() {
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <Footer />
+      
       <Toaster />
     </>
   );
