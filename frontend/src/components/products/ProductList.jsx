@@ -39,7 +39,7 @@ const ProductList = () => {
             <h1 className="text-2xl md:text-4xl font-extrabold text-gray-800 dark:text-white">
               {category.name}
             </h1>
-            <Button onClick={() => navigate("/products")}>Xem thêm</Button>
+            <Button onClick={() => navigate(`/category/${category.id}`)}>Xem thêm</Button>
           </div>
 
           {category.products && category.products.length > 0 ? (
