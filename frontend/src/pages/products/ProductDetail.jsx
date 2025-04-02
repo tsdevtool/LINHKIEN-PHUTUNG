@@ -1,5 +1,5 @@
 import React from 'react'
-import ProductDetailC from "./../../components/products/ProductDetail";
+import ProductDetailC from "../../components/products/ProductDetailC";
 import Header from '@/components/Header';
 import Navbar from '@/components/Navbar';
 const ProductDetail = () => {
