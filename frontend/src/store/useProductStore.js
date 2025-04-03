@@ -27,7 +27,7 @@ export const useProductStore = create((set, get) => ({
     }
   },
 
-  getProductByCategoryChild:async(categoryId, page = 1, perPage = 5)=>{
+  getProductByCategoryChild:async(categoryId, page = 1, perPage = 12)=>{
     set({isLoading:true})
     try{
       const response = await axios.get(`/api/client/${categoryId}/category?page=${page}&per_page=${perPage}`)
@@ -39,7 +39,7 @@ export const useProductStore = create((set, get) => ({
     }
   },
 
-  getProductByCategoryParent:async(categoryId, page = 1, perPage = 5)=>{
+  getProductByCategoryParent:async(categoryId, page = 1, perPage = 12)=>{
     set({isLoading:true})
     try{
       const response = await axios.get(`/api/client/${categoryId}/get-all?page=${page}&per_page=${perPage}`)

@@ -70,7 +70,7 @@ export const useCartStore = create((set, get) => ({
         throw new Error(response.data.message || "Có lỗi xảy ra");
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Không thể lấy thông tin giỏ hàng");
+      console.log("")
       throw error;
     } finally {
       set({ isLoading: false });

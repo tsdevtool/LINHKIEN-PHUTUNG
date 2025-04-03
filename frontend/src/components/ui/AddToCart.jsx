@@ -3,10 +3,12 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useCartStore } from "../../store/Cart/useCartStore";
 import PropTypes from "prop-types";
+import { useAuthStore } from "@/store/authUser";
 
 const AddToCart = ({ product }) => {
   const [clicked, setClicked] = useState(false);
   const { addToCart, isLoading } = useCartStore();
+  const { user } = useAuthStore();
 
   const handleCartClick = async () => {
     if (isLoading) return;
@@ -25,10 +27,11 @@ const AddToCart = ({ product }) => {
 
   return (
     <>
-      <button
+      {user && (
+        <button
         onClick={handleCartClick}
         disabled={isLoading}
-        className={`cart-button relative px-2 py-5 w-12 h-7 border-0 rounded-md bg-cyan-400 outline-none cursor-pointer text-white transition ease-in-out duration-300 overflow-hidden font-bold hover:bg-cyan-500 active:scale-90 ${
+        className={`z-10 cart-button relative px-2 py-5 w-12 h-7 border-0 rounded-md bg-cyan-400 outline-none cursor-pointer text-white transition ease-in-out duration-300 overflow-hidden font-bold hover:bg-cyan-500 active:scale-90 ${
           clicked ? "clicked bg-green-500" : ""
         } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
       >
@@ -65,6 +68,7 @@ const AddToCart = ({ product }) => {
           <path d="M50.7 58.5L0 160l208 0 0-128L93.7 32C75.5 32 58.9 42.3 50.7 58.5zM240 160l208 0L397.3 58.5C389.1 42.3 372.5 32 354.3 32L240 32l0 128zm208 32L0 192 0 416c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-224z" />
         </motion.svg>
       </button>
+      )}
     </>
   );
 };

@@ -56,7 +56,7 @@ const CartPage = () => {
       .reduce((total, item) => total + (item.product.price * item.quantity), 0);
   };
 
-  const shipping = 50000;
+  const shipping = 0;
   const discount = 0; // Tạm thời set 0
   const subtotal = calculateSelectedTotal();
   const total = subtotal + (selectedItems.length > 0 ? shipping : 0) - discount;
