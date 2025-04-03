@@ -60,7 +60,7 @@ class ProductController extends Controller
     public function show(string $id): JsonResponse
     {
         try {
-            $product = Product::active()
+            $product = Product::withTrashed()
                 ->with('category')
                 ->find($id);
             

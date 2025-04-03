@@ -83,7 +83,13 @@ const ProductList = () => {
           />
         </div>
       </div>
-
+      {/* Hiển thị tổng số sản phẩm */}
+      <div className="flex justify-between items-center text-sm text-gray-600">
+          <span>
+            Tổng số sản phẩm: <span className="font-medium">{filteredProducts.length}</span>
+          </span>
+          <span>Cập nhật: {new Date().toLocaleDateString("vi-VN")}</span>
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -107,7 +113,11 @@ const ProductList = () => {
               filteredProducts.map((product, index) => (
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{index + 1}</TableCell>
-                  <TableCell>{product.name}</TableCell>
+                  <TableCell>
+                    <div className="font-medium text-gray-900 truncate max-w-xs" title={product.name}>
+                      {product.name}
+                    </div>
+                  </TableCell>
                   <TableCell>{product.category?.name || "Không có danh mục"}</TableCell>
                   <TableCell className="text-right">{formatPrice(product.price)}</TableCell>
                   <TableCell className="text-center">

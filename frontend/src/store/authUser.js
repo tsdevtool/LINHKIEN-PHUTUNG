@@ -44,7 +44,7 @@ export const useAuthStore = create((set, get) => ({
         throw new Error(response.data?.message || 'Đăng ký thất bại');
       }
     } catch (error) {
-      console.error('Signup error:', error);
+     
       toast.error(error.response?.data?.message || "Lỗi đăng ký");
       set({ isSigningUp: false, user: null });
     }
@@ -85,7 +85,7 @@ export const useAuthStore = create((set, get) => ({
       set({ ...initialState });
       window.location.href = '/auth/login';
     } catch (error) {
-      console.error('Logout error:', error);
+     
       set({ isLoggingOut: false });
       toast.error("Lỗi đăng xuất");
     }
@@ -111,7 +111,7 @@ export const useAuthStore = create((set, get) => ({
         return null;
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+    
       set({ user: null });
       return null;
     } finally {

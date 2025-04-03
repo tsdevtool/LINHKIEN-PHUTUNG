@@ -334,11 +334,16 @@ const NewOrder = () => {
                     <NewCustomer
                       onClose={() => setShowNewCustomer(false)}
                       onSuccess={(newCustomer) => {
-                        selectCustomer({
-                          _id: newCustomer._id,
-                          name: newCustomer.firstname + ' ' + (newCustomer.lastname || ''),
-                          phone: newCustomer.phone
-                        });
+                        handleCustomerSearch('');
+                        setTimeout(() => {
+                          const customer = customers.find(c => c.phone === newCustomer.phone);
+                          if (customer) {
+                            selectCustomer(customer);
+                          } else {
+                            selectCustomer(newCustomer);
+                          }
+                        }, 500);
+                        setShowNewCustomer(false);
                       }}
                     />
                   </div>
