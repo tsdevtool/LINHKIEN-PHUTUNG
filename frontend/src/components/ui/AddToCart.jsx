@@ -28,7 +28,7 @@ const AddToCart = ({ product }) => {
       <button
         onClick={handleCartClick}
         disabled={isLoading}
-        className={`cart-button relative px-2 py-5 w-12 h-7 border-0 rounded-md bg-cyan-400 outline-none cursor-pointer text-white transition ease-in-out duration-300 overflow-hidden font-bold hover:bg-cyan-500 active:scale-90 ${
+        className={`z-10 cart-button relative px-2 py-5 w-12 h-7 border-0 rounded-md bg-cyan-400 outline-none cursor-pointer text-white transition ease-in-out duration-300 overflow-hidden font-bold hover:bg-cyan-500 active:scale-90 ${
           clicked ? "clicked bg-green-500" : ""
         } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
       >

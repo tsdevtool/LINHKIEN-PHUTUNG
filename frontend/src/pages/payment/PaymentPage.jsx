@@ -48,6 +48,8 @@ const PaymentPage = () => {
     }
   };
 
+  
+
   // Xử lý thay đổi form
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -78,9 +80,9 @@ const PaymentPage = () => {
       if(deliveryMethod === "delivery"){
         orderData = {
           cart_item_ids: selectedCartItems.map(item => item.id),
-          recipient_name: user.name,
-          recipient_phone: user.phone,
-          recipient_address: null,
+          recipient_name: formData.name,
+          recipient_phone: formData.phone,
+          recipient_address: formData.address,
           payment_type: paymentMethod,      // "cash" hoặc "payos"
           order_method: deliveryMethod,     // "delivery" hoặc "store_pickup"
           discount: orderSummary.discount,

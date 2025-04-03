@@ -27,6 +27,14 @@ const ProductList = () => {
     );
   }
 
+  const handleProductClick = (productId, e) => {
+    // Nếu click vào nút AddToCart thì không chuyển trang
+    if (e.target.closest('.add-to-cart-button')) {
+      return;
+    }
+    navigate(`/product-info/${productId}`);
+  };
+
   return (
     <div>
       {categories.map((category) => (
@@ -47,8 +55,8 @@ const ProductList = () => {
               {category.products.map((product) => (
                 <div
                   key={product.id}
-                  onClick={() => navigate(`/product-info/${product.id}`)}
-                  className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 flex flex-col transition-transform duration-300 ease-in-out transform hover:-translate-y-2.5 hover:shadow-xl justify-between"
+                  onClick={(e) => handleProductClick(product.id, e)}
+                  className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 flex flex-col transition-transform duration-300 ease-in-out transform hover:-translate-y-2.5 hover:shadow-xl justify-between cursor-pointer"
                 >
                   <div>
                     {product?.image_url ? (
@@ -73,7 +81,9 @@ const ProductList = () => {
                         currency: "VND",
                       }).format(product.price)}
                     </span>
-                    <AddToCart product={product} />
+                    <div className="add-to-cart-button">
+                      <AddToCart product={product} />
+                    </div>
                   </div>
                 </div>
               ))}

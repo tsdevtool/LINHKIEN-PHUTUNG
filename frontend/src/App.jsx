@@ -56,13 +56,14 @@ import ProductList from "./pages/admin/products/ProductList";
 function App() {
   const { user, authCheck } = useAuthStore();
   const [isInitialAuthCheck, setIsInitialAuthCheck] = useState(true);
+  const reload = 5*60*60*1000;
 
   // Check auth chỉ 1 lần khi app khởi động
   useEffect(() => {
     const initAuth = async () => {
       try {
         // Kiểm tra cookie trước khi gọi auth check
-        const hasCookie = document.cookie.includes('jwt-phutung=');
+        const hasCookie = document.cookie.includes('jwt-phutung');
         if (!hasCookie) {
           console.log('No auth cookie found, skipping auth check');
           setIsInitialAuthCheck(false);
@@ -79,7 +80,7 @@ function App() {
     };
 
     initAuth();
-  }); // Run only once on mount
+  },[reload]); // Run only once on mount
 
   // Hiển thị loading trong 300ms đầu để tránh flash content
   if (isInitialAuthCheck) {
