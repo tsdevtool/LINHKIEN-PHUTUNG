@@ -62,7 +62,7 @@ const ProductList = () => {
                         <span className="text-gray-500">No image</span>
                       </div>
                     )}
-                    <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white mt-4">
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white mt-4 line-clamp-2">
                       {product.name}
                     </h2>
                   </div>

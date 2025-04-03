@@ -13,7 +13,7 @@ const CategoryChildProductsPage = () => {
     const {getProductByCategoryChild, products, isLoading} = useProductStore()
     const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
-    const perPage = 5
+    const perPage = 12
 
     useEffect(()=>{
         const fetchProducts = async () => {
@@ -53,7 +53,7 @@ const CategoryChildProductsPage = () => {
                                   <span className="text-gray-500">No image</span>
                                 </div>
                               )}
-                              <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white mt-4">
+                              <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white mt-4 line-clamp-3">
                                 {product.name}
                               </h2>
                             </div>

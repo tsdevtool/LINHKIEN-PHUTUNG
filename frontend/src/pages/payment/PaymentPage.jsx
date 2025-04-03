@@ -17,6 +17,7 @@ import { toast } from "react-hot-toast";
 
 import Header from "../../components/Header";
 import Navbar from "../../components/Navbar";
+import { useAuthStore } from "@/store/authUser";
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const PaymentPage = () => {
   const [message, setMessage] = useState("");
   const { cartItems, selectedItems } = useCartStore();
   const { createOrderFromCart } = useOrderStore();
+  const { user } = useAuthStore();
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -34,13 +36,12 @@ const PaymentPage = () => {
 
   // Lọc các sản phẩm đã chọn từ giỏ hàng
   const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
-  console.log('Selected cart items:', selectedCartItems);
 
   // Tính toán tổng tiền
   const orderSummary = {
     items: selectedCartItems,
     subtotal: selectedCartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0),
-    shipping: 50000,
+    shipping: 0,
     discount: 0,
     get total() {
       return this.subtotal + this.shipping - this.discount;
@@ -71,19 +72,33 @@ const PaymentPage = () => {
       }
     }
 
+    let orderData;
     try {
       // Chuẩn bị dữ liệu đơn hàng
-      const orderData = {
-        cart_item_ids: selectedCartItems.map(item => item.id),
-        recipient_name: formData.fullName,
-        recipient_phone: formData.phone,
-        recipient_address: formData.address,
-        payment_type: paymentMethod,      // "cash" hoặc "payos"
-        order_method: deliveryMethod,     // "delivery" hoặc "store_pickup"
-        discount: orderSummary.discount,
-        message: message
-      };
-
+      if(deliveryMethod === "delivery"){
+        orderData = {
+          cart_item_ids: selectedCartItems.map(item => item.id),
+          recipient_name: user.name,
+          recipient_phone: user.phone,
+          recipient_address: null,
+          payment_type: paymentMethod,      // "cash" hoặc "payos"
+          order_method: deliveryMethod,     // "delivery" hoặc "store_pickup"
+          discount: orderSummary.discount,
+          message: message
+        }
+      }else{
+        
+        orderData = {
+          cart_item_ids: selectedCartItems.map(item => item.id),
+          recipient_name: user.lastname + " " + user.firstname,
+          recipient_phone: user.phone,
+          recipient_address: "Đến trực tiếp cửa hàng",
+          payment_type: paymentMethod,      // "cash" hoặc "payos"
+          order_method: deliveryMethod,     // "delivery" hoặc "store_pickup"
+          discount: orderSummary.discount,
+          message: message
+        }
+      }
       console.log('Sending order data:', orderData);
       const response = await createOrderFromCart(orderData);
 

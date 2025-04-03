@@ -46,7 +46,6 @@ import EmployeeStockCheck from './pages/employee/inventory/inventory';
 
 // UI Components
 import Loading from "./components/ui/Loading";
-import Footer from "./components/Footer";
 import CategoriesTreeSection from "./pages/admin/categories/CategoriesTreeSection";
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import OutOfStockProducts from "./pages/admin/products/OutOfStockProducts";
@@ -80,7 +79,7 @@ function App() {
     };
 
     initAuth();
-  }, []); // Run only once on mount
+  }); // Run only once on mount
 
   // Hiển thị loading trong 300ms đầu để tránh flash content
   if (isInitialAuthCheck) {
@@ -153,10 +152,10 @@ function App() {
                   <Route path="categories-tree" element={<CategoriesTreeSection />} />
                   {/* <Route path="products/list" element={<ProductsSection />} /> */}
                   <Route path="products/list" element={<ProductList />} />
-                  <Route path="orders"index element={<OrderList />} />
-                  <Route path="orders/:id" element={<OrderDetail />} />
-                  <Route path="orders/:id/edit" element={<EditOrder />} />
-                  <Route path="orders/new" element={<NewOrder />} />
+                  <Route path="orders" element={<OrderList />} />
+                  {/* <Route path="orders/:id" element={<OrderDetail />} />
+                  <Route path="orders/:id/edit" element={<EditOrder />} /> */}
+                  {/* <Route path="orders/new" element={<NewOrder />} /> */}
                   <Route path="employees/info" element={<EmployeesSection />} />
                   <Route path="inventory" element={<AdminStockCheck />} />
                   <Route path="confirmation-inventory" element={<AdminConfirmationStockList />} />
