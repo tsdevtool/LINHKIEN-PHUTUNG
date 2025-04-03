@@ -60,7 +60,7 @@ const CategoriesTreeSection = () => {
   const {
     products,
     getAllProducts,
-    createProduct,
+    addProduct,
     updateProduct,
     deleteProduct,
     moveProduct,
@@ -210,7 +210,7 @@ const CategoriesTreeSection = () => {
           });
         }
 
-        await createProduct(formData);
+        await addProduct(formData);
         toast.success("Thêm sản phẩm thành công", { id: toastId });
       } else {
         const formData = new FormData();

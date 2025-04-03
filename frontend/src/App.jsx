@@ -52,6 +52,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import OutOfStockProducts from "./pages/admin/products/OutOfStockProducts";
 import CategoryChildProductsPage from "./pages/products/CategoryChildProductsPage";
 import CategoryParentProductsPage from "./pages/products/CategoryParentProductsPage";
+import ProductList from "./pages/admin/products/ProductList";
 
 function App() {
   const { user, authCheck } = useAuthStore();
@@ -142,7 +143,7 @@ function App() {
         <Route
           path="/admin/*"
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
+             <ProtectedRoute allowedRoles={['admin']}>
               <AdminLayout>
                 <Routes>
                   <Route index element={<DashBoardSection />} />
@@ -150,7 +151,8 @@ function App() {
                   <Route path="products/out-of-stock" element={<OutOfStockProducts />} />
                   <Route path="categories" element={<CategoriesSection />} />
                   <Route path="categories-tree" element={<CategoriesTreeSection />} />
-                  <Route path="products/list" element={<ProductsSection />} />
+                  {/* <Route path="products/list" element={<ProductsSection />} /> */}
+                  <Route path="products/list" element={<ProductList />} />
                   <Route path="orders"index element={<OrderList />} />
                   <Route path="orders/:id" element={<OrderDetail />} />
                   <Route path="orders/:id/edit" element={<EditOrder />} />
