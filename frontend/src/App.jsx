@@ -29,6 +29,7 @@ import ProductsSection from "./pages/admin/products/ProductsSection";
 import CategoriesSection from "./pages/admin/categories/CategoriesSection";
 import AdminStockCheck from "./pages/admin/inventory/inventory";
 import AdminConfirmationStockList from "./pages/admin/inventory/confirmationInventory";
+import UsersList from "./pages/admin/users/UsersList";
 //Admin Employees
 import EmployeesSection from "./pages/admin/employees/EmployeesSection";
 // Employee Components
@@ -160,6 +161,7 @@ function App() {
                   <Route path="employees/info" element={<EmployeesSection />} />
                   <Route path="inventory" element={<AdminStockCheck />} />
                   <Route path="confirmation-inventory" element={<AdminConfirmationStockList />} />
+                  <Route path="users" element={<UsersList />} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>
