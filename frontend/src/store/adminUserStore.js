@@ -80,5 +80,13 @@ export default {
       toast.error('Lỗi khi khôi phục nhân viên');
     }
   },
-
+  async getAllUsers() {
+    try {
+      const response = await axios.get('/api/users/all');
+      return response.data.users;
+    } catch (error) {
+      toast.error('Lỗi khi lấy danh sách người dùng');
+      return [];
+    }
+  },
 };
