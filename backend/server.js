@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.route.js";
 import roles from "./routes/role.route.js";
 import employees from "./routes/useradmin.route.js"
 
+import clientRoutes from "./routes/client.route.js";
 
 import orderRoutes from "./routes/order.route.js";
 
@@ -36,6 +37,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/orders", orderRoutes);
 
+app.use("/api/v1/client", clientRoutes); 
 
 app.use("/api/v1/roles", roles);
 app.use("/api/v1/employees", employees);
