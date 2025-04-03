@@ -47,27 +47,27 @@ Route::prefix('cart')->middleware(AuthMiddleware::class)->group(function () {
 
 Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
-    Route::get('/trash', [ProductController::class, 'getTrash']); // Thêm route mới
-      
-    Route::get('/{id}', [ProductController::class, 'show']);
     Route::get('/list/for-admin-waitingconfirmation', [ProductController::class, 'getProductsForAdminWattingConfirmation']);
     Route::get('/list/for-admin-confirmation', [ProductController::class, 'getProductsForAdminConfirmation']);
     Route::get('/list/for-employee', [ProductController::class, 'getProductsForEmployee']);
-   
-    Route::post('/', [ProductController::class, 'store']);
-    Route::put('/{id}', [ProductController::class, 'update']);
-    Route::delete('/soft/{id}', [ProductController::class, 'softDelete']);
-    Route::delete('/{id}', [ProductController::class, 'destroy']);
+    Route::get('/trash', [ProductController::class, 'getTrash']);
     Route::delete('/trash/empty', [ProductController::class, 'emptyTrash']);
     Route::post('/restore/{id}', [ProductController::class, 'restore']);
+
  
     Route::post('/restock/{id}', [ProductController::class, 'restockProduct']);
+
 
     Route::post('/request-stock-check', [ProductController::class, 'requestStockCheck']);
     Route::post('/recheck-product/{id}', [ProductController::class, 'recheckProduct']);
     Route::post('/admin-confirm-stock-check/{id}', [ProductController::class, 'confirmStockCheck']);
     Route::post('/employee-confirm-stock-check/{id}', [ProductController::class, 'employeeConfirmStockCheck']);
-  
+    
+    // Routes với dynamic parameter nên đặt cuối cùng
+    Route::get('/{id}', [ProductController::class, 'show']);
+    Route::put('/{id}', [ProductController::class, 'update']);
+    Route::delete('/soft/{id}', [ProductController::class, 'softDelete']);
+    Route::delete('/{id}', [ProductController::class, 'destroy']);
 });
 
 Route::prefix('categories')->group(function () {

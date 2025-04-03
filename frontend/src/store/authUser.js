@@ -44,7 +44,7 @@ export const useAuthStore = create((set, get) => ({
         throw new Error(response.data?.message || 'Đăng ký thất bại');
       }
     } catch (error) {
-      console.error('Signup error:', error);
+     
       toast.error(error.response?.data?.message || "Lỗi đăng ký");
       set({ isSigningUp: false, user: null });
     }
@@ -56,7 +56,7 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingIn: true });
     try {
       const response = await axiosInstance.post("/v1/auth/login", credentials);
-      console.log('Login response:', response.data);
+    
 
       if (!response.data?.success || !response.data?.user) {
         throw new Error('Invalid login response');
@@ -86,7 +86,7 @@ export const useAuthStore = create((set, get) => ({
       set({ ...initialState });
       window.location.href = '/auth/login';
     } catch (error) {
-      console.error('Logout error:', error);
+     
       set({ isLoggingOut: false });
       toast.error("Lỗi đăng xuất");
     }
@@ -96,16 +96,16 @@ export const useAuthStore = create((set, get) => ({
     const currentState = get();
     
     if (currentState.isAuthChecking) {
-      console.log('Auth check in progress, skipping');
+     
       return currentState.user;
     }
 
     set({ isAuthChecking: true });
-    console.log('Starting auth check...');
+  
 
     try {
       const response = await axiosInstance.get("/v1/auth/auth-check");
-      console.log('Auth check response:', response.data);
+     
 
       if (response.data?.success && response.data?.user) {
         set({ user: response.data.user });
@@ -115,7 +115,7 @@ export const useAuthStore = create((set, get) => ({
         return null;
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+    
       set({ user: null });
       return null;
     } finally {

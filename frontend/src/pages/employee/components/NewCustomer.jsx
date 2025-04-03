@@ -30,20 +30,35 @@ const NewCustomer = ({ onClose, onSuccess }) => {
       setLoading(true);
       const customerData = {
         firstname: formData.firstname,
-        lastname: formData.lastname || null,
+        lastname: formData.lastname || '',
         phone: formData.phone,
-        username: formData.phone,
         password: formData.phone,
-        role: 'customer'
+        idrole: '67dac2f4e2b2c2309a07727d',
+        status: true,
+        address: '',
+        image: ''
       };
 
-      const newCustomer = await customerRepository.createCustomer(customerData);
+      console.log('Sending customer data:', customerData);
+      const response = await customerRepository.createCustomer(customerData);
+      console.log('Response:', response);
+      
       toast.success('Thêm khách hàng mới thành công!');
-      onSuccess(newCustomer);
+      const customer = response.customer;
+      
+      // Trả về dữ liệu khách hàng từ API response
+      if (response && response.customer) {
+        onSuccess({
+          phone: response.customer.phone
+        });
+      }
       onClose();
     } catch (error) {
       console.error('Error creating customer:', error);
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi thêm khách hàng');
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error
+        || 'Có lỗi xảy ra khi thêm khách hàng';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

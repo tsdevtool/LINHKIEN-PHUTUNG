@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-const NODE_API_URL = import.meta.env.VITE_BACKEND_URL + '/api/v1';
 const PHP_API_URL = 'http://localhost:8000/api';
 
 class CustomerRepository {
@@ -70,6 +69,10 @@ class CustomerRepository {
             return response.data;
         } catch (error) {
             console.error('Error creating customer:', error);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+                console.error('Response status:', error.response.status);
+            }
             throw error;
         }
     }

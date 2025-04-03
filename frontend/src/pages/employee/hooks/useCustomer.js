@@ -54,7 +54,7 @@ export const useCustomer = () => {
 
     // Error handling utility
     const handleError = useCallback((error, customMessage = '') => {
-        console.error(customMessage || 'Error:', error);
+       
         updateState({ 
             error: error.message || 'Đã xảy ra lỗi, vui lòng thử lại',
             loading: false 
@@ -66,7 +66,7 @@ export const useCustomer = () => {
         try {
             updateState({ loading: true, error: null });
             const data = await customerService.getCustomers();
-            console.log('Fetched customers:', data);
+         
             // Ensure data is an array
             const customersArray = Array.isArray(data) ? data : (data?.customers || []);
             updateState({ customers: customersArray });
@@ -85,15 +85,17 @@ export const useCustomer = () => {
 
     // Search customers
     const handleSearch = useCallback(async (query) => {
-        if (!query?.trim()) {
-            await fetchCustomers();
-            return;
-        }
-
+        updateState({ loading: true, error: null });
+        
         try {
-            updateState({ loading: true, error: null });
-            const results = await customerService.searchCustomers(query);
-            console.log('Search results:', results);
+            let results;
+            if (!query?.trim()) {
+                results = await customerService.getCustomers();
+            } else {
+                results = await customerService.searchCustomers(query);
+            }
+            
+            
             // Ensure results is an array
             const resultsArray = Array.isArray(results) ? results : (results?.customers || []);
             updateState({ customers: resultsArray });
@@ -103,12 +105,12 @@ export const useCustomer = () => {
         } finally {
             updateState({ loading: false });
         }
-    }, [fetchCustomers, handleError]);
+    }, [handleError]);
 
     // Select customer
     const selectCustomer = useCallback((customer) => {
         try {
-            console.log('Raw customer data:', customer);
+           
             
             // Validate customer data
             validateCustomerId(customer);
@@ -116,7 +118,7 @@ export const useCustomer = () => {
             
             // Normalize customer data
             const normalizedCustomer = normalizeCustomerData(customer);
-            console.log('Normalized customer data:', normalizedCustomer);
+         
             
             updateState({
                 selectedCustomer: normalizedCustomer,
