@@ -19,7 +19,7 @@ class CreateOrderFromCartRequest extends FormRequest
             'recipient_name' => 'required|string',
             'recipient_phone' => 'required|string',
             'recipient_address' => 'required_if:order_method,delivery|string',
-            'payment_type' => 'required|in:cash,bank_transfer',
+            'payment_type' => 'required|in:cash,payos',
             'order_method' => 'required|in:pickup,delivery',
             'discount' => 'nullable|numeric|min:0'
         ];

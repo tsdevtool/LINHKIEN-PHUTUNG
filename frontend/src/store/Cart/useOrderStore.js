@@ -54,7 +54,7 @@ const useOrderStore = create((set) => ({
       
       if (response.data.success) {
         set({ orderData: response.data.data });
-        toast.success('Đặt hàng thành công!');
+        // toast.success('Đặt hàng thành công!');
         return response.data;
       } else {
         throw new Error(response.data.message || 'Có lỗi xảy ra khi đặt hàng');

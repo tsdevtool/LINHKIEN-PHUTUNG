@@ -52,19 +52,7 @@ const OrderSuccessPage = () => {
             </button>
             <button
               onClick={() =>
-                navigate("/orders", {
-                  state: {
-                    orderDetails: {
-                      ...orderDetails,
-                      status: "processing",
-                      createdAt: new Date().toISOString(),
-                      paymentStatus:
-                        orderDetails.paymentMethod === "cod"
-                          ? "pending"
-                          : "paid",
-                    },
-                  },
-                })
+                navigate("/orders")
               }
               className="flex items-center justify-center gap-2 border border-cyan-600 text-cyan-600 px-6 py-3 rounded-lg hover:bg-cyan-50 dark:hover:bg-cyan-900/30 transition-colors"
             >
