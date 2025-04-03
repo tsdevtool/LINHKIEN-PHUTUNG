@@ -114,6 +114,8 @@ Route::prefix('roles')->group(function () {
 });
 Route::prefix('users')->group(function () {
 
+
+    Route::get('/all', [UserControllerAdmin::class, 'getAllUsers']);
     // Thêm routes cho customer
     Route::get('/customers', [UserControllerAdmin::class, 'getAllCustomers']);
     Route::get('/customers/{_id}', [UserControllerAdmin::class, 'getCustomerById']);
