@@ -15,7 +15,6 @@ const axiosInstance = axios.create({
 class OrderService {
     async createOrder(orderData) {
         try {
-            // Validate required fields
             if (!orderData.customer_info || !orderData.customer_info.name) {
                 throw new Error('Thiếu thông tin khách hàng');
             }
@@ -23,22 +22,11 @@ class OrderService {
             if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
                 throw new Error('Thiếu thông tin sản phẩm');
             }
-
-            // Log request data
-            console.log('Creating order with data:', JSON.stringify(orderData, null, 2));
             
-            // Format data before sending
             const { orderNumber, ...orderDataWithoutNumber } = orderData;
             
-            // Ensure staff_id is proper MongoDB ID
             const staffId = orderData.staff_id ? orderData.staff_id.toString() : null;
-            if (!staffId) {
-                console.warn('Missing staff_id in order data');
-            } else {
-                console.log('Using staff_id:', staffId);
-            }
             
-            // Ensure all required fields are present and properly formatted
             const formattedData = {
                 ...orderDataWithoutNumber,
                 customer_id: orderData.customer_id,
@@ -62,7 +50,7 @@ class OrderService {
                 payment_status: orderData.payment_status,
                 shipping_method: orderData.shipping_method,
                 shipping_status: orderData.shipping_status,
-                staff_id: staffId,  // Use the extracted staff ID
+                staff_id: staffId,
                 staff_info: {
                     name: orderData.staff_info?.name || orderData.staff_name || 'Nhân viên',
                     role: 'employee'
@@ -71,10 +59,7 @@ class OrderService {
                 note: orderData.note || ''
             };
             
-            console.log('Formatted data to send:', JSON.stringify(formattedData, null, 2));
-            
             const response = await axiosInstance.post('/orders', formattedData);
-            console.log('API Response:', response);
             
             if (!response.data) {
                 throw new Error('Không nhận được phản hồi từ server');
@@ -82,13 +67,6 @@ class OrderService {
             
             return response.data;
         } catch (error) {
-            console.error('Order API Error:', {
-                message: error.message,
-                response: error.response,
-                data: error.response?.data
-            });
-
-            // Xử lý lỗi trùng mã đơn hàng
             if (error.response?.data?.message?.includes('duplicate key error') || 
                 error.response?.data?.message?.includes('E11000')) {
                 throw new Error('Mã đơn hàng đã tồn tại, vui lòng thử lại');
@@ -102,7 +80,6 @@ class OrderService {
         }
     }
 
-    // Map payment method from UI to acceptable values in model
     mapPaymentMethod(method) {
         const mapping = {
             'Tiền mặt': 'cash',
@@ -119,16 +96,12 @@ class OrderService {
 
     async getOrders() {
         try {
-         
             const response = await axiosInstance.get('/orders');
-         
 
             if (!response || !response.data) {
-                console.warn('Empty response from API:', response);
                 return [];
             }
 
-            // Kiểm tra cấu trúc response
             let orders = [];
             if (Array.isArray(response.data)) {
                 orders = response.data;
@@ -140,8 +113,6 @@ class OrderService {
 
             return orders;
         } catch (error) {
-           
-
             if (error.code === 'ECONNREFUSED') {
                 throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra server đã chạy chưa.');
             }
@@ -165,9 +136,7 @@ class OrderService {
             }
 
             const response = await axiosInstance.get(`/orders/${id}`);
-           
 
-            // Kiểm tra và xử lý response
             let orderData = null;
             if (response.data) {
                 if (response.data.order) {
@@ -180,18 +149,14 @@ class OrderService {
             }
 
             if (!orderData) {
-                
                 throw new Error('Cấu trúc dữ liệu đơn hàng không hợp lệ');
             }
 
-           
             return {
                 success: true,
                 order: orderData
             };
         } catch (error) {
-          
-
             if (error.response?.status === 404) {
                 throw new Error('Không tìm thấy đơn hàng');
             }
@@ -215,23 +180,19 @@ class OrderService {
 
             // Test API trực tiếp với Axios (không qua instance)
             try {
-                console.log(`Direct API URL: ${API_URL}/orders/${id}`);
-                const directResponse = await axios({
+                await axios({
                     method: 'put',
-                    url: `${API_URL}/orders/${id}`,
+                    url: `${PHP_API_URL}/orders/${id}`,
                     data: orderData,
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 });
-                console.log('Direct Axios Response:', directResponse);
             } catch (directError) {
-                console.error('Direct API call failed:', directError);
+                // Ignore direct API call errors
             }
 
-            // Tiếp tục với axiosInstance
             const response = await axiosInstance.put(`/orders/${id}`, orderData);
-          
 
             if (!response.data) {
                 throw new Error('Không nhận được phản hồi khi cập nhật đơn hàng');
@@ -266,14 +227,6 @@ class OrderService {
                 order: response.data
             };
         } catch (error) {
-            console.error('Update Order Error:', {
-                orderId: id,
-                message: error.message,
-                response: error.response?.data,
-                status: error.response?.status,
-                stack: error.stack
-            });
-
             throw new Error(
                 error.response?.data?.message || 
                 error.message || 
@@ -284,10 +237,7 @@ class OrderService {
 
     async deleteOrder(id) {
         try {
-           
             const response = await axiosInstance.delete(`/orders/${id}`);
-           
-
             return response.data;
         } catch (error) {
             throw new Error(
@@ -325,4 +275,4 @@ class OrderService {
     }
 }
 
-export default new OrderService(); 
+export default new OrderService();
