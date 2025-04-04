@@ -19,7 +19,7 @@ class OrderController extends Controller
     {
         try {
             // Get sorting parameters
-            $sortField = $request->input('sortBy', 'createdAt');
+            $sortField = $request->input('sortBy', 'created_at');
             $sortOrder = $request->input('sortOrder', 'desc');
             $filterStatus = $request->input('status');
             $filterPaymentStatus = $request->input('paymentStatus');
@@ -34,10 +34,10 @@ class OrderController extends Controller
                 $query->where('status', $filterStatus);
             }
             if ($filterPaymentStatus) {
-                $query->where('paymentStatus', $filterPaymentStatus);
+                $query->where('payment_status', $filterPaymentStatus);
             }
             if ($filterShippingStatus) {
-                $query->where('shippingStatus', $filterShippingStatus);
+                $query->where('shipping_status', $filterShippingStatus);
             }
 
             // Apply date range filter
