@@ -45,6 +45,20 @@ const productSchema = new mongoose.Schema({
     is_active: {
         type: Boolean,
         default: true
+    },
+    pending_actual_quantity:{
+        type: Number,
+        default:0
+    },
+    is_checked_stock:{
+        type: String,
+        default:""
+    },
+    created_at:{
+        type: Date
+    },
+    updated_at:{
+        type: Date
     }
 }, {
     timestamps: true,
