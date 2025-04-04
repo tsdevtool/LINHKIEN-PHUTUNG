@@ -17,7 +17,7 @@ const EmployeeStockCheck = () => {
   }, [getProductsForEmployee]);
 
   const handleQuantityChange = (e, id) => {
-    const value = e.target.value === "" ? "" : parseInt(e.target.value, 10);
+    const value = e.target.value === "" ? "" : e.target.value; // Không dùng parseInt nữa, giữ nguyên giá trị nhập
     const updatedProducts = inventoryProductsForEmployee.map((product) =>
       product.id === id
         ? { ...product, pending_actual_quantity: value }
@@ -25,6 +25,7 @@ const EmployeeStockCheck = () => {
     );
     useProductStore.setState({ inventoryProductsForEmployee: updatedProducts });
   };
+  
 
   const handleCheckStock = (id, pendingQuantity) => {
     if (pendingQuantity === "" || pendingQuantity === undefined) {
