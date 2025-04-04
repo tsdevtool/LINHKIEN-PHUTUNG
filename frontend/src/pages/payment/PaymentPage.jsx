@@ -14,9 +14,11 @@ import {
 import { useCartStore } from "../../store/Cart/useCartStore";
 import useOrderStore from "../../store/Cart/useOrderStore";
 import { toast } from "react-hot-toast";
+import axios from "axios";
 
 import Header from "../../components/Header";
 import Navbar from "../../components/Navbar";
+import { useAuthStore } from "@/store/authUser";
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ const PaymentPage = () => {
   const [message, setMessage] = useState("");
   const { cartItems, selectedItems } = useCartStore();
   const { createOrderFromCart } = useOrderStore();
+  const { user } = useAuthStore();
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -34,18 +37,19 @@ const PaymentPage = () => {
 
   // Lọc các sản phẩm đã chọn từ giỏ hàng
   const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
-  console.log('Selected cart items:', selectedCartItems);
 
   // Tính toán tổng tiền
   const orderSummary = {
     items: selectedCartItems,
     subtotal: selectedCartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0),
-    shipping: 50000,
+    shipping: 0,
     discount: 0,
     get total() {
       return this.subtotal + this.shipping - this.discount;
     }
   };
+
+  
 
   // Xử lý thay đổi form
   const handleFormChange = (e) => {
@@ -71,35 +75,111 @@ const PaymentPage = () => {
       }
     }
 
+    let orderData;
     try {
       // Chuẩn bị dữ liệu đơn hàng
-      const orderData = {
-        cart_item_ids: selectedCartItems.map(item => item.id),
-        recipient_name: formData.fullName,
-        recipient_phone: formData.phone,
-        recipient_address: formData.address,
-        payment_type: paymentMethod,      // "cash" hoặc "payos"
-        order_method: deliveryMethod,     // "delivery" hoặc "store_pickup"
-        discount: orderSummary.discount,
-        message: message
-      };
-
+      if(deliveryMethod === "delivery"){
+        orderData = {
+          cart_item_ids: selectedCartItems.map(item => item.id),
+          recipient_name: formData.fullName,
+          recipient_phone: formData.phone,
+          recipient_address: formData.address,
+          payment_type: paymentMethod,      // "cash" hoặc "payos"
+          order_method: deliveryMethod,     // "delivery" hoặc "store_pickup"
+          discount: orderSummary.discount,
+          message: message
+        }
+      } else {
+        orderData = {
+          cart_item_ids: selectedCartItems.map(item => item.id),
+          recipient_name: user.lastname + " " + user.firstname,
+          recipient_phone: user.phone,
+          recipient_address: "Đến trực tiếp cửa hàng",
+          payment_type: paymentMethod,      // "cash" hoặc "payos"
+          order_method: deliveryMethod,     // "delivery" hoặc "store_pickup"
+          discount: orderSummary.discount,
+          message: message
+        }
+      }
+      
       console.log('Sending order data:', orderData);
       const response = await createOrderFromCart(orderData);
+      console.log('Response:', response);
 
       if (response.success) {
-        toast.success('Đặt hàng thành công!');
-        navigate("/order-success", {
-          state: {
-            orderDetails: {
-              orderId: response.data.id,
-              total: orderSummary.total,
-              paymentMethod,
-              items: selectedCartItems,
-              shippingInfo: formData
-            },
-          },
-        });
+        if (paymentMethod === 'payos') {
+          try {
+            // Tạo returnUrl với state được mã hóa
+            const orderState = {
+              orderDetails: {
+                orderId: response.data.order_id,
+                total: orderSummary.total,
+                paymentMethod,
+                items: selectedCartItems,
+                shippingInfo: formData
+              }
+            };
+            
+            const stateParam = encodeURIComponent(JSON.stringify(orderState));
+            const returnUrl = `${window.location.origin}/order-success?state=${stateParam}`;
+            
+            console.log('Creating payment with order ID:', response.data.order_id);
+            
+            const paymentResponse = await axios.post(
+              `${import.meta.env.VITE_PHP_URL}/api/orders/${response.data.order_id}/payment`,
+              {
+                amount: orderSummary.total,
+                orderInfo: `Thanh toán đơn hàng ${response.data.order_number}`,
+                return_url: returnUrl,
+                cancel_url: `${window.location.origin}/payment/cancel?orderCode=${response.data.order_id}`
+              },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+                }
+              }
+            );
+
+            console.log('Full payment request URL:', `${import.meta.env.VITE_PHP_URL}/api/orders/${response.data.order_id}/payment`);
+            console.log('Payment request data:', {
+              amount: orderSummary.total,
+              orderInfo: `Thanh toán đơn hàng ${response.data.order_number}`,
+              return_url: returnUrl,
+              cancel_url: `${window.location.origin}/payment/cancel?orderCode=${response.data.order_id}`
+            });
+            console.log('Payment Response:', paymentResponse);
+
+            if (paymentResponse.data.success && paymentResponse.data.paymentUrl) {
+              window.location.href = paymentResponse.data.paymentUrl;
+              return;
+            } else {
+              console.error('Payment response error:', paymentResponse.data);
+              throw new Error(paymentResponse.data.message || 'Không thể tạo liên kết thanh toán');
+            }
+          } catch (error) {
+            console.error('Payment creation error:', error);
+            console.error('Error response:', error.response?.data);
+            console.error('Error status:', error.response?.status);
+            console.error('Error headers:', error.response?.headers);
+            toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo thanh toán');
+            return;
+          }
+        } else {
+          // Nếu thanh toán tiền mặt, chuyển đến trang thành công
+          toast.success('Đặt hàng thành công!');
+          navigate("/order-success", {
+            state: {
+              orderDetails: {
+                orderId: response.data.order_id,
+                total: orderSummary.total,
+                paymentMethod,
+                items: selectedCartItems,
+                shippingInfo: formData
+              }
+            }
+          });
+        }
       }
     } catch (error) {
       console.error('Order creation error:', error);

@@ -4,11 +4,11 @@ import MobileMenuButton from "./ui/MobileMenuButton";
 import AuthSection from "./ui/AuthSection";
 import DesktopMenu from "./ui/DesktopMenu";
 import MobileMenu from "./ui/MobileMenu";
-
+import { useAuthStore } from "../store/authUser";
 const Navbar = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user] = useState(true);
+  const {user} = useAuthStore();
   const [cart] = useState(3);
   const [isAdmin] = useState(false);
 

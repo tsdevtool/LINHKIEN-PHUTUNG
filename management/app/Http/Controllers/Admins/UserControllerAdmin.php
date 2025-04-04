@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Exception;
 use Carbon\Carbon;
 use Symfony\Component\CssSelector\Node\FunctionNode;
@@ -382,5 +383,68 @@ class UserControllerAdmin extends Controller
     }
 
     //customer
+    public function getCustomerById($id): JsonResponse
+    {
+        try {
+            // Tìm người dùng theo ID
+            $user = User::find($id);
+
+            if (!$user) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Không tìm thấy người dùng.'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Lấy thông tin người dùng thành công.',
+                'user' => $user
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Lỗi server: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    //User
+    public function getAllUsers(): JsonResponse
+    {
+        try {
+            // Lấy tất cả người dùng từ bảng `users`
+            $users = User::all();
+
+            // Xử lý dữ liệu nếu cần (ví dụ: định dạng ngày tháng)
+            $processedUsers = $users->map(function ($user) {
+                return [
+                    '_id' => $user->_id,
+                    'name' => $user->firstname . ' ' . $user->lastname,
+                    'phone' => $user->phone,
+                    'address' => $user->address,
+                    'email' => $user->email,
+                    'username' => $user->username,
+                    'idrole' => $user->idrole,
+                    'status' => $user->status ?? true,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at,
+                    'deleted_at' => $user->deleted_at,
+                ];
+            });
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Lấy tất cả người dùng thành công.',
+                'users' => $processedUsers
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Lỗi server: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
 ?>

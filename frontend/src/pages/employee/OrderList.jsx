@@ -239,18 +239,18 @@ const OrderList = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Danh sách đơn hàng</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Danh sách đơn hàng</h1>
           <div className="flex gap-2">
-            <button className="px-4 py-2 text-gray-600 border rounded-md hover:bg-gray-50 flex items-center gap-2">
+            <button className="px-4 py-2 text-gray-600 dark:text-white border rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2">
               <Download size={20} />
               <span>Xuất file</span>
             </button>
             <button
               onClick={handleCreateOrder}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-2"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 flex items-center gap-2"
             >
               <Plus size={20} />
               <span>Tạo đơn hàng</span>
@@ -332,9 +332,9 @@ const OrderList = () => {
             <p className="text-gray-500">Không tìm thấy đơn hàng nào</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <input type="checkbox" className="rounded border-gray-300" />

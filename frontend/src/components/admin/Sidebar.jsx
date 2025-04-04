@@ -9,7 +9,7 @@ import {
   Users,
   EllipsisVertical,
 } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import MenuItem from "./MenuItem";
 
@@ -67,6 +67,8 @@ const menuItems = [
 
 const Sidebar = ({ isOpen, setIsOpen, isLocked, setIsLocked }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+
 
   return (
     <div
@@ -80,12 +82,13 @@ const Sidebar = ({ isOpen, setIsOpen, isLocked, setIsLocked }) => {
     >
       {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b border-gray-800">
-        <img src="/logo-nobg.png" alt="Logo" className="w-10 h-10 rounded-lg" />
-        {(isOpen || isLocked) && (
+        <div onClick={() => navigate("/")} className="cursor-pointer flex gap-2">
+          <img src="/logo-nobg.png" alt="Logo" className="w-10 h-10 rounded-lg dark:invert" />
+          {(isOpen || isLocked) && (
           <h1 className="font-bold text-xl bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
             MotorKing
           </h1>
-        )}
+        )}</div>
         <button
           onClick={() => setIsLocked(!isLocked)}
           className={cn(

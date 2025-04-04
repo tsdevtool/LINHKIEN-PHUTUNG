@@ -36,6 +36,8 @@ Route::prefix('client')->group(function () {
     Route::get('/{category_id}/get-all', [ClientController::class, 'showListProductFollowCategory']);
 
     Route::get('/{category_id}/category', [ClientController::class, 'showListProductFollowChildCategory']);
+
+    Route::get('search-products', [ClientController::class, 'searchProducts']);
 });
 
 Route::prefix('cart')->middleware(AuthMiddleware::class)->group(function () {
@@ -114,6 +116,8 @@ Route::prefix('roles')->group(function () {
 });
 Route::prefix('users')->group(function () {
 
+
+    Route::get('/all', [UserControllerAdmin::class, 'getAllUsers']);
     // Thêm routes cho customer
     Route::get('/customers', [UserControllerAdmin::class, 'getAllCustomers']);
     Route::get('/customers/{_id}', [UserControllerAdmin::class, 'getCustomerById']);

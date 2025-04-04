@@ -1,12 +1,74 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FaCheckCircle, FaHome, FaFileAlt } from "react-icons/fa";
 import Header from "../../components/Header";
 import Navbar from "../../components/Navbar";
+import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const OrderSuccessPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const orderDetails = location.state?.orderDetails;
+  const [searchParams] = useSearchParams();
+  const [isUpdating, setIsUpdating] = useState(true);
+  const [error, setError] = useState(null);
+  const [orderDetails, setOrderDetails] = useState(null);
+
+  // Lấy thông tin từ URL parameters
+  const orderId = searchParams.get('order_id');
+  const orderNumber = searchParams.get('order_number');
+  const amount = searchParams.get('amount');
+  const description = searchParams.get('description');
+
+  useEffect(() => {
+    const updatePaymentStatus = async () => {
+      try {
+        if (!orderNumber) {
+          throw new Error('Không tìm thấy mã đơn hàng');
+        }
+
+        // Tìm đơn hàng theo order_number
+        const findOrderResponse = await axios.get(
+          `${import.meta.env.VITE_PHP_URL}/api/orders/find-by-number/${orderNumber}`
+        );
+
+        if (findOrderResponse.data && findOrderResponse.data.order) {
+          setOrderDetails(findOrderResponse.data.order);
+
+          // Cập nhật trạng thái thanh toán
+          const updateUrl = `${import.meta.env.VITE_PHP_URL}/api/orders/update-by-number/${orderNumber}`;
+          const updateData = {
+            payment_status: 'paid',
+            status: 'pending',
+            payment_info: {
+              provider: 'PayOS',
+              payment_id: orderId || '',
+              status: 'paid',
+              paid_at: new Date().toISOString(),
+              amount: amount ? parseInt(amount) : 0
+            }
+          };
+
+          await axios.put(updateUrl, updateData);
+          toast.success('Cập nhật trạng thái thanh toán thành công');
+        } else {
+          throw new Error('Không tìm thấy đơn hàng');
+        }
+      } catch (error) {
+        console.error('Error updating payment status:', error);
+        setError('Không thể cập nhật trạng thái thanh toán: ' + 
+          (error.response?.data?.message || error.message));
+        toast.error(error.response?.data?.message || error.message);
+      } finally {
+        setIsUpdating(false);
+      }
+    };
+
+    if (orderNumber) {
+      updatePaymentStatus();
+    } else {
+      setIsUpdating(false);
+    }
+  }, [orderNumber, orderId, amount]);
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -20,13 +82,17 @@ const OrderSuccessPage = () => {
           </div>
 
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
-            Đặt hàng thành công!
+            {isUpdating ? "Đang xử lý..." : "Đặt hàng thành công!"}
           </h1>
 
-          <p className="text-gray-600 dark:text-gray-300 mb-8">
-            Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn sẽ được xử lý trong thời
-            gian sớm nhất.
-          </p>
+          {error ? (
+            <div className="text-red-500 mb-4">{error}</div>
+          ) : (
+            <p className="text-gray-600 dark:text-gray-300 mb-8">
+              Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn sẽ được xử lý trong thời
+              gian sớm nhất.
+            </p>
+          )}
 
           {orderDetails && (
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-8 text-left">
@@ -34,10 +100,13 @@ const OrderSuccessPage = () => {
                 Chi tiết đơn hàng
               </h2>
               <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                <p>Mã đơn hàng: #{orderDetails.orderId}</p>
-                <p>Tổng tiền: {orderDetails.total.toLocaleString()}đ</p>
-                <p>Phương thức thanh toán: Thanh toán khi nhận hàng (COD)</p>
-                <p>Thời gian giao hàng dự kiến: 2-3 ngày làm việc</p>
+                <p>Mã đơn hàng: {orderNumber}</p>
+                {amount && (
+                  <p>Tổng tiền: {parseInt(amount).toLocaleString()}đ</p>
+                )}
+                <p>Trạng thái: {orderDetails.status === 'confirmed' ? 'Đã xác nhận' : 'Đang xử lý'}</p>
+
+                {description && <p>Ghi chú: {description}</p>}
               </div>
             </div>
           )}
@@ -51,21 +120,7 @@ const OrderSuccessPage = () => {
               Về trang chủ
             </button>
             <button
-              onClick={() =>
-                navigate("/orders", {
-                  state: {
-                    orderDetails: {
-                      ...orderDetails,
-                      status: "processing",
-                      createdAt: new Date().toISOString(),
-                      paymentStatus:
-                        orderDetails.paymentMethod === "cod"
-                          ? "pending"
-                          : "paid",
-                    },
-                  },
-                })
-              }
+              onClick={() => navigate("/orders")}
               className="flex items-center justify-center gap-2 border border-cyan-600 text-cyan-600 px-6 py-3 rounded-lg hover:bg-cyan-50 dark:hover:bg-cyan-900/30 transition-colors"
             >
               <FaFileAlt />

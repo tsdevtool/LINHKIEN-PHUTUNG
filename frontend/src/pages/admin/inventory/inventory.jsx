@@ -91,7 +91,6 @@ const AdminStockCheck = () => {
     <div className="stock-check-container p-4 bg-gray-50 rounded-lg shadow">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Quản lý kiểm kho</h1>
-        <p className="text-gray-600">Xác nhận hoặc yêu cầu kiểm kho lại các sản phẩm</p>
       </div>
 
       <div className="mb-4 flex justify-between items-center">
@@ -204,7 +203,7 @@ const AdminStockCheck = () => {
                 return (
                   <tr key={product.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{product.name}</div>
+                      <div className="font-medium text-gray-900 truncate max-w-xs">{product.name}</div>
                       {product.sku && <div className="text-sm text-gray-500">SKU: {product.sku}</div>}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

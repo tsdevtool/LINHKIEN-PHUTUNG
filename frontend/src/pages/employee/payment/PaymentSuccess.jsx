@@ -20,8 +20,8 @@ const PaymentSuccess = () => {
 
     // Hàm kiểm tra và lấy route prefix
     const getRoutePrefix = () => {
-        const isAdminRoute = location.pathname.startsWith('/admin');
-        return isAdminRoute ? '/admin' : '/employee';
+        const isAdminRoute = location.pathname.startsWith('/');
+        return isAdminRoute ? '/' : '/employee';
     };
 
     // Nếu order_number không có trong URL trực tiếp, thử tìm trong returnUrl

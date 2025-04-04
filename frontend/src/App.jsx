@@ -29,6 +29,7 @@ import ProductsSection from "./pages/admin/products/ProductsSection";
 import CategoriesSection from "./pages/admin/categories/CategoriesSection";
 import AdminStockCheck from "./pages/admin/inventory/inventory";
 import AdminConfirmationStockList from "./pages/admin/inventory/confirmationInventory";
+import UsersList from "./pages/admin/users/UsersList";
 //Admin Employees
 import EmployeesSection from "./pages/admin/employees/EmployeesSection";
 // Employee Components
@@ -46,7 +47,6 @@ import EmployeeStockCheck from './pages/employee/inventory/inventory';
 
 // UI Components
 import Loading from "./components/ui/Loading";
-import Footer from "./components/Footer";
 import CategoriesTreeSection from "./pages/admin/categories/CategoriesTreeSection";
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import OutOfStockProducts from "./pages/admin/products/OutOfStockProducts";
@@ -57,13 +57,14 @@ import ProductList from "./pages/admin/products/ProductList";
 function App() {
   const { user, authCheck } = useAuthStore();
   const [isInitialAuthCheck, setIsInitialAuthCheck] = useState(true);
+  const reload = 5*60*60*1000;
 
   // Check auth chỉ 1 lần khi app khởi động
   useEffect(() => {
     const initAuth = async () => {
       try {
         // Kiểm tra cookie trước khi gọi auth check
-        const hasCookie = document.cookie.includes('jwt-phutung=');
+        const hasCookie = document.cookie.includes('jwt-phutung');
         if (!hasCookie) {
           console.log('No auth cookie found, skipping auth check');
           setIsInitialAuthCheck(false);
@@ -80,7 +81,7 @@ function App() {
     };
 
     initAuth();
-  }, []); // Run only once on mount
+  },[reload]); // Run only once on mount
 
   // Hiển thị loading trong 300ms đầu để tránh flash content
   if (isInitialAuthCheck) {
@@ -153,13 +154,14 @@ function App() {
                   <Route path="categories-tree" element={<CategoriesTreeSection />} />
                   {/* <Route path="products/list" element={<ProductsSection />} /> */}
                   <Route path="products/list" element={<ProductList />} />
-                  <Route path="orders"index element={<OrderList />} />
-                  <Route path="orders/:id" element={<OrderDetail />} />
-                  <Route path="orders/:id/edit" element={<EditOrder />} />
-                  <Route path="orders/new" element={<NewOrder />} />
+                  <Route path="orders" element={<OrderList />} />
+                  {/* <Route path="orders/:id" element={<OrderDetail />} />
+                  <Route path="orders/:id/edit" element={<EditOrder />} /> */}
+                  {/* <Route path="orders/new" element={<NewOrder />} /> */}
                   <Route path="employees/info" element={<EmployeesSection />} />
                   <Route path="inventory" element={<AdminStockCheck />} />
                   <Route path="confirmation-inventory" element={<AdminConfirmationStockList />} />
+                  <Route path="users" element={<UsersList />} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>
