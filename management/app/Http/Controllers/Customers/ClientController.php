@@ -9,6 +9,8 @@ use App\Http\Requests\Product\ListProductInChildCategoryRequest;
 use App\Actions\Customer\Product\DetailProduct;
 use App\Actions\Customer\Product\ListProductInCategory;
 use App\Actions\Customer\Product\ListProductInChildCategory;
+use App\Actions\Customer\Product\SearchProduct;
+use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class ClientController extends Controller
@@ -16,15 +18,18 @@ class ClientController extends Controller
     private $detailProduct;
     private $listProductInChildCategory;
     private $listProductInCategory;
+    private $searchProduct;
     
     public function __construct(
         DetailProduct $detailProduct,
         ListProductInChildCategory $listProductInChildCategory,
-        ListProductInCategory $listProductInCategory
+        ListProductInCategory $listProductInCategory,
+        SearchProduct $searchProduct
         ){
         $this->detailProduct = $detailProduct;
         $this->listProductInChildCategory = $listProductInChildCategory;
         $this->listProductInCategory = $listProductInCategory;
+        $this->searchProduct = $searchProduct;
     }
 
     /**
@@ -58,5 +63,16 @@ class ClientController extends Controller
    public function showListProductFollowCategory(ListProductInCategoryRequest $request): JsonResponse
    {
     return $this->listProductInCategory->execute($request);
+   }
+
+   /**
+    * Tìm kiếm sản phẩm theo tên
+    *
+    * @param Request $request
+    * @return JsonResponse
+    */
+   public function searchProducts(Request $request): JsonResponse
+   {
+    return $this->searchProduct->execute($request);
    }
 }

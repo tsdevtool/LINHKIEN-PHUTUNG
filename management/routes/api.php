@@ -36,6 +36,8 @@ Route::prefix('client')->group(function () {
     Route::get('/{category_id}/get-all', [ClientController::class, 'showListProductFollowCategory']);
 
     Route::get('/{category_id}/category', [ClientController::class, 'showListProductFollowChildCategory']);
+
+    Route::get('search-products', [ClientController::class, 'searchProducts']);
 });
 
 Route::prefix('cart')->middleware(AuthMiddleware::class)->group(function () {
