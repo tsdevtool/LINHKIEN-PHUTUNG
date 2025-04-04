@@ -373,6 +373,11 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
+            Log::info('Cancel order request received', [
+                'id' => $id,
+                'request' => request()->all()
+            ]);
+
             $order = Order::find($id);
             if (!$order) {
                 throw new Exception('Không tìm thấy đơn hàng');
@@ -388,14 +393,19 @@ class OrderController extends Controller
 
             // Return products to inventory
             foreach ($order->items as $item) {
-                $product = Product::find($item['productId']);
-                if ($product) {
-                    $product->quantity += $item['quantity'];
-                    $product->save();
+                $productId = $item['product_id'] ?? $item['productId'] ?? null;
+                if ($productId) {
+                    $product = Product::find($productId);
+                    if ($product) {
+                        $product->quantity += $item['quantity'];
+                        $product->save();
+                    }
                 }
             }
 
             $order->status = 'cancelled';
+            $order->cancelled_reason = request('cancelReason');
+            $order->cancelled_at = now();
             $order->save();
 
             DB::commit();
