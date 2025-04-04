@@ -147,6 +147,7 @@ Route::prefix('orders')->group(function () {
         Route::put('/{id}', [OrderController::class, 'update']);
         Route::post('/{id}/payment', [OrderController::class, 'createPayment']);
         Route::post('/payment/webhook', [OrderController::class, 'handleWebhook']);
+        Route::put('/{id}/cancel', [OrderController::class, 'cancel']);
    
 });
 

@@ -82,10 +82,10 @@ const OrderList = () => {
   }, [sortConfig, filters]);
 
   const handleSort = (field) => {
-    setSortConfig(prevConfig => ({
+    setSortConfig({
       field,
-      order: prevConfig.field === field && prevConfig.order === 'asc' ? 'desc' : 'asc'
-    }));
+      order: 'desc'
+    });
   };
 
   const handleFilterChange = (filterType, value) => {
@@ -99,9 +99,7 @@ const OrderList = () => {
     if (sortConfig.field !== field) {
       return <ChevronDown className="w-4 h-4 text-gray-400" />;
     }
-    return sortConfig.order === 'asc' 
-      ? <ChevronUp className="w-4 h-4 text-blue-500" />
-      : <ChevronDown className="w-4 h-4 text-blue-500" />;
+    return <ChevronDown className="w-4 h-4 text-blue-500" />;
   };
 
   if (loading) {

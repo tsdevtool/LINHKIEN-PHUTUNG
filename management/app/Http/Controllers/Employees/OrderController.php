@@ -19,7 +19,7 @@ class OrderController extends Controller
     {
         try {
             // Get sorting parameters
-            $sortField = $request->input('sortBy', 'createdAt');
+            $sortField = $request->input('sortBy', 'created_at');
             $sortOrder = $request->input('sortOrder', 'desc');
             $filterStatus = $request->input('status');
             $filterPaymentStatus = $request->input('paymentStatus');
@@ -34,10 +34,10 @@ class OrderController extends Controller
                 $query->where('status', $filterStatus);
             }
             if ($filterPaymentStatus) {
-                $query->where('paymentStatus', $filterPaymentStatus);
+                $query->where('payment_status', $filterPaymentStatus);
             }
             if ($filterShippingStatus) {
-                $query->where('shippingStatus', $filterShippingStatus);
+                $query->where('shipping_status', $filterShippingStatus);
             }
 
             // Apply date range filter
@@ -373,6 +373,11 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
+            Log::info('Cancel order request received', [
+                'id' => $id,
+                'request' => request()->all()
+            ]);
+
             $order = Order::find($id);
             if (!$order) {
                 throw new Exception('Không tìm thấy đơn hàng');
@@ -388,14 +393,19 @@ class OrderController extends Controller
 
             // Return products to inventory
             foreach ($order->items as $item) {
-                $product = Product::find($item['productId']);
-                if ($product) {
-                    $product->quantity += $item['quantity'];
-                    $product->save();
+                $productId = $item['product_id'] ?? $item['productId'] ?? null;
+                if ($productId) {
+                    $product = Product::find($productId);
+                    if ($product) {
+                        $product->quantity += $item['quantity'];
+                        $product->save();
+                    }
                 }
             }
 
             $order->status = 'cancelled';
+            $order->cancelled_reason = request('cancelReason');
+            $order->cancelled_at = now();
             $order->save();
 
             DB::commit();

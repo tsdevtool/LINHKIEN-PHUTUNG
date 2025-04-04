@@ -102,6 +102,7 @@ class OrderService {
                 return [];
             }
 
+            // Kiểm tra cấu trúc response
             let orders = [];
             if (Array.isArray(response.data)) {
                 orders = response.data;
@@ -113,6 +114,8 @@ class OrderService {
 
             return orders;
         } catch (error) {
+           
+
             if (error.code === 'ECONNREFUSED') {
                 throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra server đã chạy chưa.');
             }
@@ -136,7 +139,9 @@ class OrderService {
             }
 
             const response = await axiosInstance.get(`/orders/${id}`);
+           
 
+            // Kiểm tra và xử lý response
             let orderData = null;
             if (response.data) {
                 if (response.data.order) {
@@ -149,14 +154,18 @@ class OrderService {
             }
 
             if (!orderData) {
+                
                 throw new Error('Cấu trúc dữ liệu đơn hàng không hợp lệ');
             }
 
+           
             return {
                 success: true,
                 order: orderData
             };
         } catch (error) {
+          
+
             if (error.response?.status === 404) {
                 throw new Error('Không tìm thấy đơn hàng');
             }
@@ -192,7 +201,9 @@ class OrderService {
                 // Ignore direct API call errors
             }
 
+            // Tiếp tục với axiosInstance
             const response = await axiosInstance.put(`/orders/${id}`, orderData);
+          
 
             if (!response.data) {
                 throw new Error('Không nhận được phản hồi khi cập nhật đơn hàng');
@@ -251,8 +262,12 @@ class OrderService {
     // Hủy đơn hàng
     async cancelOrder(orderId, reason) {
         try {
+            if (!orderId) {
+                throw new Error('ID đơn hàng không hợp lệ');
+            }
+
             const response = await axiosInstance.put(`/orders/${orderId}/cancel`, {
-                cancelReason: reason,
+                cancelReason: reason || 'Không có lý do',
                 cancelledAt: new Date().toISOString()
             });
 
@@ -269,8 +284,11 @@ class OrderService {
                 message: response.data.message || 'Không thể hủy đơn hàng'
             };
         } catch (error) {
-          
-            throw error;
+            throw new Error(
+                error.response?.data?.message || 
+                error.message || 
+                'Có lỗi xảy ra khi hủy đơn hàng'
+            );
         }
     }
 }
