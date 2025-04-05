@@ -1,6 +1,6 @@
-import Category from '../models/category.model.js';
+import Category from '../../models/category.model.js';
 import mongoose from 'mongoose';
-import Product  from '../models/Product.js';
+import Product  from '../../models/Product.js';
 
 class CategoryController {
 

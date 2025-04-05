@@ -7,7 +7,7 @@ import {
     updateEmployee ,
     deleteEmployee ,
     undeleteEmployee
-} from "../controllers/useradmin.controller.js";
+} from "../controllers/Admin/user.controller.js";
 
 const router = express.Router();
 

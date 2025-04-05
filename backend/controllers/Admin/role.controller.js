@@ -1,4 +1,4 @@
-import {Role} from "./../models/role.model.js";
+import {Role} from "../../models/role.model.js";
 
 // Thêm mới
 export const addRole = async (req, res) => {

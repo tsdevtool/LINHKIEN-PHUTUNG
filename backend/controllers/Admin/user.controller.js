@@ -1,5 +1,5 @@
-import {UserAdmin} from "./../models/useradmin.model.js";
-import {Role} from "./../models/role.model.js";
+import { User as UserAdmin } from "../../models/user.model.js";
+import {Role} from "../../models/role.model.js";
 import bcrypt from 'bcrypt';
 
 // Lấy tất cả nhân viên (không phải khách hàng)
