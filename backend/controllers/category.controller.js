@@ -15,9 +15,6 @@ class CategoryController {
             const categoriesChild = await Category.active()
                 .where('level', 1).where('is_active', true);  
 
-            
-
-
             const formattedCategories = categories.map(category => ({
                 id: category._id,
                 name: category.name,
@@ -86,9 +83,19 @@ class CategoryController {
                     category: formattedCategory
                 });
             }else{
+
+                const categorieFormatt = {
+                    id : category.id,
+                    name : category.name,
+                    parent : {
+                        id : category.parent_id,
+                        name: category.parent_name
+                    },
+                    products : products.filter(child => child.category_id.toString() === category._id.toString())
+                }
                 return res.status(200).json({
                     status: 200,
-                    category: category
+                    category: categorieFormatt
                 });
             }
         } catch (error) {
